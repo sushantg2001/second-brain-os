@@ -1,0 +1,9 @@
+{
+	"id": "calendar-periodic-notes",
+	"name": "Calendar & Periodic Notes",
+	"version": "1.0.0",
+	"minAppVersion": "1.7.2",
+	"description": "Calendar view combined with daily, weekly, monthly, quarterly, and yearly notes.",
+	"author": "Sushant Gupta",
+	"isDesktopOnly": false
+}
