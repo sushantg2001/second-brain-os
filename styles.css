@@ -1,0 +1,149 @@
+.cpn-calendar {
+	--cpn-cell-size: 2.2em;
+	padding: 0 8px;
+}
+
+.cpn-header {
+	align-items: center;
+	display: flex;
+	justify-content: space-between;
+	margin: 4px 0 8px;
+}
+
+.cpn-title {
+	background: none;
+	box-shadow: none;
+	cursor: pointer;
+	font-size: var(--font-ui-medium);
+	padding: 2px 4px;
+}
+
+.cpn-title:hover {
+	background-color: var(--interactive-hover);
+}
+
+.cpn-title-month {
+	color: var(--color-accent);
+	font-weight: 600;
+}
+
+.cpn-nav {
+	display: flex;
+	gap: 2px;
+}
+
+.cpn-nav-button {
+	background: none;
+	box-shadow: none;
+	color: var(--text-muted);
+	cursor: pointer;
+	padding: 2px 8px;
+}
+
+.cpn-nav-button:hover {
+	color: var(--text-normal);
+}
+
+.cpn-grid {
+	border-collapse: collapse;
+	table-layout: fixed;
+	width: 100%;
+}
+
+.cpn-grid th {
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	font-weight: 500;
+	padding: 4px 0;
+	text-align: center;
+}
+
+.cpn-grid td {
+	padding: 1px;
+	text-align: center;
+}
+
+.cpn-cell-button {
+	align-items: center;
+	background: none;
+	border-radius: var(--radius-s);
+	box-shadow: none;
+	cursor: pointer;
+	display: flex;
+	flex-direction: column;
+	font-size: var(--font-ui-small);
+	height: var(--cpn-cell-size);
+	justify-content: center;
+	padding: 2px 0 0;
+	width: 100%;
+}
+
+.cpn-cell-button:hover {
+	background-color: var(--interactive-hover);
+}
+
+.cpn-adjacent-month {
+	color: var(--text-faint);
+}
+
+.cpn-today {
+	color: var(--color-accent);
+	font-weight: 600;
+}
+
+.cpn-selected {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+.cpn-selected:hover {
+	background-color: var(--interactive-accent-hover);
+}
+
+.cpn-weeknum .cpn-cell-button,
+.cpn-weeknum-header {
+	border-right: 1px solid var(--background-modifier-border);
+	color: var(--text-muted);
+}
+
+.cpn-dot {
+	background-color: var(--color-accent);
+	border-radius: 50%;
+	height: 4px;
+	margin-top: 1px;
+	width: 4px;
+}
+
+.cpn-selected .cpn-dot {
+	background-color: var(--text-on-accent);
+}
+
+.jump-to-date-year-row {
+	align-items: center;
+	display: flex;
+	gap: 0.5em;
+	justify-content: center;
+	margin: 1em 0;
+}
+
+.jump-to-date-year-row input {
+	font-size: 1.1em;
+	text-align: center;
+	width: 6em;
+}
+
+.jump-to-date-month-label {
+	margin: 0 0 0.5em;
+	text-align: center;
+}
+
+.jump-to-date-month-grid {
+	display: grid;
+	gap: 0.5em;
+	grid-template-columns: repeat(4, 1fr);
+	margin-bottom: 1em;
+}
+
+.jump-to-date-month-grid button {
+	padding: 0.5em 0;
+}
