@@ -1,5 +1,8 @@
 # Calendar & Periodic Notes
 
+[![CI](https://github.com/sushantg2001/calendar-periodic-notes/actions/workflows/ci.yml/badge.svg)](https://github.com/sushantg2001/calendar-periodic-notes/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 An Obsidian plugin that combines a calendar view with periodic notes (daily, weekly, monthly, quarterly, and yearly) in a single plugin.
 
 ## Features
@@ -62,6 +65,10 @@ bun run lint
 ```
 
 Tests run with [Vitest](https://vitest.dev) against a mocked Obsidian API (`tests/mocks/obsidian.ts`). CI runs lint, tests, and the build on every push and pull request; tagged pushes create a draft GitHub release with the plugin artifacts.
+
+## Contributing
+
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, scripts, and the pull request process, and please follow the [Code of Conduct](CODE_OF_CONDUCT.md). Bug reports and feature requests go through the issue templates.
 
 ## Credits
 
