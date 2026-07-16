@@ -64,7 +64,7 @@ bun run test:watch
 bun run lint
 ```
 
-Tests run with [Vitest](https://vitest.dev) against a mocked Obsidian API (`tests/mocks/obsidian.ts`). CI runs lint, tests, and the build on every push and pull request; tagged pushes create a draft GitHub release with the plugin artifacts.
+Tests run with [Vitest](https://vitest.dev) against a mocked Obsidian API (`tests/mocks/obsidian.ts`). CI runs lint, tests, and the build on every push and pull request. Pushing a tag creates a draft GitHub release with the plugin artifacts; the release workflow can also be run manually from the **Actions** tab, supplying the tag to release.
 
 ## Contributing
 

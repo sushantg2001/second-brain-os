@@ -4,6 +4,12 @@ on:
     push:
         tags:
             - '*'
+    workflow_dispatch:
+        inputs:
+            tag:
+                description: 'Tag to release (e.g. 1.0.1). Defaults to the ref the run was started from.'
+                required: false
+                type: string
 
 jobs:
     build:
@@ -34,10 +40,9 @@ jobs:
             - name: Create release
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  TAG: ${{ inputs.tag || github.ref_name }}
               run: |
-                  tag="${GITHUB_REF#refs/tags/}"
-
-                  gh release create "$tag" \
-                    --title="$tag" \
+                  gh release create "$TAG" \
+                    --title="$TAG" \
                     --draft \
                     main.js manifest.json styles.css
