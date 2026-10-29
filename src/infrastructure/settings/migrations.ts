@@ -11,6 +11,8 @@ type Migration = (data: RawSettings) => RawSettings;
 /** Keyed by the version a migration upgrades from. Version 0 means "no version field". */
 const MIGRATIONS: Readonly<Record<number, Migration>> = {
 	0: (data) => ({ ...data, version: 1 }),
+	// 2.0: periodic notes and calendar settings.
+	1: (data) => ({ ...data, version: 2, periodic: DEFAULT_SETTINGS.periodic }),
 };
 
 function isRecord(value: unknown): value is RawSettings {

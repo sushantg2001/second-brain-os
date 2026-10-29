@@ -1,6 +1,6 @@
 import { describe, expect, it, mock } from "bun:test";
 
-import { Store } from "../../../src/shared/kernel";
+import { select, Store } from "../../../src/shared/kernel";
 
 describe("Store", () => {
 	it("returns the initial value", () => {
@@ -65,5 +65,32 @@ describe("Store", () => {
 		store.set("y");
 		expect(get()).toBe("y");
 		expect(listener).toHaveBeenCalledTimes(1);
+	});
+});
+
+describe("select", () => {
+	it("exposes a slice and notifies only when the slice changes", () => {
+		const store = new Store({ a: 1, b: 1 });
+		const slice = select(store, (value) => value.a);
+		const listener = mock(() => {});
+		const unsubscribe = slice.subscribe(listener);
+
+		store.set({ a: 1, b: 2 });
+		expect(listener).not.toHaveBeenCalled();
+		expect(slice.get()).toBe(1);
+
+		store.set({ a: 5, b: 2 });
+		expect(listener).toHaveBeenCalledTimes(1);
+		expect(slice.get()).toBe(5);
+
+		unsubscribe();
+		store.set({ a: 6, b: 2 });
+		expect(listener).toHaveBeenCalledTimes(1);
+	});
+
+	it("returns the same derived object while the source is unchanged", () => {
+		const store = new Store({ items: [1, 2] });
+		const slice = select(store, (value) => value.items.map((item) => item * 2));
+		expect(slice.get()).toBe(slice.get());
 	});
 });

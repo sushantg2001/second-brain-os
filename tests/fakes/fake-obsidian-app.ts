@@ -1,14 +1,11 @@
+import type { App as ObsidianApp } from "obsidian";
+
+import { App, type PluginManagerState } from "../mocks/obsidian";
+
 import type { FakePlugin } from "./fake-plugin-registry";
 
-/** The slice of Obsidian's private `app.plugins` manager the registry adapter reads. */
-export interface FakePluginManager {
-	manifests: Record<string, { version?: string }>;
-	enabledPlugins: Set<string>;
-	plugins: Record<string, unknown>;
-}
-
-export function createPluginManager(plugins: readonly FakePlugin[] = []): FakePluginManager {
-	const manager: FakePluginManager = { manifests: {}, enabledPlugins: new Set(), plugins: {} };
+export function createPluginManager(plugins: readonly FakePlugin[] = []): PluginManagerState {
+	const manager: PluginManagerState = { manifests: {}, enabledPlugins: new Set(), plugins: {} };
 	for (const plugin of plugins) {
 		manager.manifests[plugin.id] = { version: plugin.version };
 		if (plugin.enabled) {
@@ -19,64 +16,30 @@ export function createPluginManager(plugins: readonly FakePlugin[] = []): FakePl
 	return manager;
 }
 
-interface FakeLeaf {
-	viewState: { type: string; active?: boolean } | null;
-	setViewState(state: { type: string; active?: boolean }): Promise<void>;
+export interface TestAppOptions {
+	/** Vault files by path. Folders are created as needed. */
+	readonly files?: Readonly<Record<string, string>>;
+	readonly plugins?: readonly FakePlugin[];
 }
 
-function createLeaf(): FakeLeaf {
-	return {
-		viewState: null,
-		setViewState(state) {
-			this.viewState = state;
-			return Promise.resolve();
-		},
-	};
-}
-
-/** A workspace that runs layout-ready callbacks when the test says the layout is ready. */
-export class FakeWorkspace {
-	readonly leaves: FakeLeaf[] = [];
-	readonly revealed: FakeLeaf[] = [];
-	#layoutReady = false;
-	readonly #pending: (() => void)[] = [];
-
-	onLayoutReady(callback: () => void): void {
-		if (this.#layoutReady) {
-			callback();
-		} else {
-			this.#pending.push(callback);
+/** An in-memory Obsidian app seeded with notes. */
+export async function createTestApp(options: TestAppOptions = {}): Promise<App> {
+	const app = new App();
+	app.plugins = createPluginManager(options.plugins);
+	for (const [path, content] of Object.entries(options.files ?? {})) {
+		const parts = path.split("/").slice(0, -1);
+		for (let index = 1; index <= parts.length; index++) {
+			const folder = parts.slice(0, index).join("/");
+			if (!app.vault.getAbstractFileByPath(folder)) {
+				await app.vault.createFolder(folder);
+			}
 		}
+		await app.vault.create(path, content);
 	}
-
-	finishLayout(): void {
-		this.#layoutReady = true;
-		for (const callback of this.#pending.splice(0)) {
-			callback();
-		}
-	}
-
-	getLeavesOfType(type: string): FakeLeaf[] {
-		return this.leaves.filter((leaf) => leaf.viewState?.type === type);
-	}
-
-	getLeaf(): FakeLeaf {
-		const leaf = createLeaf();
-		this.leaves.push(leaf);
-		return leaf;
-	}
-
-	revealLeaf(leaf: FakeLeaf): Promise<void> {
-		this.revealed.push(leaf);
-		return Promise.resolve();
-	}
+	return app;
 }
 
-export interface FakeApp {
-	plugins: FakePluginManager;
-	workspace: FakeWorkspace;
-}
-
-export function createFakeApp(plugins: readonly FakePlugin[] = []): FakeApp {
-	return { plugins: createPluginManager(plugins), workspace: new FakeWorkspace() };
+/** The mock app typed as the real one, for passing into adapters. */
+export function asObsidianApp(app: App): ObsidianApp {
+	return app as unknown as ObsidianApp;
 }

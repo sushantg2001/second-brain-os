@@ -1,4 +1,12 @@
-import { err, ok, Store, type ReadableStore, type Result } from "../../shared/kernel";
+import {
+	err,
+	ok,
+	select,
+	Store,
+	type ReadableStore,
+	type Result,
+	type SettingsSection,
+} from "../../shared/kernel";
 import { migrateSettings, SettingsError } from "./migrations";
 import { DEFAULT_SETTINGS, settingsSchema, type Settings } from "./schema";
 
@@ -45,5 +53,19 @@ export class SettingsRepository {
 		this.#store.set(parsed.data);
 		await this.persistence.save(parsed.data);
 		return ok(parsed.data);
+	}
+
+	/** A feature's view of its own section. */
+	section<K extends Exclude<keyof Settings, "version">>(key: K): SettingsSection<Settings[K]> {
+		return {
+			store: select(this.#store, (settings) => settings[key]),
+			update: async (updater) => {
+				const result = await this.update((settings) => ({
+					...settings,
+					[key]: updater(settings[key]),
+				}));
+				return result.ok ? ok(result.value[key]) : result;
+			},
+		};
 	}
 }

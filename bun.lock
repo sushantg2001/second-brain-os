@@ -28,6 +28,7 @@
         "fast-check": "^4.10.2",
         "globals": "^17.6.0",
         "jiti": "^2.6.1",
+        "moment": "2.29.4",
         "obsidian": "1.13.1",
         "prettier": "^3.9.10",
         "typescript": "^5.8.3",
