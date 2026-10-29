@@ -1,0 +1,66 @@
+/* Second Brain OS styles. Every class is prefixed `sbos-` and uses Obsidian theme variables. */
+
+.sbos-view {
+	padding: var(--size-4-4);
+}
+
+.sbos-icon {
+	display: inline-flex;
+	align-items: center;
+}
+
+.sbos-error {
+	color: var(--text-error);
+}
+
+.sbos-error__message {
+	white-space: pre-wrap;
+	font-size: var(--font-ui-smaller);
+}
+
+.sbos-setup {
+	max-width: 40rem;
+}
+
+.sbos-setup__list {
+	list-style: none;
+	padding: 0;
+	margin: var(--size-4-4) 0;
+	display: grid;
+	gap: var(--size-4-2);
+}
+
+.sbos-setup__item {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: var(--size-2-1) var(--size-4-2);
+	padding: var(--size-4-2) var(--size-4-3);
+	border: var(--border-width) solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+}
+
+.sbos-setup__name {
+	font-weight: var(--font-semibold);
+}
+
+.sbos-setup__state {
+	justify-self: end;
+	font-size: var(--font-ui-small);
+}
+
+.sbos-setup__item--ready .sbos-setup__state {
+	color: var(--text-success);
+}
+
+.sbos-setup__item--missing .sbos-setup__state,
+.sbos-setup__item--disabled .sbos-setup__state,
+.sbos-setup__item--outdated .sbos-setup__state {
+	color: var(--text-warning);
+}
+
+.sbos-setup__purpose,
+.sbos-setup__version {
+	grid-column: 1 / -1;
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
