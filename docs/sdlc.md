@@ -8,7 +8,7 @@ flowchart LR
   ready --> branch[Branch off main]
   branch --> pr[Pull request]
   pr -->|CI, review, Definition of Done| main[main]
-  main -->|make version + make release| tag[Tag x.y.z]
+  main -->|release workflow reads commits| tag[Tag x.y.z]
   tag -->|release workflow| draft[Draft release]
   draft -->|smoke test, publish| users[Users]
 ```
@@ -41,7 +41,8 @@ make format   # fix formatting
 
 ## 4. Pull request
 
-- Title in Conventional Commits form: `feat(planner): drag to resize blocks`. The `PR title` workflow checks it.
+- Branch named `<type>/<slug>` with the same types as commits, such as `feat/pln-3-drag-blocks` or `fix/week-53`.
+- Title in Conventional Commits form: `feat(planner): drag to resize blocks`. The squash-merge commit on `main` uses it, and the release pipeline reads it. The `PR conventions` workflow checks the title and the branch name.
 - The PR template's checklist is the [Definition of Done](definition-of-ready-and-done.md#definition-of-done).
 - Keep PRs small (around 400 lines of code, excluding tests).
 
@@ -50,9 +51,9 @@ make format   # fix formatting
 | Workflow       | Trigger                                           | Jobs                                                                                                                                                                                                                        |
 | -------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `ci.yml`       | every PR, push to `main`, called by `release.yml` | **quality**: `make format-check lint typecheck`. **test**: `make coverage` and upload lcov. **build**: `make check-bundle` and upload the plugin files. **dependency-review**: PRs only, fails on high-severity advisories. |
-| `pr-title.yml` | PR opened or edited                               | Conventional Commits title check                                                                                                                                                                                            |
+| `pr-title.yml` | PR opened or edited                               | Conventional Commits title and `<type>/<slug>` branch name                                                                                                                                                                  |
 | `codeql.yml`   | PR to `main`, push to `main`, weekly              | CodeQL for JavaScript and TypeScript                                                                                                                                                                                        |
-| `release.yml`  | tag `x.y.z`, or manual with a tag                 | Reruns CI, checks the tag against `manifest.json`, `package.json` and `versions.json`, builds, attests provenance, and creates a draft release with generated notes                                                         |
+| `release.yml`  | push to `main`, or manual with a bump             | Plans the version from commits since the last tag, reruns CI, updates the version files and changelog, commits `chore(release): x.y.z`, tags, attests provenance and publishes the GitHub release                           |
 | Dependabot     | weekly                                            | npm (dev deps grouped, `obsidian` pinned) and GitHub Actions                                                                                                                                                                |
 
 Bun is pinned by `.bun-version` in every job. Workflows default to `contents: read`, and jobs ask for more only when they need it.
@@ -60,28 +61,39 @@ Bun is pinned by `.bun-version` in every job. Workflows default to `contents: re
 ### Branch protection for `main` (repository settings)
 
 - Require a pull request with one approval, and resolved conversations.
-- Required status checks: `Format, lint, typecheck`, `Tests and coverage`, `Build and bundle check`, `Dependency review`, `title`, `analyze`.
+- Required status checks: `Format, lint, typecheck`, `Tests and coverage`, `Build and bundle check`, `Dependency review`, `Title and branch`, `analyze`.
+- Let the release workflow push its version commit: allow GitHub Actions to bypass the rule, or add a `RELEASE_TOKEN` secret (a fine-grained token or GitHub App token with `contents: write`).
 - Require branches to be up to date. Squash merge only. No force pushes.
 
 ## 6. Release
 
-Obsidian reads `manifest.json` and `versions.json` from the default branch, and the release assets from the GitHub release whose tag equals the version.
+Releases are automatic. Every push to `main` runs `release.yml`, which reads the Conventional Commit subjects since the last version tag and takes the largest bump:
+
+| Commit types                                            | Version change     | Example       |
+| ------------------------------------------------------- | ------------------ | ------------- |
+| `feat`                                                  | major              | 1.4.2 → 2.0.0 |
+| `fix`                                                   | minor              | 1.4.2 → 1.5.0 |
+| `chore`, `refactor`, `perf`, `build`, `style`, `revert` | patch              | 1.4.2 → 1.4.3 |
+| `docs`, `test`, `ci`                                    | no release, no tag |               |
+
+This project's rule makes every feature a major release on purpose, which is stricter than plain semver. The rules live in `scripts/release-plan.ts` and are unit-tested.
+
+When there is a bump, the workflow:
+
+1. Reruns the CI gates.
+2. Writes the version into `package.json`, `manifest.json` and `versions.json`, and adds a section to `CHANGELOG.md` (the `## [Unreleased]` text becomes part of it).
+3. Builds and checks the bundle, commits `chore(release): x.y.z [skip ci]` to `main` and pushes the tag `x.y.z`. Its own commit does not start another release.
+4. Attests build provenance and publishes the GitHub release with `main.js`, `manifest.json`, `styles.css` and notes grouped by type.
+
+Useful commands:
 
 ```bash
-git switch -c release/1.2.0
-make version BUMP=minor        # updates package.json, manifest.json, versions.json
-git commit -am "chore(release): 1.2.0" && gh pr create --fill
-# after merge, on an up-to-date main:
-make release                   # runs make check, tags 1.2.0 and pushes the tag
+make release-plan    # show the version the next push to main would release, and its notes
 ```
 
-Then:
+To force a release (for example a patch after a docs-only change), run the **Release** workflow by hand and pick `major`, `minor` or `patch`.
 
-1. The release workflow builds and creates a **draft** release with `main.js`, `manifest.json`, `styles.css` and generated notes.
-2. Install the draft's files into a clean vault and run the manual checklist in [testing.md](testing.md#manual-acceptance-checklist-release).
-3. Publish the release. Pre-releases (`-alpha.N`, `-beta.N`) are marked as pre-release and tested through BRAT.
-
-Versioning follows semver for the note formats, settings and `plugin.api`. Raising `minAppVersion` is at least a minor bump.
+After a release, install its files into a clean vault and run the manual checklist in [testing.md](testing.md#manual-acceptance-checklist-release). Obsidian reads `manifest.json` and `versions.json` from `main` and the assets from the release whose tag equals the version.
 
 ## 7. Operate
 

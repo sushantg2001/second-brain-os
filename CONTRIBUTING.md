@@ -26,7 +26,7 @@ Pick an issue labelled `ready`, or open one with the templates. The [Definition 
 2. Follow the layers in [docs/architecture.md](docs/architecture.md). Lint fails on imports that cross them the wrong way.
 3. Add tests at the levels in [docs/testing.md](docs/testing.md). A bug fix starts with a failing test.
 4. Run `make check`. It runs the same gates as CI.
-5. Open a pull request with a Conventional Commits title (`feat(planner): …`) and complete the checklist, which is the [Definition of Done](docs/definition-of-ready-and-done.md#definition-of-done).
+5. Open a pull request with a Conventional Commits title (`feat(planner): …`); CI checks it and the branch name. The title decides the next version: `feat` is major, `fix` minor, `chore`/`refactor` patch, and `docs`/`test`/`ci` release nothing. Complete the checklist, which is the [Definition of Done](docs/definition-of-ready-and-done.md#definition-of-done).
 
 ## Code style
 
