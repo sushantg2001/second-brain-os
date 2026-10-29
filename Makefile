@@ -87,11 +87,10 @@ version: ## Bump version files: make version BUMP=patch|minor|major|x.y.z[-pre.N
 	@test -n "$(BUMP)" || { echo "Set BUMP=patch|minor|major|x.y.z"; exit 1; }
 	$(BUN) run version:bump $(BUMP)
 
-.PHONY: release
-release: check ## Tag the current version and push it, which starts the release workflow
-	@test -z "$$(git status --porcelain)" || { echo "Working tree is not clean"; exit 1; }
-	git tag -a "$(VERSION)" -m "$(VERSION)"
-	git push origin "$(VERSION)"
+.PHONY: release-plan
+release-plan: ## Show the version the release pipeline would publish from commits since the last tag
+	$(BUN) scripts/release-plan.ts
+	@rm -f RELEASE_NOTES.md
 
 .PHONY: package
 package: check-bundle ## Zip dist/ for a manual install

@@ -1,56 +1,107 @@
-# Publishes a draft GitHub release when a version tag (x.y.z or x.y.z-pre.N, no "v") is pushed.
-# Start it with `make version BUMP=...`, merge, then `make release` on main.
+# Versions, tags and publishes the plugin from Conventional Commits on main.
+#
+#   feat -> major, fix -> minor, chore/refactor/perf/build/style/revert -> patch,
+#   docs/test/ci -> no release. The largest bump since the last tag wins.
+#
+# The rules live in scripts/release-plan.ts (`make release-plan` shows the next release).
 name: Release
 
 on:
   push:
-    tags: ["[0-9]+.[0-9]+.[0-9]+", "[0-9]+.[0-9]+.[0-9]+-*"]
+    branches: [main]
   workflow_dispatch:
     inputs:
-      tag:
-        description: Existing tag to release, such as 1.2.0
-        required: true
-        type: string
+      bump:
+        description: Bump to apply, or auto to read it from commits
+        type: choice
+        options: [auto, major, minor, patch]
+        default: auto
 
 permissions:
   contents: read
 
 concurrency:
-  group: release-${{ inputs.tag || github.ref_name }}
+  group: release
+  cancel-in-progress: false
 
 jobs:
+  plan:
+    name: Plan release
+    # The pipeline's own version commit must not start another release.
+    if: ${{ !startsWith(github.event.head_commit.message, 'chore(release):') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      release: ${{ steps.plan.outputs.release }}
+      version: ${{ steps.plan.outputs.version }}
+      bump: ${{ steps.plan.outputs.bump }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+      - id: plan
+        run: bun scripts/release-plan.ts --bump "${{ inputs.bump || 'auto' }}"
+      - name: Summary
+        run: |
+          if [ "${{ steps.plan.outputs.release }}" = "true" ]; then
+            echo "Releasing ${{ steps.plan.outputs.version }} (${{ steps.plan.outputs.bump }})" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No release: only docs, test or ci changes since the last tag." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
   verify:
+    name: Verify
+    needs: plan
+    if: needs.plan.outputs.release == 'true'
+    # A called workflow may not ask for more than this; ci.yml's dependency review job asks for these.
+    permissions:
+      contents: read
+      pull-requests: write
     uses: ./.github/workflows/ci.yml
 
   release:
-    needs: verify
+    name: Tag and publish
+    needs: [plan, verify]
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     permissions:
       contents: write
       id-token: write
       attestations: write
     env:
-      TAG: ${{ inputs.tag || github.ref_name }}
+      VERSION: ${{ needs.plan.outputs.version }}
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ env.TAG }}
+          fetch-depth: 0
+          # A token that may push to a protected main; falls back to the workflow token.
+          token: ${{ secrets.RELEASE_TOKEN || github.token }}
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version-file: .bun-version
-
-      - name: Check the tag matches every version file
-        run: |
-          for file in manifest.json package.json; do
-            version=$(jq -r .version "$file")
-            [ "$version" = "$TAG" ] || { echo "::error::$file is $version, tag is $TAG"; exit 1; }
-          done
-          jq -e --arg v "$TAG" 'has($v)' versions.json >/dev/null \
-            || { echo "::error::versions.json has no entry for $TAG"; exit 1; }
-
       - run: make install
-      - run: make check-bundle
+
+      - name: Update version files and changelog
+        run: |
+          bun scripts/version.ts "$VERSION"
+          bun scripts/release-plan.ts --bump "${{ needs.plan.outputs.bump }}" --changelog
+          bunx prettier --write CHANGELOG.md package.json manifest.json versions.json
+
+      - name: Build
+        run: make check-bundle
+
+      - name: Commit and tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json manifest.json versions.json CHANGELOG.md
+          git commit -m "chore(release): $VERSION [skip ci]"
+          git tag -a "$VERSION" -m "$VERSION"
+          git push origin HEAD:main
+          git push origin "$VERSION"
 
       - uses: actions/attest-build-provenance@v3
         with:
@@ -58,11 +109,11 @@ jobs:
             dist/main.js
             dist/styles.css
 
-      - name: Create draft release
+      - name: Publish GitHub release
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           prerelease=()
-          [[ "$TAG" == *-* ]] && prerelease=(--prerelease)
-          gh release create "$TAG" --draft --verify-tag --title "$TAG" --generate-notes "${prerelease[@]}" \
+          [[ "$VERSION" == *-* ]] && prerelease=(--prerelease)
+          gh release create "$VERSION" --verify-tag --title "$VERSION" --notes-file RELEASE_NOTES.md "${prerelease[@]}" \
             dist/main.js dist/manifest.json dist/styles.css
