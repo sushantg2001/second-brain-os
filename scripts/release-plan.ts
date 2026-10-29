@@ -3,8 +3,8 @@
  *
  *   feat            -> major   (1.4.2 -> 2.0.0)
  *   fix             -> minor   (1.4.2 -> 1.5.0)
- *   chore, refactor, perf, build, style, revert -> patch (1.4.2 -> 1.4.3)
- *   docs, test, ci  -> no release
+ *   chore, refactor -> patch   (1.4.2 -> 1.4.3)
+ *   anything else (docs, test, ci, ...) -> no release
  *
  * The largest bump wins. "chore(release):" commits made by the pipeline are ignored.
  *
@@ -23,13 +23,6 @@ export const BUMP_BY_TYPE: Readonly<Record<string, Bump>> = {
 	fix: "minor",
 	chore: "patch",
 	refactor: "patch",
-	perf: "patch",
-	build: "patch",
-	style: "patch",
-	revert: "patch",
-	docs: "none",
-	test: "none",
-	ci: "none",
 };
 
 const ORDER: readonly Bump[] = ["none", "patch", "minor", "major"];
@@ -76,8 +69,7 @@ export interface ReleasePlan {
 const SECTIONS: readonly [string, readonly string[]][] = [
 	["Features", ["feat"]],
 	["Fixes", ["fix"]],
-	["Performance", ["perf"]],
-	["Maintenance", ["refactor", "chore", "build", "style", "revert"]],
+	["Maintenance", ["refactor", "chore"]],
 ];
 
 /** Release notes grouped by type. Types that do not release are left out. */

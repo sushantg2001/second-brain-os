@@ -69,12 +69,12 @@ Bun is pinned by `.bun-version` in every job. Workflows default to `contents: re
 
 Releases are automatic. Every push to `main` runs `release.yml`, which reads the Conventional Commit subjects since the last version tag and takes the largest bump:
 
-| Commit types                                            | Version change     | Example       |
-| ------------------------------------------------------- | ------------------ | ------------- |
-| `feat`                                                  | major              | 1.4.2 → 2.0.0 |
-| `fix`                                                   | minor              | 1.4.2 → 1.5.0 |
-| `chore`, `refactor`, `perf`, `build`, `style`, `revert` | patch              | 1.4.2 → 1.4.3 |
-| `docs`, `test`, `ci`                                    | no release, no tag |               |
+| Commit types                            | Version change     | Example       |
+| --------------------------------------- | ------------------ | ------------- |
+| `feat`                                  | major              | 1.4.2 → 2.0.0 |
+| `fix`                                   | minor              | 1.4.2 → 1.5.0 |
+| `chore`, `refactor`                     | patch              | 1.4.2 → 1.4.3 |
+| anything else (`docs`, `test`, `ci`, …) | no release, no tag |               |
 
 This project's rule makes every feature a major release on purpose, which is stricter than plain semver. The rules live in `scripts/release-plan.ts` and are unit-tested.
 
