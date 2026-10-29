@@ -4,6 +4,7 @@ import { Store, type Notifier, type ReadableStore, type Workspace } from "../../
 import { isClosed, type Task, type TaskActions, type TaskIndex } from "../../tasks";
 import type { PpvIndex } from "../application/ppv-index";
 import type { PpvService } from "../application/ppv-service";
+import type { PpvNote } from "../domain/ppv-note";
 import { parseBlockQuery } from "../domain/query";
 import { PPV_TYPES, TYPE_LABELS, type PpvType } from "../domain/settings";
 import type { PpvServices, ProjectSummary } from "./services";
@@ -27,6 +28,7 @@ export interface PpvModuleDeps {
 	readonly settings: ReadableStore<unknown>;
 	/** Overrides the task counts on project rows, for example with clocked time. */
 	readonly summary?: (project: { path: string }) => ProjectSummary;
+	readonly aggregate?: (note: PpvNote) => ProjectSummary;
 }
 
 async function revealDashboard(app: App): Promise<void> {
@@ -101,6 +103,7 @@ export function registerPpv(plugin: Plugin, deps: PpvModuleDeps): PpvServices {
 		newNote,
 		toggleTask: (task) => void deps.actions.toggleDone(task).then(report),
 		summary: deps.summary ?? defaultSummary,
+		...(deps.aggregate ? { aggregate: deps.aggregate } : {}),
 		setUp: () =>
 			void service.setUp().then((created) => {
 				notifier.notify(

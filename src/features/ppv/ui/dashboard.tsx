@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 
+import { formatDuration } from "../../../shared/kernel";
 import { useStore } from "../../../shared/react";
 import type { PpvNote } from "../domain/ppv-note";
 import { isClosedStatus, type ProjectStatus } from "../domain/settings";
@@ -14,6 +15,26 @@ const FILTERS: Readonly<Record<Filter, (status: ProjectStatus) => boolean>> = {
 	active: (status) => status === "active",
 	all: () => true,
 };
+
+function Progress({ note }: { readonly note: PpvNote }): ReactNode {
+	const services = PpvContext.useService();
+	const totals = services.aggregate?.(note);
+	if (!totals || totals.total === 0) {
+		return null;
+	}
+	return (
+		<span className="sbos-progress">
+			<progress
+				max={totals.total}
+				value={totals.done}
+				aria-label={`${note.title}: ${totals.done} of ${totals.total} tasks done`}
+			/>
+			{totals.clockedMinutes > 0 && (
+				<span className="sbos-muted">⏱ {formatDuration(totals.clockedMinutes)}</span>
+			)}
+		</span>
+	);
+}
 
 function Goal({
 	goal,
@@ -35,6 +56,7 @@ function Goal({
 				</button>
 				{goal.note.kind && <span className="sbos-pill">{goal.note.kind}</span>}
 				{goal.note.due && <span className="sbos-muted">Due {goal.note.due}</span>}
+				<Progress note={goal.note} />
 				<button
 					type="button"
 					className="sbos-icon-button"
@@ -112,6 +134,7 @@ export function Dashboard(): ReactNode {
 								{pillar.note.title}
 							</button>
 						</h3>
+						<Progress note={pillar.note} />
 						<button
 							type="button"
 							className="sbos-icon-button"

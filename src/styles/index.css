@@ -657,3 +657,29 @@
 .sbos-block-query .sbos-project {
 	margin-left: 0;
 }
+
+/* ---------------------------------------------------------------- rollups and reviews */
+
+.sbos-progress {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--size-2-2);
+}
+
+.sbos-progress progress {
+	width: 6em;
+}
+
+.sbos-review h4 {
+	margin: var(--size-4-3) 0 var(--size-2-2);
+}
+
+.sbos-review ul {
+	margin: 0;
+}
+
+.sbos-review__table th {
+	text-align: left;
+	font-weight: var(--font-normal);
+	padding-right: var(--size-4-4);
+}

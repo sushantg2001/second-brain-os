@@ -11,7 +11,7 @@ Each feature has an ID used in issues, branches and PR titles (`feat(planner): â
 | SET-3 | Features register only after the check passes, without needing a reload                                           | M   |
 | SET-4 | Settings schema with versioned migrations; unreadable settings are never overwritten                              | M   |
 
-## Periodic notes (`periodic`), phase 1, done
+## Periodic notes (`periodic`), phase 1, done (PER-6 in phase 5)
 
 | ID    | Feature                                                                                                         | Pri |
 | ----- | --------------------------------------------------------------------------------------------------------------- | --- |
@@ -72,7 +72,7 @@ Each feature has an ID used in issues, branches and PR titles (`feat(planner): â
 | PPV-7 | `sbos` code block that renders a filtered list or board of projects or tasks inside any note             | S   |
 | PPV-8 | First-run wizard that creates folders, templates and an example pillar without overwriting anything      | S   |
 
-## Rollups (`rollups`), phase 5
+## Rollups (`rollups`), phase 5, done
 
 | ID    | Feature                                                                           | Pri |
 | ----- | --------------------------------------------------------------------------------- | --- |
@@ -102,13 +102,13 @@ Each feature has an ID used in issues, branches and PR titles (`feat(planner): â
 
 ## Roadmap
 
-| Phase | Scope                                                                         | Release       | Status                       |
-| ----- | ----------------------------------------------------------------------------- | ------------- | ---------------------------- |
-| 0     | Skeleton: React and Bun build, layers, settings, setup gate, CI               | â€”             | done                         |
-| 1     | Periodic and calendar, ported from 1.x with parity tests                      | 2.0.0-alpha.1 | done (PER-5 and PER-6 later) |
-| 2     | Planner timeline (PLN-1 to PLN-8)                                             | alpha.2       | done                         |
-| 3     | Clocks                                                                        | alpha.3       | done                         |
-| 4     | PPV model, commands, dashboard and capture                                    | beta.1        | done                         |
-| 5     | Rollups and review templates                                                  | beta.2        | planned                      |
-| 6     | Lint                                                                          | rc.1          | planned                      |
-| 7     | S items, performance and accessibility pass, docs, community store submission | 2.0.0         | planned                      |
+| Phase | Scope                                                                         | Release       | Status                               |
+| ----- | ----------------------------------------------------------------------------- | ------------- | ------------------------------------ |
+| 0     | Skeleton: React and Bun build, layers, settings, setup gate, CI               | â€”             | done                                 |
+| 1     | Periodic and calendar, ported from 1.x with parity tests                      | 2.0.0-alpha.1 | done (PER-5 later; PER-6 in phase 5) |
+| 2     | Planner timeline (PLN-1 to PLN-8)                                             | alpha.2       | done                                 |
+| 3     | Clocks                                                                        | alpha.3       | done                                 |
+| 4     | PPV model, commands, dashboard and capture                                    | beta.1        | done                                 |
+| 5     | Rollups and review templates                                                  | beta.2        | done                                 |
+| 6     | Lint                                                                          | rc.1          | planned                              |
+| 7     | S items, performance and accessibility pass, docs, community store submission | 2.0.0         | planned                              |
