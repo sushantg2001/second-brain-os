@@ -67,6 +67,10 @@ export default defineConfig(
 			...reactHooks.configs.recommended.rules,
 			...a11y.flatConfigs.recommended.rules,
 			"boundaries/no-unknown-files": "error",
+			"obsidianmd/ui/sentence-case": [
+				"warn",
+				{ enforceCamelCaseLower: true, acronyms: ["PPV"] },
+			],
 			"@typescript-eslint/no-restricted-imports": restrictImports(),
 			"boundaries/dependencies": [
 				"error",

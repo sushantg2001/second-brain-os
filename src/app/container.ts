@@ -3,6 +3,7 @@ import { moment, type App, type Plugin } from "obsidian";
 import { Clocks } from "../features/clocks";
 import { PeriodicNotes } from "../features/periodic";
 import { Planner } from "../features/planner";
+import { PpvIndex, PpvService } from "../features/ppv";
 import { DependencyGate } from "../features/setup";
 import { TaskActions, TaskIndex } from "../features/tasks";
 import {
@@ -42,6 +43,8 @@ export interface Container {
 	readonly taskActions: TaskActions;
 	readonly planner: Planner;
 	readonly clocks: Clocks;
+	readonly ppvIndex: PpvIndex;
+	readonly ppv: PpvService;
 }
 
 export interface ContainerOverrides {
@@ -58,17 +61,19 @@ export function createContainer(plugin: Plugin, overrides: ContainerOverrides = 
 	const workspace = new ObsidianWorkspace(app);
 	const dates = new MomentDateFormatter(moment);
 	const clock = overrides.clock ?? new SystemClock();
+	const templates = new TemplaterEngine(app);
 	const periodic = new PeriodicNotes({
 		settings: settings.section("periodic").store,
 		notes,
 		dates,
 		workspace,
-		templates: new TemplaterEngine(app),
+		templates,
 		clock,
 	});
 	const tasks = new TaskIndex(notes);
 	const taskActions = new TaskActions(notes, clock, new TasksPluginToggler(app));
 	const now = new NowTicker(clock);
+	const ppvIndex = new PpvIndex(notes, settings.section("ppv").store);
 	return {
 		app,
 		settings,
@@ -91,5 +96,17 @@ export function createContainer(plugin: Plugin, overrides: ContainerOverrides = 
 			clock,
 		}),
 		clocks: new Clocks({ tasks, notes, now }),
+		ppvIndex,
+		ppv: new PpvService({
+			index: ppvIndex,
+			tasks,
+			actions: taskActions,
+			notes,
+			periodic,
+			settings: settings.section("ppv").store,
+			templates,
+			clock,
+			formatDate: (date, format) => dates.format(date, format),
+		}),
 	};
 }

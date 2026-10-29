@@ -577,6 +577,29 @@ export class Workspace extends Events {
 export class FileManager {
 	constructor(private readonly app: App) {}
 
+	async renameFile(file: TAbstractFile, newPath: string): Promise<void> {
+		const oldName = file instanceof TFile ? file.basename : file.name;
+		await this.app.vault.rename(file, newPath);
+		const newName = file instanceof TFile ? file.basename : file.name;
+		if (oldName === newName) {
+			return;
+		}
+		// Like Obsidian, rewrite wikilinks that pointed at the old name.
+		for (const other of this.app.vault.getMarkdownFiles()) {
+			const content = this.app.vault.contentOf(other.path) ?? "";
+			const updated = content.replace(
+				new RegExp(
+					`\\[\\[${oldName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?=[\\]|#])`,
+					"g",
+				),
+				`[[${newName}`,
+			);
+			if (updated !== content) {
+				await this.app.vault.modify(other, updated);
+			}
+		}
+	}
+
 	async processFrontMatter(
 		file: TFile,
 		fn: (frontmatter: Record<string, unknown>) => void,

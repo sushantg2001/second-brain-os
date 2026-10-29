@@ -3,6 +3,30 @@ import { afterEach, expect, mock } from "bun:test";
 
 GlobalRegistrator.register();
 
+// Obsidian adds createEl to every element; plugin code may rely on it.
+interface CreateElOptions {
+	cls?: string;
+	text?: string;
+}
+Object.defineProperty(HTMLElement.prototype, "createEl", {
+	configurable: true,
+	value: function createEl(
+		this: HTMLElement,
+		tag: string,
+		options: CreateElOptions = {},
+	): HTMLElement {
+		const child = this.ownerDocument.createElement(tag);
+		if (options.cls) {
+			child.className = options.cls;
+		}
+		if (options.text !== undefined) {
+			child.textContent = options.text;
+		}
+		this.append(child);
+		return child;
+	},
+});
+
 // Imported after the DOM exists: Testing Library binds `screen` to document.body on load.
 const { cleanup } = await import("@testing-library/react");
 // The default export duplicates the named matchers and does not fit expect.extend.

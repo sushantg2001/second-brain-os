@@ -59,7 +59,7 @@ Each feature has an ID used in issues, branches and PR titles (`feat(planner): â
 | CLK-4 | Recover a clock that was left running after a restart                       | M   |
 | CLK-5 | Planned versus clocked comparison per day and per project                   | S   |
 
-## PPV (`ppv`), phase 4
+## PPV (`ppv`), phase 4, done
 
 | ID    | Feature                                                                                                  | Pri |
 | ----- | -------------------------------------------------------------------------------------------------------- | --- |
@@ -102,13 +102,13 @@ Each feature has an ID used in issues, branches and PR titles (`feat(planner): â
 
 ## Roadmap
 
-| Phase | Scope                                                                         | Release       | Status                                        |
-| ----- | ----------------------------------------------------------------------------- | ------------- | --------------------------------------------- |
-| 0     | Skeleton: React and Bun build, layers, settings, setup gate, CI               | â€”             | done                                          |
-| 1     | Periodic and calendar, ported from 1.x with parity tests                      | 2.0.0-alpha.1 | done (PER-5, PER-6 and CAL-6 data come later) |
-| 2     | Planner timeline (PLN-1 to PLN-8)                                             | alpha.2       | done                                          |
-| 3     | Clocks                                                                        | alpha.3       | done                                          |
-| 4     | PPV model, commands, dashboard and capture                                    | beta.1        | planned                                       |
-| 5     | Rollups and review templates                                                  | beta.2        | planned                                       |
-| 6     | Lint                                                                          | rc.1          | planned                                       |
-| 7     | S items, performance and accessibility pass, docs, community store submission | 2.0.0         | planned                                       |
+| Phase | Scope                                                                         | Release       | Status                       |
+| ----- | ----------------------------------------------------------------------------- | ------------- | ---------------------------- |
+| 0     | Skeleton: React and Bun build, layers, settings, setup gate, CI               | â€”             | done                         |
+| 1     | Periodic and calendar, ported from 1.x with parity tests                      | 2.0.0-alpha.1 | done (PER-5 and PER-6 later) |
+| 2     | Planner timeline (PLN-1 to PLN-8)                                             | alpha.2       | done                         |
+| 3     | Clocks                                                                        | alpha.3       | done                         |
+| 4     | PPV model, commands, dashboard and capture                                    | beta.1        | done                         |
+| 5     | Rollups and review templates                                                  | beta.2        | planned                      |
+| 6     | Lint                                                                          | rc.1          | planned                      |
+| 7     | S items, performance and accessibility pass, docs, community store submission | 2.0.0         | planned                      |
