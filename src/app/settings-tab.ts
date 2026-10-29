@@ -1,5 +1,6 @@
 import { PluginSettingTab, type Plugin } from "obsidian";
 
+import { renderLintSettings } from "../features/lint";
 import { renderPeriodicSettings } from "../features/periodic";
 import { renderPlannerSettings } from "../features/planner";
 import { renderPpvSettings } from "../features/ppv";
@@ -29,5 +30,6 @@ export class SecondBrainSettingTab extends PluginSettingTab {
 		);
 		renderPlannerSettings(containerEl, container.settings.section("planner"));
 		renderPpvSettings(containerEl, container.settings.section("ppv"));
+		renderLintSettings(containerEl, container.settings.section("lint"));
 	}
 }

@@ -6,10 +6,11 @@ import {
 	WEEK_STARTS,
 	type PeriodicSettings,
 } from "../../features/periodic";
+import { DEFAULT_LINT_SETTINGS, type LintSettings } from "../../features/lint";
 import { DEFAULT_PLANNER_SETTINGS, type PlannerSettings } from "../../features/planner";
 import { CAPTURE_TARGETS, DEFAULT_PPV_SETTINGS, type PpvSettings } from "../../features/ppv";
 
-export const SETTINGS_VERSION = 4;
+export const SETTINGS_VERSION = 5;
 
 const periodicConfig = z.object({
 	enabled: z.boolean(),
@@ -60,12 +61,27 @@ const ppv = z.object({
 	captureHeading: z.string(),
 });
 
+const rule = z.object({ enabled: z.boolean(), severity: z.enum(["error", "warning", "info"]) });
+
+const lint = z.object({
+	"orphan-goal": rule,
+	"orphan-project": rule,
+	"broken-parent": rule,
+	"wrong-parent": rule,
+	"no-next-action": rule,
+	"overdue-project": rule,
+	"malformed-time-block": rule,
+	"overlapping-blocks": rule,
+	"stale-clock": rule,
+});
+
 /** Each feature owns a section. A new section or field needs a migration in migrations.ts. */
 export const settingsSchema = z.object({
 	version: z.literal(SETTINGS_VERSION),
 	periodic,
 	planner,
 	ppv,
+	lint,
 });
 
 export type Settings = z.infer<typeof settingsSchema>;
@@ -75,6 +91,7 @@ export type SectionTypes = {
 	periodic: PeriodicSettings;
 	planner: PlannerSettings;
 	ppv: PpvSettings;
+	lint: LintSettings;
 };
 const _sectionsMatch: {
 	[K in keyof SectionTypes]: Settings[K] extends SectionTypes[K] ? true : never;
@@ -82,6 +99,7 @@ const _sectionsMatch: {
 	periodic: true,
 	planner: true,
 	ppv: true,
+	lint: true,
 };
 void _sectionsMatch;
 
@@ -90,4 +108,5 @@ export const DEFAULT_SETTINGS: Settings = {
 	periodic: DEFAULT_PERIODIC_SETTINGS,
 	planner: DEFAULT_PLANNER_SETTINGS,
 	ppv: DEFAULT_PPV_SETTINGS,
+	lint: DEFAULT_LINT_SETTINGS,
 };
