@@ -11,7 +11,8 @@ export interface TimeBlock {
 	readonly malformed: boolean;
 }
 
-const CLOCK = /^(\d{1,2}:\d{2})(?:(\s?)([ap]m)(?![\p{L}\p{N}]))?/iu;
+/** Hours and minutes separated by ":" or ".", as Day Planner accepts. */
+const CLOCK = /^(\d{1,2}[:.]\d{2})(?:(\s?)([ap]m)(?![\p{L}\p{N}]))?/iu;
 const RANGE = /^\s*[-–—]\s*/;
 
 interface ReadTime {
@@ -30,7 +31,7 @@ function readTime(text: string, meridiem: "start" | "end" | "none"): ReadTime | 
 	if (!match) {
 		return null;
 	}
-	const clock = match[1] ?? "";
+	const clock = (match[1] ?? "").replace(".", ":");
 	const suffix = match[3];
 	if (meridiem !== "none" && suffix) {
 		const rest = text.slice(match[0].length);
