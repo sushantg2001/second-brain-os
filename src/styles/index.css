@@ -226,3 +226,233 @@
 	grid-template-columns: repeat(4, 1fr);
 	gap: var(--size-4-2);
 }
+
+/* ---------------------------------------------------------------- day planner */
+
+.sbos-timeline {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	font-size: var(--font-ui-small);
+}
+
+.sbos-timeline__toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--size-4-2);
+	margin-bottom: var(--size-4-2);
+}
+
+.sbos-timeline__title {
+	margin: 0;
+	font-size: var(--font-ui-medium);
+}
+
+.sbos-timeline__nav {
+	display: flex;
+	gap: var(--size-2-1);
+}
+
+.sbos-timeline__nav button {
+	padding: var(--size-2-1) var(--size-2-3);
+}
+
+.sbos-timeline__day-headers {
+	display: flex;
+	gap: var(--size-2-1);
+	border-bottom: var(--border-width) solid var(--background-modifier-border);
+	padding-bottom: var(--size-2-2);
+}
+
+.sbos-timeline__day-header {
+	flex: 1;
+	display: flex;
+	justify-content: space-between;
+	color: var(--text-muted);
+}
+
+.sbos-timeline__day-header.is-today {
+	color: var(--text-accent);
+	font-weight: var(--font-semibold);
+}
+
+.sbos-timeline__total {
+	color: var(--text-faint);
+}
+
+.sbos-timeline__scroll {
+	flex: 1;
+	overflow-y: auto;
+	min-height: 0;
+}
+
+.sbos-timeline__body {
+	display: flex;
+	gap: var(--size-2-1);
+}
+
+.sbos-timeline__gutter {
+	flex: 0 0 3em;
+}
+
+.sbos-timeline__label {
+	color: var(--text-faint);
+	font-size: var(--font-ui-smaller);
+	transform: translateY(-0.6em);
+}
+
+.sbos-timeline__day {
+	flex: 1;
+	min-width: 0;
+}
+
+.sbos-timeline__column {
+	position: relative;
+	touch-action: none;
+	user-select: none;
+}
+
+.sbos-timeline__hour {
+	position: absolute;
+	left: 0;
+	right: 0;
+	border-top: var(--border-width) solid var(--background-modifier-border);
+	pointer-events: none;
+}
+
+.sbos-timeline__now {
+	position: absolute;
+	left: 0;
+	right: 0;
+	border-top: 2px solid var(--color-red);
+	pointer-events: none;
+	z-index: 2;
+}
+
+.sbos-block {
+	position: absolute;
+	box-sizing: border-box;
+	display: flex;
+	align-items: flex-start;
+	gap: var(--size-2-2);
+	padding: var(--size-2-1) var(--size-2-2);
+	border: var(--border-width) solid var(--background-modifier-border);
+	border-left: 3px solid var(--interactive-accent);
+	border-radius: var(--radius-s);
+	background-color: var(--background-secondary);
+	overflow: hidden;
+	cursor: grab;
+	z-index: 1;
+}
+
+.sbos-block.is-scheduled {
+	border-left-style: dashed;
+}
+
+.sbos-block.is-done {
+	opacity: 0.6;
+}
+
+.sbos-block.is-done .sbos-block__title {
+	text-decoration: line-through;
+}
+
+.sbos-block.is-dragging {
+	cursor: grabbing;
+	box-shadow: var(--shadow-s);
+	z-index: 3;
+}
+
+.sbos-block.is-ghost {
+	left: 0;
+	right: 0;
+	border-style: dashed;
+	color: var(--text-muted);
+	pointer-events: none;
+}
+
+.sbos-block__title {
+	flex: 1;
+	min-width: 0;
+	height: auto;
+	padding: 0;
+	background: none;
+	box-shadow: none;
+	text-align: left;
+	white-space: normal;
+	color: var(--text-normal);
+	font: inherit;
+}
+
+.sbos-block__title:focus-visible {
+	outline: 2px solid var(--background-modifier-border-focus);
+}
+
+.sbos-block__time {
+	color: var(--text-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+.sbos-block__resize {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 6px;
+	cursor: ns-resize;
+}
+
+.sbos-unscheduled {
+	border-top: var(--border-width) solid var(--background-modifier-border);
+	margin-top: var(--size-4-2);
+	padding-top: var(--size-4-2);
+}
+
+.sbos-unscheduled h4 {
+	margin: 0 0 var(--size-2-2);
+	font-size: var(--font-ui-small);
+	color: var(--text-muted);
+}
+
+.sbos-unscheduled ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: var(--size-2-1);
+}
+
+.sbos-unscheduled li {
+	display: flex;
+	align-items: center;
+	gap: var(--size-2-2);
+	cursor: grab;
+}
+
+.sbos-unscheduled__title {
+	flex: 1;
+	justify-content: flex-start;
+	background: none;
+	box-shadow: none;
+	text-align: left;
+}
+
+.sbos-new-block {
+	display: grid;
+	gap: var(--size-4-2);
+}
+
+.sbos-new-block label {
+	display: grid;
+	gap: var(--size-2-1);
+}
+
+.sbos-new-block__error {
+	color: var(--text-error);
+	margin: 0;
+}
+
+.sbos-status[hidden] {
+	display: none;
+}

@@ -30,13 +30,11 @@ describe("SetupScreen", () => {
 	it("lists each required plugin with its state", () => {
 		renderScreen(
 			new FakePluginRegistry([
-				{ id: "dataview", version: "0.5.68", enabled: true },
 				{ id: "obsidian-tasks-plugin", version: "8.6.0", enabled: false },
 			]),
 		);
 
 		expect(screen.getByRole("heading", { name: "Required plugins" })).toBeInTheDocument();
-		expect(within(itemFor("Dataview")).getByText("Ready")).toBeInTheDocument();
 		expect(within(itemFor("Tasks")).getByText("Installed but not enabled")).toBeInTheDocument();
 		expect(within(itemFor("Templater")).getByText("Not installed")).toBeInTheDocument();
 		expect(
@@ -46,18 +44,18 @@ describe("SetupScreen", () => {
 
 	it("shows the installed version against the minimum", () => {
 		renderScreen(
-			new FakePluginRegistry([{ id: "dataview", version: "0.5.60", enabled: true }]),
+			new FakePluginRegistry([
+				{ id: "obsidian-tasks-plugin", version: "6.1.0", enabled: true },
+			]),
 		);
 
-		const dataview = itemFor("Dataview");
-		expect(within(dataview).getByText("Update required")).toBeInTheDocument();
-		expect(
-			within(dataview).getByText("version 0.5.60, needs 0.5.64 or later"),
-		).toBeInTheDocument();
+		const tasks = itemFor("Tasks");
+		expect(within(tasks).getByText("Update required")).toBeInTheDocument();
+		expect(within(tasks).getByText("version 6.1.0, needs 7.0.0 or later")).toBeInTheDocument();
 	});
 
 	it("updates after the user enables the missing plugin and checks again", async () => {
-		const registry = new FakePluginRegistry(READY_PLUGINS.slice(0, 2));
+		const registry = new FakePluginRegistry(READY_PLUGINS.slice(0, 1));
 		renderScreen(registry);
 		expect(within(itemFor("Templater")).getByText("Not installed")).toBeInTheDocument();
 

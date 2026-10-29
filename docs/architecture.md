@@ -14,7 +14,7 @@ The plugin stores everything as plain Markdown and front matter. Removing it lea
 
 - **One plugin, one settings tab, one model.** A task scheduled in the planner is the same task that rolls up into a project and appears in the weekly review.
 - **Markdown is the database.** No hidden store. Any derived data (indexes, rollups) can be rebuilt from the vault.
-- **Lean on proven plugins.** Dataview indexes notes, Tasks owns task syntax and statuses, Templater renders templates. The setup gate (`src/features/setup`) blocks features until all three are installed, enabled and new enough.
+- **Lean on proven plugins.** Tasks owns task statuses and toggling (including recurrence), Templater renders templates. The setup gate (`src/features/setup`) blocks features until both are installed, enabled and new enough. The plugin keeps its own task index (ADR 0002), so Dataview is optional.
 - **Mobile works.** `isDesktopOnly: false`, so no Node or Electron APIs at runtime. Lint blocks them.
 - **Small and fast.** `main.js` budget is 400 KB (`scripts/check-bundle.ts`). Plugin load stays under 50 ms of our own work. Index work runs after `onLayoutReady`.
 
@@ -29,7 +29,7 @@ src/
     application/        Use cases and ports (interfaces). No obsidian, no React, no UI.
     ui/                 React components and Obsidian views, modals, settings sections.
     index.ts            The feature's public API. The only file other modules may import.
-  infrastructure/<adapter>/  Implements ports against Obsidian, Dataview, Tasks and Templater.
+  infrastructure/<adapter>/  Implements ports against Obsidian, Tasks and Templater.
   shared/kernel/        Result, Store, version maths. Pure.
   shared/react/         ReactItemView, ErrorBoundary, hooks, service context.
   styles/               CSS, scoped with the `sbos-` prefix, using Obsidian's CSS variables.
@@ -64,16 +64,15 @@ flowchart TD
 
 Each feature declares what it needs from the outside world as interfaces in `application/ports.ts`. `infrastructure/` implements them. `app/container.ts` is the only place they meet. Tests swap in fakes from `tests/fakes/`.
 
-| Port                                                                 | Adapter                    | Wraps                                |
-| -------------------------------------------------------------------- | -------------------------- | ------------------------------------ |
-| `PluginRegistry`                                                     | `infrastructure/obsidian`  | `app.plugins`                        |
-| `NoteRepository` (read, create, `process` atomic edit, rename)       | `infrastructure/vault`     | `app.vault`, `app.fileManager`       |
-| `NoteIndex` (pages, list items, tasks, inline fields; change events) | `infrastructure/dataview`  | Dataview API                         |
-| `TaskSyntax` (parse and format a task line, status cycle)            | `infrastructure/tasks`     | Tasks API and its status registry    |
-| `TemplateRenderer`                                                   | `infrastructure/templater` | Templater API                        |
-| `Clock` (now, timers)                                                | `infrastructure/time`      | `window.moment`, `window.setTimeout` |
-| `RemoteCalendar` (read-only ICS)                                     | `infrastructure/ics`       | `requestUrl`                         |
-| `SettingsPersistence`                                                | `infrastructure/settings`  | `loadData` and `saveData`            |
+| Port                                                                            | Adapter                    | Wraps                                     |
+| ------------------------------------------------------------------------------- | -------------------------- | ----------------------------------------- |
+| `PluginRegistry`                                                                | `infrastructure/obsidian`  | `app.plugins`                             |
+| `NoteStore` (list, read, create, `process`, front matter, links, change events) | `infrastructure/obsidian`  | `app.vault`, `app.metadataCache`          |
+| `TaskToggler` (toggle done, including recurrence)                               | `infrastructure/tasks`     | Tasks `apiV1`                             |
+| `TemplateEngine`                                                                | `infrastructure/templater` | Templater                                 |
+| `Clock`, `DateFormatter`, `Workspace`, `Notifier`                               | `infrastructure/obsidian`  | Date, `moment`, `app.workspace`, `Notice` |
+| `RemoteCalendar` (read-only ICS)                                                | `infrastructure/ics`       | `requestUrl`                              |
+| `SettingsPersistence`                                                           | `infrastructure/settings`  | `loadData` and `saveData`                 |
 
 ## Core domain model
 
@@ -96,8 +95,8 @@ All features share these types, defined in each owning feature's `domain/` and e
 1. `onload`: build the container, load and migrate settings (zod schema plus versioned migrations, never overwriting unreadable data), and register the setup view and command.
 2. `onLayoutReady`: evaluate the dependency gate. If not ready, open the setup view. Features register only once the gate reports ready, and register once.
 3. Each `FeatureModule.register` adds its views, commands, settings section, code block processors and event subscriptions through `plugin.register*`, so unload cleans up everything.
-4. Reads go through `NoteIndex`. It debounces Dataview change events into a `Store`, and views subscribe with `useStore`.
-5. Writes go through `NoteRepository.process` (atomic read-modify-write) with pure edit functions from the domain, such as `moveTimeBlock(line, start, end) => line`. That makes every write testable without Obsidian.
+4. Reads go through the `TaskIndex` and `PeriodicNotes` index, kept current from vault events and exposed as a `Store`. Views subscribe with `useStore`.
+5. Writes go through `NoteStore.process` (atomic read-modify-write) with pure edit functions from the domain, such as `moveTimeBlock(line, start, end) => line`. That makes every write testable without Obsidian.
 
 ## Cross-cutting decisions
 

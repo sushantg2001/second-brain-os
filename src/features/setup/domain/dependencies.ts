@@ -28,12 +28,6 @@ export interface DependencyReport {
 
 export const REQUIRED_PLUGINS: readonly RequiredPlugin[] = [
 	{
-		id: "dataview",
-		name: "Dataview",
-		minVersion: "0.5.64",
-		purpose: "Indexes notes, list items, tasks and inline fields.",
-	},
-	{
 		id: "obsidian-tasks-plugin",
 		name: "Tasks",
 		minVersion: "7.0.0",

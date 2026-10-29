@@ -13,6 +13,8 @@ const MIGRATIONS: Readonly<Record<number, Migration>> = {
 	0: (data) => ({ ...data, version: 1 }),
 	// 2.0: periodic notes and calendar settings.
 	1: (data) => ({ ...data, version: 2, periodic: DEFAULT_SETTINGS.periodic }),
+	// 2.0: day planner.
+	2: (data) => ({ ...data, version: 3, planner: DEFAULT_SETTINGS.planner }),
 };
 
 function isRecord(value: unknown): value is RawSettings {

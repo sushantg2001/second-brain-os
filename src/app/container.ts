@@ -1,7 +1,9 @@
 import { moment, type App, type Plugin } from "obsidian";
 
 import { PeriodicNotes } from "../features/periodic";
+import { Planner } from "../features/planner";
 import { DependencyGate } from "../features/setup";
+import { TaskActions, TaskIndex } from "../features/tasks";
 import {
 	MomentDateFormatter,
 	NoticeNotifier,
@@ -11,6 +13,7 @@ import {
 	VaultNoteStore,
 } from "../infrastructure/obsidian";
 import { SettingsRepository } from "../infrastructure/settings";
+import { TasksPluginToggler } from "../infrastructure/tasks";
 import { TemplaterEngine } from "../infrastructure/templater";
 import type { Clock, DateFormatter, NoteStore, Notifier, Workspace } from "../shared/kernel";
 
@@ -25,6 +28,9 @@ export interface Container {
 	readonly clock: Clock;
 	readonly notifier: Notifier;
 	readonly periodic: PeriodicNotes;
+	readonly tasks: TaskIndex;
+	readonly taskActions: TaskActions;
+	readonly planner: Planner;
 }
 
 export interface ContainerOverrides {
@@ -41,6 +47,16 @@ export function createContainer(plugin: Plugin, overrides: ContainerOverrides = 
 	const workspace = new ObsidianWorkspace(app);
 	const dates = new MomentDateFormatter(moment);
 	const clock = overrides.clock ?? new SystemClock();
+	const periodic = new PeriodicNotes({
+		settings: settings.section("periodic").store,
+		notes,
+		dates,
+		workspace,
+		templates: new TemplaterEngine(app),
+		clock,
+	});
+	const tasks = new TaskIndex(notes);
+	const taskActions = new TaskActions(notes, clock, new TasksPluginToggler(app));
 	return {
 		app,
 		settings,
@@ -50,12 +66,15 @@ export function createContainer(plugin: Plugin, overrides: ContainerOverrides = 
 		dates,
 		clock,
 		notifier: new NoticeNotifier(),
-		periodic: new PeriodicNotes({
-			settings: settings.section("periodic").store,
+		periodic,
+		tasks,
+		taskActions,
+		planner: new Planner({
+			tasks,
+			actions: taskActions,
+			periodic,
 			notes,
-			dates,
-			workspace,
-			templates: new TemplaterEngine(app),
+			settings: settings.section("planner").store,
 			clock,
 		}),
 	};

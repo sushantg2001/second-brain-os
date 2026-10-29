@@ -23,9 +23,9 @@ Tests that run on Bun (`bun test`) share `tests/setup.ts`, which registers happy
     - Moving a block never changes the task text outside the time range.
     - For every date and week-start setting, `periodOf(date)` contains `date`, and `next(prev(p)) === p`.
     - Rollup totals equal the sum of their children.
-- **Edits are pure functions** `(text) => text`, tested on strings. Integration tests then check one round trip through `NoteRepository.process` against the fixture vault.
+- **Edits are pure functions** `(text) => text`, tested on strings. Integration tests then check one round trip through `NoteStore.process` against the in-memory vault.
 - **Components** are queried by role and label, never by class name. Each view gets one test that it renders inside `ErrorBoundary` and recovers.
-- **Adapters** (Dataview, Tasks, Templater) get contract tests: the same suite runs against the fake and, where it can, against a recorded response from the real plugin's API shape, so a fake can't drift from reality.
+- **Adapters** (vault, Tasks, Templater) get contract tests: the same suite runs against the fake and, where it can, against a recorded response from the real plugin's API shape, so a fake can't drift from reality.
 - **Regression:** every bug fix adds a test that fails before the fix.
 
 ## Fixtures
@@ -47,7 +47,7 @@ The threshold starts at 80% and is raised as phases land. It is never lowered wi
 
 ## Manual acceptance checklist (release)
 
-Use a clean vault with Dataview, Tasks and Templater at their minimum versions, then again at their latest versions.
+Use a clean vault with Tasks and Templater at their minimum versions, then again at their latest versions.
 
 1. Fresh install: the setup view lists missing plugins. Enabling them unlocks features without a reload.
 2. Periodic: create and open each period. Templates render. Week 53 and the year boundary work.

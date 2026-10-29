@@ -1,6 +1,7 @@
 import { PluginSettingTab, type Plugin } from "obsidian";
 
 import { renderPeriodicSettings } from "../features/periodic";
+import { renderPlannerSettings } from "../features/planner";
 import type { Container } from "./container";
 
 /**
@@ -25,5 +26,6 @@ export class SecondBrainSettingTab extends PluginSettingTab {
 			container.periodic,
 			redraw,
 		);
+		renderPlannerSettings(containerEl, container.settings.section("planner"));
 	}
 }

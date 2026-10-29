@@ -10,10 +10,15 @@ const { default: _default, ...matchers } = await import("@testing-library/jest-d
 expect.extend(matchers);
 
 await mock.module("obsidian", () => import("./mocks/obsidian"));
+const { Modal } = await import("./mocks/obsidian");
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 afterEach(() => {
+	// A test that leaves a dialog open must not leak it into the next test.
+	for (const modal of [...Modal.open]) {
+		modal.close();
+	}
 	cleanup();
 	document.body.replaceChildren();
 });
