@@ -11,7 +11,6 @@ import {
 import { buildDayPlan } from "../../../src/features/planner";
 import type { PpvNote } from "../../../src/features/ppv";
 import { parseTasks } from "../../../src/features/tasks";
-import { clockBlock, yaml } from "../../fakes/yaml";
 
 function note(partial: Partial<PpvNote> & Pick<PpvNote, "path" | "type">): PpvNote {
 	return {
@@ -117,25 +116,21 @@ describe("task rules", () => {
 			[
 				"- [ ] 10:00 - 09:00 Backwards",
 				"- [ ] Long",
-				clockBlock({ start: "2026-10-28 09:00:00" }),
+				"\t- [clock::2026-10-28T09:00--]",
 				"- [ ] Short",
 				"\t- [clock::2026-10-29T08:00--]",
-				"- [ ] Old style",
-				"\t- [clock::2026-10-27T08:00--]",
 			].join("\n"),
-			(text) => yaml.parse(text),
 		);
 		const findings = lint(input({ tasks }));
 		expect(findings.map((item) => [item.rule, item.line, item.severity])).toEqual([
 			["malformed-time-block", 0, "error"],
 			["stale-clock", 2, "warning"],
-			["stale-clock", 10, "warning"],
 		]);
 		expect(findings[1]?.fix).toEqual({
 			kind: "close-clock",
 			path: "a.md",
-			line: 1,
-			raw: "- [ ] Long",
+			line: 2,
+			raw: "\t- [clock::2026-10-28T09:00--]",
 		});
 	});
 

@@ -164,13 +164,16 @@ describe("adapter details", () => {
 			throw new Error("missing");
 		}
 		const running = clocks.running.get()[0];
-		await harness.app.vault.process(file, (text) => text.replace("- [ ] A", "- [ ] A2"));
-		const stale = await clocks.stopTask({
-			path: "a.md",
-			line: running?.task.line ?? 0,
-			raw: running?.task.raw ?? "",
-		});
-		expect(stale.ok).toBe(false);
+		await harness.app.vault.process(file, (text) => text.replace("[clock::", "[clock:: "));
+		if (running) {
+			const stale = await harness.container.linter.closeClock({
+				kind: "close-clock",
+				path: "a.md",
+				line: running.clock.line,
+				raw: running.clock.raw,
+			});
+			expect(stale.ok).toBe(false);
+		}
 	});
 });
 

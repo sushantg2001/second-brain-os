@@ -35,6 +35,5 @@ export type {
 	SettingsSection,
 	TemplateEngine,
 	Workspace,
-	YamlCodec,
 } from "./ports";
 export { NowTicker, type NowSnapshot } from "./now";

@@ -11,14 +11,7 @@ export {
 } from "./domain/edit";
 export { displayText, parseFields, type TaskFields } from "./domain/fields";
 export { formatListLine, indentWidth, parseListLine, type ListLine } from "./domain/list-line";
-export {
-	frontmatterLines,
-	parseTasks,
-	taskEndLine,
-	type ListItem,
-	type Task,
-	type TaskProps,
-} from "./domain/parse-note";
+export { frontmatterLines, parseTasks, type ListItem, type Task } from "./domain/parse-note";
 export { isClosed, STATE_SYMBOL, stateOf, type TaskState } from "./domain/status";
 export {
 	formatTimeBlock,
