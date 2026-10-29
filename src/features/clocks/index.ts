@@ -17,11 +17,15 @@ export {
 	type ClockEntry,
 	type Moment,
 } from "./domain/clock-entry";
+export { formatLogTime, logOf, parseLogTime, withLog, yamlBlock } from "./domain/planner-log";
 export {
-	childIndent,
 	closeClockLine,
 	clocksOf,
-	openClockLine,
-	type ClockLine,
+	convertLegacy,
+	describeStop,
+	startClock,
+	stopClock,
+	type ClockSource,
+	type TaskClock,
 } from "./domain/task-clocks";
 export { clockStatusText, registerClocks, taskAtLine, type ClocksModuleDeps } from "./ui/module";

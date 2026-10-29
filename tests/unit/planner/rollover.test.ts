@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 
 import { removeCarried, tasksToCarry } from "../../../src/features/planner";
 import { parseTasks } from "../../../src/features/tasks";
+import { clockBlock, yaml } from "../../fakes/yaml";
 
 const NOTE = [
 	"# Yesterday",
@@ -38,5 +39,20 @@ describe("carrying tasks over", () => {
 
 	it("leaves a changed note alone", () => {
 		expect(removeCarried(NOTE.replace("Write spec", "Write the spec"), carried)).toBeNull();
+	});
+});
+
+describe("carrying tasks with Day Planner clocks", () => {
+	it("moves the yaml block with its task", () => {
+		const note = [
+			"- [ ] Write",
+			clockBlock({ start: "2026-10-28 09:00:00", end: "2026-10-28 09:30:00" }),
+			"- [x] Done",
+		].join("\n");
+		const tasks = parseTasks("2026-10-28.md", note, (text) => yaml.parse(text));
+		const carried = tasksToCarry(note, tasks);
+		expect(carried[0]?.carried).toHaveLength(7);
+		expect(carried[0]?.carried.at(-1)).toBe("  ```");
+		expect(removeCarried(note, carried)).toBe("- [x] Done");
 	});
 });

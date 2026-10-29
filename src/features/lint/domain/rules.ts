@@ -196,7 +196,7 @@ function taskFindings(input: LintInput): Finding[] {
 						task.path,
 						clock.line,
 						`A clock on "${task.text}" has run since ${clock.start.date}.`,
-						{ kind: "close-clock", path: task.path, line: clock.line, raw: clock.raw },
+						{ kind: "close-clock", path: task.path, line: task.line, raw: task.raw },
 					),
 				);
 			}

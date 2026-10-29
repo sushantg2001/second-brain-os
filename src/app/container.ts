@@ -10,6 +10,7 @@ import { DependencyGate } from "../features/setup";
 import { TaskActions, TaskIndex } from "../features/tasks";
 import {
 	MomentDateFormatter,
+	ObsidianYaml,
 	NoticeNotifier,
 	ObsidianPluginRegistry,
 	ObsidianWorkspace,
@@ -74,9 +75,11 @@ export function createContainer(plugin: Plugin, overrides: ContainerOverrides = 
 		templates,
 		clock,
 	});
-	const tasks = new TaskIndex(notes);
+	const yaml = new ObsidianYaml();
+	const tasks = new TaskIndex(notes, yaml);
 	const taskActions = new TaskActions(notes, clock, new TasksPluginToggler(app));
 	const now = new NowTicker(clock);
+	const clocks = new Clocks({ tasks, notes, now, yaml });
 	const ppvIndex = new PpvIndex(notes, settings.section("ppv").store);
 	const ppv = new PpvService({
 		index: ppvIndex,
@@ -111,7 +114,7 @@ export function createContainer(plugin: Plugin, overrides: ContainerOverrides = 
 		tasks,
 		taskActions,
 		planner,
-		clocks: new Clocks({ tasks, notes, now }),
+		clocks,
 		ppvIndex,
 		ppv,
 		rollups: new Rollups({ ppv, index: ppvIndex, tasks, notes, periodic, now }),
@@ -124,6 +127,7 @@ export function createContainer(plugin: Plugin, overrides: ContainerOverrides = 
 			notes,
 			settings: settings.section("lint").store,
 			now,
+			clocks,
 		}),
 	};
 }

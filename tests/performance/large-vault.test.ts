@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 
 import { loadPlugin } from "../fakes/plugin-harness";
+import { clockBlock } from "../fakes/yaml";
 
 /** A vault of 2,000 notes: daily notes with tasks, projects, and plain notes. */
 function largeVault(): Record<string, string> {
@@ -12,7 +13,7 @@ function largeVault(): Record<string, string> {
 			"## Day planner",
 			"- [ ] 09:00 - 10:00 Deep work [[Project 1]]",
 			"- [x] 10:30 Standup ✅ " + date,
-			"\t- [clock::" + date + "T10:30--" + date + "T10:45]",
+			clockBlock({ start: `${date} 10:30:00`, end: `${date} 10:45:00` }),
 			"- [ ] Inbox item",
 		].join("\n");
 	}

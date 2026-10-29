@@ -6,11 +6,11 @@ import {
 	type ReadableStore,
 	type Result,
 } from "../../../shared/kernel";
-import { closeClockLine } from "../../clocks";
+import type { Clocks } from "../../clocks";
 import type { PeriodicNotes } from "../../periodic";
 import type { Planner } from "../../planner";
 import type { PpvIndex, PpvService, PpvType } from "../../ppv";
-import { replaceLine, type TaskIndex } from "../../tasks";
+import type { TaskIndex } from "../../tasks";
 import { lint, type Finding, type LintFix } from "../domain/rules";
 import { applySettings, type LintSettings } from "../domain/settings";
 
@@ -23,6 +23,7 @@ export interface LinterDeps {
 	readonly notes: NoteStore;
 	readonly settings: ReadableStore<LintSettings>;
 	readonly now: ReadableStore<NowSnapshot>;
+	readonly clocks: Clocks;
 }
 
 const SEVERITY_ORDER = { error: 0, warning: 1, info: 2 } as const;
@@ -75,30 +76,18 @@ export class Linter {
 		return findings;
 	}
 
-	/** What a clock fix would change, as the line before and after. */
+	/** What a clock fix would record, before and after. */
 	previewCloseClock(
 		fix: Extract<LintFix, { kind: "close-clock" }>,
 	): { before: string; after: string } | null {
-		const after = closeClockLine(fix.raw, this.deps.now.get());
-		return after === null ? null : { before: fix.raw, after };
+		const task = this.deps.tasks
+			.tasksIn(fix.path)
+			.find((candidate) => candidate.line === fix.line && candidate.raw === fix.raw);
+		return task ? this.deps.clocks.previewStop(task) : null;
 	}
 
-	async closeClock(fix: Extract<LintFix, { kind: "close-clock" }>): Promise<Result<void, Error>> {
-		const after = closeClockLine(fix.raw, this.deps.now.get());
-		if (after === null) {
-			return err(new Error("That clock is no longer running."));
-		}
-		let failure: Error | null = null;
-		await this.deps.notes.process(fix.path, (content) => {
-			const next = replaceLine(content, fix, after);
-			if (!next.ok) {
-				failure = next.error;
-				return content;
-			}
-			return next.value;
-		});
-		await this.deps.tasks.update(fix.path);
-		return failure ? err(failure) : ok(undefined);
+	closeClock(fix: Extract<LintFix, { kind: "close-clock" }>): Promise<Result<void, Error>> {
+		return this.deps.clocks.stopTask(fix);
 	}
 
 	/** The front matter line a set-parent fix would add. */
