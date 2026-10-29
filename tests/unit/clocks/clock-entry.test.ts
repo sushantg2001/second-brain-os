@@ -2,20 +2,27 @@ import { describe, expect, it } from "bun:test";
 import fc from "fast-check";
 
 import {
-	childIndent,
 	closeClockLine,
 	clocksOf,
+	convertLegacy,
 	datesOf,
+	describeStop,
+	formatLogTime,
+	logOf,
+	parseLogTime,
+	startClock,
+	stopClock,
+	withLog,
 	entryMinutes,
 	formatClockEntry,
 	minutesBetween,
 	minutesOnDate,
-	openClockLine,
 	parseClockEntry,
 	rangeOnDate,
 } from "../../../src/features/clocks";
-import { parseTasks } from "../../../src/features/tasks";
-import { addDays } from "../../../src/shared/kernel";
+import { parseTasks, type Task } from "../../../src/features/tasks";
+import { addDays, type Result } from "../../../src/shared/kernel";
+import { clockBlock, yaml } from "../../fakes/yaml";
 
 const now = { date: "2026-10-29", minutes: 12 * 60 };
 
@@ -129,40 +136,209 @@ function at<T>(items: readonly T[], index: number): T {
 	return item;
 }
 
-describe("clock lines under tasks", () => {
-	const tasks = parseTasks(
-		"a.md",
-		[
-			"- [ ] Write",
-			"\t- [clock::2026-10-29T09:00--2026-10-29T09:30]",
-			"\t- [clock::2026-10-29T11:00--]",
-			"\t- not a clock",
-			"- [ ] Other",
-			"  - [ ] spaced child",
-		].join("\n"),
+const parse = (content: string) => parseTasks("a.md", content, (text) => yaml.parse(text));
+const apply = (
+	content: string,
+	edit: (lines: readonly string[], task: Task) => Result<string[], Error> | null,
+	line = 0,
+) => {
+	const result = edit(
+		content.split("\n"),
+		at(
+			parse(content).filter((task) => task.line === line),
+			0,
+		),
 	);
+	if (!result?.ok) {
+		throw result?.error ?? new Error("no change");
+	}
+	return result.value.join("\n");
+};
+const at10 = { date: "2026-10-29", minutes: 600 };
 
-	it("finds entries among children", () => {
-		expect(clocksOf(at(tasks, 0)).map((clock) => [clock.line, clock.end === null])).toEqual([
-			[1, false],
-			[2, true],
-		]);
+describe("planner log times", () => {
+	it("reads Day Planner timestamps and YAML dates", () => {
+		expect(parseLogTime("2026-10-29 09:05:00")).toEqual({ date: "2026-10-29", minutes: 545 });
+		expect(parseLogTime("2026-10-29T09:05")).toEqual({ date: "2026-10-29", minutes: 545 });
+		expect(parseLogTime(new Date(Date.UTC(2026, 9, 29, 9, 5)))).toEqual({
+			date: "2026-10-29",
+			minutes: 545,
+		});
+		for (const bad of [
+			"2026-10-29",
+			"2026-02-30 09:00:00",
+			"2026-10-29 25:00:00",
+			5,
+			null,
+			new Date(Number.NaN),
+		]) {
+			expect(parseLogTime(bad)).toBeNull();
+		}
+		expect(formatLogTime({ date: "2026-10-29", minutes: 545 })).toBe("2026-10-29 09:05:00");
 	});
 
-	it("indents new children like existing ones, or by the note's style", () => {
-		expect(childIndent(at(tasks, 0), "")).toBe("\t");
-		expect(childIndent(at(tasks, 1), "")).toBe("  ");
-		const lone = at(parseTasks("b.md", "  - [ ] Nested\n"), 0);
-		expect(childIndent(lone, "  - [ ] Nested\n    - x")).toBe("      ");
-		expect(childIndent(lone, "\t- x")).toBe("  \t");
+	it("replaces the log and keeps other keys", () => {
+		const data = { tags: ["x"], planner: { color: "red", log: [{ start: "a" }] } };
+		expect(withLog(data, [])).toEqual({ tags: ["x"], planner: { color: "red", log: [] } });
+		expect(logOf({ planner: { log: "nope" } })).toEqual([]);
+		expect(withLog(null, [{ start: "b" }])).toEqual({ planner: { log: [{ start: "b" }] } });
 	});
+});
 
-	it("writes and closes clock lines", () => {
-		const open = openClockLine("\t", { date: "2026-10-29", minutes: 600 });
-		expect(open).toBe("\t- [clock::2026-10-29T10:00--]");
-		expect(closeClockLine(open, { date: "2026-10-29", minutes: 645 })).toBe(
-			"\t- [clock::2026-10-29T10:00--2026-10-29T10:45]",
+describe("yaml clocks under tasks", () => {
+	it("reads the yaml log first, then old [clock::] items", () => {
+		const tasks = parse(
+			[
+				"- [ ] Write",
+				clockBlock(
+					{ start: "2026-10-29 09:00:00", end: "2026-10-29 09:30:00" },
+					{ start: "2026-10-29 11:00:00" },
+				),
+				"\t- [clock::2026-10-28T08:00--2026-10-28T08:10]",
+				"\t- note",
+			].join("\n"),
 		);
-		expect(closeClockLine("\t- [clock::2026-10-29T10:00--2026-10-29T10:45]", now)).toBeNull();
+		const clocks = clocksOf(at(tasks, 0));
+		expect(
+			clocks.map((clock) => [
+				clock.source.kind,
+				clock.start.minutes,
+				clock.end?.minutes ?? null,
+				clock.line,
+			]),
+		).toEqual([
+			["yaml", 540, 570, 1],
+			["yaml", 660, null, 1],
+			["legacy", 480, 490, 8],
+		]);
+		expect(at(tasks, 0).props).toMatchObject({
+			startLine: 1,
+			endLine: 7,
+			indent: "  ",
+			valid: true,
+		});
+	});
+
+	it("ignores unreadable entries and blocks", () => {
+		const bad = parse(["- [ ] A", "  ```yaml", "  planner: [unclosed", "  ```"].join("\n"));
+		expect(at(bad, 0).props?.valid).toBe(false);
+		expect(clocksOf(at(bad, 0))).toEqual([]);
+		const odd = parse(
+			[
+				"- [ ] A",
+				clockBlock({ start: "soon" }, { start: "2026-10-29 09:00:00", end: "later" }),
+			].join("\n"),
+		);
+		expect(clocksOf(at(odd, 0))).toEqual([]);
+		const noReader = parseTasks(
+			"a.md",
+			["- [ ] A", clockBlock({ start: "2026-10-29 09:00:00" })].join("\n"),
+		);
+		expect(at(noReader, 0).props).toMatchObject({ valid: false });
+	});
+
+	it("starts a clock by adding a yaml block right under the task", () => {
+		expect(
+			apply("- [ ] Write\n\t- note", (lines, task) => startClock(lines, task, at10, yaml)),
+		).toBe(
+			[
+				"- [ ] Write",
+				"  ```yaml",
+				"  planner:",
+				"    log:",
+				"      - start: 2026-10-29 10:00:00",
+				"  ```",
+				"\t- note",
+			].join("\n"),
+		);
+		expect(
+			apply("\t- [ ] Nested", (lines, task) => startClock(lines, task, at10, yaml)),
+		).toContain("\t  ```yaml");
+	});
+
+	it("appends to an existing log and keeps other keys", () => {
+		const content = [
+			"- [ ] Write",
+			"  ```yaml",
+			"  color: red",
+			"  planner:",
+			"    log:",
+			"      - start: 2026-10-29 09:00:00",
+			"        end: 2026-10-29 09:30:00",
+			"  ```",
+		].join("\n");
+		const started = apply(content, (lines, task) => startClock(lines, task, at10, yaml));
+		expect(started).toContain("  color: red");
+		expect(started).toContain(
+			"      - start: 2026-10-29 09:00:00\n        end: 2026-10-29 09:30:00\n      - start: 2026-10-29 10:00:00",
+		);
+		const stopped = apply(started, (lines, task) =>
+			stopClock(lines, task, { date: "2026-10-29", minutes: 645 }, yaml),
+		);
+		expect(stopped).toContain(
+			"      - start: 2026-10-29 10:00:00\n        end: 2026-10-29 10:45:00",
+		);
+		expect(parse(stopped)[0]?.props?.data).toEqual({
+			color: "red",
+			planner: {
+				log: [
+					{ start: "2026-10-29 09:00:00", end: "2026-10-29 09:30:00" },
+					{ start: "2026-10-29 10:00:00", end: "2026-10-29 10:45:00" },
+				],
+			},
+		});
+	});
+
+	it("refuses to start twice or write into an unreadable block", () => {
+		const running = ["- [ ] A", clockBlock({ start: "2026-10-29 09:00:00" })].join("\n");
+		expect(startClock(running.split("\n"), at(parse(running), 0), at10, yaml).ok).toBe(false);
+		const broken = ["- [ ] A", "  ```yaml", "  - just a list", "  ```"].join("\n");
+		const result = startClock(broken.split("\n"), at(parse(broken), 0), at10, yaml);
+		expect(!result.ok && result.error.message).toBe(
+			"The task's yaml block could not be read. Fix it, then try again.",
+		);
+		expect(stopClock(["- [ ] A"], at(parse("- [ ] A"), 0), at10, yaml).ok).toBe(false);
+	});
+
+	it("stops old [clock::] items in place", () => {
+		const content = "- [ ] A\n\t- [clock::2026-10-29T09:00--]";
+		expect(apply(content, (lines, task) => stopClock(lines, task, at10, yaml))).toBe(
+			"- [ ] A\n\t- [clock::2026-10-29T09:00--2026-10-29T10:00]",
+		);
+		expect(closeClockLine("\t- [clock::2026-10-29T10:00--2026-10-29T10:45]", at10)).toBeNull();
+	});
+
+	it("converts old items into the yaml log", () => {
+		const content = [
+			"- [ ] A",
+			clockBlock({ start: "2026-10-27 08:00:00", end: "2026-10-27 08:30:00" }),
+			"\t- keep me",
+			"\t- [clock::2026-10-28T09:00--2026-10-28T09:45]",
+			"\t- [clock::2026-10-29T09:00--]",
+		].join("\n");
+		const converted = apply(content, (lines, task) => convertLegacy(lines, task, yaml));
+		expect(converted).not.toContain("[clock::");
+		expect(converted).toContain("\t- keep me");
+		expect(
+			clocksOf(at(parse(converted), 0)).map((clock) => [
+				clock.source.kind,
+				clock.start.date,
+				clock.end === null,
+			]),
+		).toEqual([
+			["yaml", "2026-10-27", false],
+			["yaml", "2026-10-28", false],
+			["yaml", "2026-10-29", true],
+		]);
+		expect(convertLegacy(["- [ ] B"], at(parse("- [ ] B"), 0), yaml)).toBeNull();
+	});
+
+	it("describes a stop for previews", () => {
+		expect(
+			describeStop({ start: { date: "2026-10-27", minutes: 540 }, end: null }, at10),
+		).toEqual({
+			before: "start: 2026-10-27 09:00:00",
+			after: "start: 2026-10-27 09:00:00, end: 2026-10-29 10:00:00",
+		});
 	});
 });

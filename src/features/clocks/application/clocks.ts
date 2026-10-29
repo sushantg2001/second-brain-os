@@ -8,12 +8,12 @@ import {
 	type NowSnapshot,
 	type ReadableStore,
 	type Result,
+	type YamlCodec,
 } from "../../../shared/kernel";
 import {
 	displayText,
 	locate,
 	parseTasks,
-	replaceLine,
 	stripTimeBlock,
 	type Task,
 	type TaskIndex,
@@ -21,16 +21,17 @@ import {
 } from "../../tasks";
 import { datesOf, entryMinutes, minutesOnDate, rangeOnDate } from "../domain/clock-entry";
 import {
-	childIndent,
-	closeClockLine,
 	clocksOf,
-	openClockLine,
-	type ClockLine,
+	convertLegacy,
+	describeStop,
+	startClock,
+	stopClock,
+	type TaskClock,
 } from "../domain/task-clocks";
 
 export interface RunningClock {
 	readonly task: Task;
-	readonly clock: ClockLine;
+	readonly clock: TaskClock;
 }
 
 export interface ClockedRange {
@@ -45,6 +46,7 @@ export interface ClocksDeps {
 	readonly tasks: TaskIndex;
 	readonly notes: NoteStore;
 	readonly now: ReadableStore<NowSnapshot>;
+	readonly yaml: YamlCodec;
 }
 
 export function taskTitle(task: Task): string {
@@ -93,6 +95,44 @@ export class Clocks {
 			.some((running) => running.task.path === task.path && running.task.line === task.line);
 	}
 
+	/**
+	 * Rewrites one task's lines inside an atomic edit. The task is found again in the current
+	 * text, so an edit never lands on a line that changed since it was read.
+	 */
+	private async editTask(
+		ref: TaskRef,
+		edit: (lines: readonly string[], task: Task) => Result<string[], Error> | null,
+	): Promise<Result<boolean, Error>> {
+		let outcome: Result<boolean, Error> = ok(false);
+		await this.deps.notes.process(ref.path, (content) => {
+			const lines = content.split(/\r?\n/);
+			const at = locate(lines, ref);
+			if (!at.ok) {
+				outcome = at;
+				return content;
+			}
+			const task = parseTasks(ref.path, content, (text) => this.deps.yaml.parse(text)).find(
+				(candidate) => candidate.line === at.value,
+			);
+			if (!task) {
+				outcome = err(new Error("That line is not a task."));
+				return content;
+			}
+			const next = edit(lines, task);
+			if (next === null) {
+				return content;
+			}
+			if (!next.ok) {
+				outcome = next;
+				return content;
+			}
+			outcome = ok(true);
+			return next.value.join(content.includes("\r\n") ? "\r\n" : "\n");
+		});
+		await this.deps.tasks.update(ref.path);
+		return outcome;
+	}
+
 	/** Starts a clock on a task, stopping any other running clock first. */
 	async start(ref: TaskRef): Promise<Result<void, Error>> {
 		const stopped = await this.stop();
@@ -100,45 +140,61 @@ export class Clocks {
 			return stopped;
 		}
 		const now = this.deps.now.get();
-		let failure: Error | null = null;
-		await this.deps.notes.process(ref.path, (content) => {
-			const lines = content.split(/\r?\n/);
-			const at = locate(lines, ref);
-			const task = at.ok
-				? parseTasks(ref.path, content).find((candidate) => candidate.line === at.value)
-				: undefined;
-			if (!task) {
-				failure = at.ok ? new Error("That line is not a task.") : at.error;
-				return content;
-			}
-			const last = task.children.at(-1) ?? task;
-			lines.splice(last.line + 1, 0, openClockLine(childIndent(task, content), now));
-			return lines.join(content.includes("\r\n") ? "\r\n" : "\n");
-		});
-		await this.deps.tasks.update(ref.path);
-		return failure ? err(failure) : ok(undefined);
+		const result = await this.editTask(ref, (lines, task) =>
+			startClock(lines, task, now, this.deps.yaml),
+		);
+		return result.ok ? ok(undefined) : result;
+	}
+
+	/** Stops the running clock on one task. */
+	async stopTask(ref: TaskRef): Promise<Result<void, Error>> {
+		const now = this.deps.now.get();
+		const result = await this.editTask(ref, (lines, task) =>
+			stopClock(lines, task, now, this.deps.yaml),
+		);
+		return result.ok ? ok(undefined) : result;
 	}
 
 	/** Stops every running clock at the current minute. */
 	async stop(): Promise<Result<void, Error>> {
-		const now = this.deps.now.get();
-		for (const { task, clock } of this.#running.get()) {
-			let failure: Error | null = null;
-			await this.deps.notes.process(task.path, (content) => {
-				const closed = closeClockLine(clock.raw, now);
-				const next = closed === null ? null : replaceLine(content, clock, closed);
-				if (!next?.ok) {
-					failure = next?.error ?? new Error("That clock is not running.");
-					return content;
-				}
-				return next.value;
-			});
-			await this.deps.tasks.update(task.path);
-			if (failure) {
-				return err(failure);
+		const tasks = new Map<string, Task>();
+		for (const { task } of this.#running.get()) {
+			tasks.set(`${task.path}:${task.line}`, task);
+		}
+		for (const task of tasks.values()) {
+			const result = await this.stopTask(task);
+			if (!result.ok) {
+				return result;
 			}
 		}
 		return ok(undefined);
+	}
+
+	/** What stopping the clock on a task would record. */
+	previewStop(task: Task): { before: string; after: string } | null {
+		const running = clocksOf(task).find((clock) => clock.end === null);
+		return running ? describeStop(running, this.deps.now.get()) : null;
+	}
+
+	/** Moves every older `[clock::]` item into its task's yaml log. Returns the tasks changed. */
+	async convertLegacy(): Promise<Result<number, Error>> {
+		const tasks = [...this.deps.tasks.all()].filter((task) =>
+			clocksOf(task).some((clock) => clock.source.kind === "legacy"),
+		);
+		let changed = 0;
+		// Bottom-up within each note, so earlier conversions do not move later tasks.
+		for (const task of tasks.sort((a, b) =>
+			a.path === b.path ? b.line - a.line : a.path < b.path ? -1 : 1,
+		)) {
+			const result = await this.editTask(task, (lines, current) =>
+				convertLegacy(lines, current, this.deps.yaml),
+			);
+			if (!result.ok) {
+				return result;
+			}
+			changed += result.value ? 1 : 0;
+		}
+		return ok(changed);
 	}
 
 	/** Starts the clock on a task, or stops it when it is the running one. */

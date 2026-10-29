@@ -69,7 +69,7 @@ export default defineConfig(
 			"boundaries/no-unknown-files": "error",
 			"obsidianmd/ui/sentence-case": [
 				"warn",
-				{ enforceCamelCaseLower: true, acronyms: ["PPV"] },
+				{ enforceCamelCaseLower: true, acronyms: ["PPV", "YAML"] },
 			],
 			"@typescript-eslint/no-restricted-imports": restrictImports(),
 			"boundaries/dependencies": [

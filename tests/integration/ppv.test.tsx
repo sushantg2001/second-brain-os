@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 
 import { Notice } from "../mocks/obsidian";
 import { loadPlugin, sleep } from "../fakes/plugin-harness";
+import { clockBlock } from "../fakes/yaml";
 
 const VAULT = {
 	"PPV/Pillars/Health.md": "---\ntype: pillar\n---\n# Health",
@@ -20,7 +21,7 @@ const VAULT = {
 		"- [x] Buy shoes",
 		"- [ ] Book physio",
 		"- [/] Long run",
-		"\t- [clock::2026-10-28T07:00--2026-10-28T08:30]",
+		clockBlock({ start: "2026-10-28 07:00:00", end: "2026-10-28 08:30:00" }),
 	].join("\n"),
 	"PPV/Projects/Old site.md": '---\ntype: project\nstatus: done\npillar: "[[Work]]"\n---\n',
 	"2026-10-29.md": "- [ ] Stretch [[Training plan]]",

@@ -84,3 +84,11 @@ export interface SettingsSection<T> {
 	readonly store: ReadableStore<T>;
 	update(updater: (current: T) => T): Promise<Result<T, Error>>;
 }
+
+/** YAML as Obsidian reads and writes it (front matter and fenced yaml blocks). */
+export interface YamlCodec {
+	/** Throws on invalid YAML. */
+	parse(text: string): unknown;
+	/** Block-style YAML ending in a newline. */
+	stringify(value: unknown): string;
+}

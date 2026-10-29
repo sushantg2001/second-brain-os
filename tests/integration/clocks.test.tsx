@@ -7,6 +7,7 @@ import type { TimelineView } from "../../src/features/planner";
 import { parseTasks } from "../../src/features/tasks";
 import { Notice } from "../mocks/obsidian";
 import { loadPlugin, sleep } from "../fakes/plugin-harness";
+import { clockBlock } from "../fakes/yaml";
 
 const NOTE = ["- [ ] 09:00 - 10:00 Write spec", "\t- context", "- [ ] Review", ""].join("\n");
 
@@ -28,7 +29,7 @@ async function setup(
 }
 
 describe("clocks", () => {
-	it("starts a clock under the task's existing children and stops it", async () => {
+	it("writes a Day Planner yaml block under the task and stops it", async () => {
 		const { plugin, content, at, clockStatus } = await setup();
 		expect(plugin.runCommand("stop-clock")).toBe(false);
 		expect(plugin.runEditorCommand("start-clock", "2026-10-29.md", 1)).toBe(true);
@@ -36,8 +37,12 @@ describe("clocks", () => {
 		expect(content()).toBe(
 			[
 				"- [ ] 09:00 - 10:00 Write spec",
+				"  ```yaml",
+				"  planner:",
+				"    log:",
+				"      - start: 2026-10-29 09:05:00",
+				"  ```",
 				"\t- context",
-				"\t- [clock::2026-10-29T09:05--]",
 				"- [ ] Review",
 				"",
 			].join("\n"),
@@ -46,7 +51,9 @@ describe("clocks", () => {
 		expect(clockStatus()?.textContent).toBe("⏱ Write spec · 45m");
 		expect(plugin.runCommand("stop-clock")).toBe(true);
 		await act(() => sleep(10));
-		expect(content()).toContain("\t- [clock::2026-10-29T09:05--2026-10-29T09:50]");
+		expect(content()).toContain(
+			"      - start: 2026-10-29 09:05:00\n        end: 2026-10-29 09:50:00\n  ```",
+		);
 		expect(clockStatus()?.hidden).toBe(true);
 	});
 
@@ -55,22 +62,31 @@ describe("clocks", () => {
 		plugin.runEditorCommand("start-clock", "2026-10-29.md", 0);
 		await act(() => sleep(10));
 		await at(9 * 60 + 30);
-		plugin.runEditorCommand("start-clock", "2026-10-29.md", 3);
+		plugin.runEditorCommand("start-clock", "2026-10-29.md", 7);
 		await act(() => sleep(10));
 		expect(content()).toBe(
 			[
 				"- [ ] 09:00 - 10:00 Write spec",
+				"  ```yaml",
+				"  planner:",
+				"    log:",
+				"      - start: 2026-10-29 09:05:00",
+				"        end: 2026-10-29 09:30:00",
+				"  ```",
 				"\t- context",
-				"\t- [clock::2026-10-29T09:05--2026-10-29T09:30]",
 				"- [ ] Review",
-				"\t- [clock::2026-10-29T09:30--]",
+				"  ```yaml",
+				"  planner:",
+				"    log:",
+				"      - start: 2026-10-29 09:30:00",
+				"  ```",
 				"",
 			].join("\n"),
 		);
 		expect(container.clocks.running.get()).toHaveLength(1);
 		await at(10 * 60);
 		expect(container.clocks.minutesOn("2026-10-29")).toBe(25 + 30);
-		plugin.runEditorCommand("start-clock", "2026-10-29.md", 3);
+		plugin.runEditorCommand("start-clock", "2026-10-29.md", 8);
 		await act(() => sleep(10));
 		expect(container.clocks.running.get()).toHaveLength(0);
 	});
@@ -81,10 +97,45 @@ describe("clocks", () => {
 		expect(plugin.runEditorCommand("start-clock", "missing.md", 0)).toBe(false);
 	});
 
+	it("still reads and stops old [clock::] entries, and converts them", async () => {
+		Notice.messages.length = 0;
+		const { plugin, content, container } = await setup({
+			"a.md": "- [ ] Old\n\t- [clock::2026-10-28T09:00--2026-10-28T10:00]\n- [ ] Running\n\t- [clock::2026-10-29T08:00--]",
+		});
+		expect(container.clocks.minutesOn("2026-10-28")).toBe(60);
+		plugin.runCommand("stop-clock");
+		await act(() => sleep(10));
+		expect(content("a.md")).toContain("\t- [clock::2026-10-29T08:00--2026-10-29T09:05]");
+		plugin.runCommand("convert-clock-entries");
+		await act(() => sleep(20));
+		expect(content("a.md")).not.toContain("[clock::");
+		expect(content("a.md")).toContain(
+			"      - start: 2026-10-28 09:00:00\n        end: 2026-10-28 10:00:00",
+		);
+		expect(Notice.messages.at(-1)).toBe("Converted clock entries on 2 tasks.");
+		expect(container.clocks.minutesOn("2026-10-28")).toBe(60);
+		plugin.runCommand("convert-clock-entries");
+		await act(() => sleep(20));
+		expect(Notice.messages.at(-1)).toBe("No old clock entries found.");
+	});
+
+	it("reports a yaml block it cannot convert into", async () => {
+		Notice.messages.length = 0;
+		const { plugin } = await setup({
+			"a.md": "- [ ] Old\n  ```yaml\n  - list\n  ```\n\t- [clock::2026-10-28T09:00--2026-10-28T10:00]",
+		});
+		plugin.runCommand("convert-clock-entries");
+		await act(() => sleep(20));
+		expect(Notice.messages.at(-1)).toBe(
+			"The task's yaml block could not be read. Fix it, then try again.",
+		);
+	});
+
 	it("reminds about clocks left running and opens the task", async () => {
 		Notice.messages.length = 0;
 		const { plugin, app } = await setup({
-			"Projects/Site.md": "# Site\n- [ ] Build\n  - [clock::2026-10-28T16:00--]\n",
+			"Projects/Site.md":
+				"# Site\n- [ ] Build\n  ```yaml\n  planner:\n    log:\n      - start: 2026-10-28 16:00:00\n  ```\n",
 		});
 		expect(Notice.messages).toContain(
 			'A clock is still running on "Build" since 2026-10-28 16:00.',
@@ -107,18 +158,18 @@ describe("clocks", () => {
 		const ui = within(view.contentEl);
 		await userEvent.click(ui.getByRole("button", { name: "Start clock on Write spec" }));
 		await act(() => sleep(10));
-		expect(harness.content()).toContain("\t- [clock::2026-10-29T09:05--]");
+		expect(harness.content()).toContain("      - start: 2026-10-29 09:05:00\n  ```");
 		await harness.at(9 * 60 + 35);
 		expect(ui.getByText("Planned 1h · Clocked 30m")).toBeInTheDocument();
 		expect(view.contentEl.querySelector(".sbos-clocked.is-running")).not.toBeNull();
 		await userEvent.click(ui.getByRole("button", { name: "Stop clock on Write spec" }));
 		await act(() => sleep(10));
-		expect(harness.content()).toContain("\t- [clock::2026-10-29T09:05--2026-10-29T09:35]");
+		expect(harness.content()).toContain("        end: 2026-10-29 09:35:00");
 	});
 
 	it("shows clocked time on the calendar", async () => {
 		const harness = await setup({
-			"2026-10-29.md": "- [ ] Write\n\t- [clock::2026-10-29T09:00--2026-10-29T10:30]\n",
+			"2026-10-29.md": `- [ ] Write\n${clockBlock({ start: "2026-10-29 09:00:00", end: "2026-10-29 10:30:00" })}\n`,
 		});
 		const leaf = harness.app.workspace.getLeavesOfType("sbos-calendar")[0];
 		document.body.append(leaf?.view?.containerEl ?? document.createElement("div"));

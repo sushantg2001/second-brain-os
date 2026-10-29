@@ -11,6 +11,18 @@ export interface ListItem {
 	readonly text: string;
 }
 
+/** A fenced yaml block directly under a task, as Day Planner 0.29 writes it. */
+export interface TaskProps {
+	/** Parsed YAML, or null when it could not be read. */
+	readonly data: unknown;
+	readonly valid: boolean;
+	/** Lines of the opening and closing fences. */
+	readonly startLine: number;
+	readonly endLine: number;
+	/** Indentation of the fence lines. */
+	readonly indent: string;
+}
+
 export interface Task extends ListItem {
 	readonly path: string;
 	readonly status: string;
@@ -21,9 +33,54 @@ export interface Task extends ListItem {
 	readonly children: readonly ListItem[];
 	/** The closest heading above the task, or null. */
 	readonly heading: string | null;
+	/** The yaml block on the line after the task, or null. */
+	readonly props: TaskProps | null;
 }
 
 const FENCE = /^\s*(```|~~~)/;
+const YAML_FENCE = /^(\s*)```ya?ml\s*$/;
+
+/** Reads a yaml block that starts on `start`, or null. */
+function readProps(
+	lines: readonly string[],
+	start: number,
+	parseYaml: ((text: string) => unknown) | undefined,
+): TaskProps | null {
+	const opening = YAML_FENCE.exec(lines[start] ?? "");
+	if (!opening) {
+		return null;
+	}
+	const indent = opening[1] ?? "";
+	const end = lines.findIndex(
+		(line, index) => index > start && line.trimStart().startsWith("```"),
+	);
+	if (end === -1) {
+		return null;
+	}
+	const text = lines
+		.slice(start + 1, end)
+		.map((line) => (line.startsWith(indent) ? line.slice(indent.length) : line.trimStart()))
+		.join("\n");
+	if (!parseYaml) {
+		return { data: null, valid: false, startLine: start, endLine: end, indent };
+	}
+	try {
+		return {
+			data: parseYaml(text) ?? null,
+			valid: true,
+			startLine: start,
+			endLine: end,
+			indent,
+		};
+	} catch {
+		return { data: null, valid: false, startLine: start, endLine: end, indent };
+	}
+}
+
+/** The last line that belongs to a task: its yaml block or its deepest nested item. */
+export function taskEndLine(task: Task): number {
+	return Math.max(task.line, task.props?.endLine ?? -1, task.children.at(-1)?.line ?? -1);
+}
 const HEADING = /^(#{1,6})\s+(.*?)\s*#*\s*$/;
 
 /** Length of the front matter block in lines, or 0. */
@@ -37,8 +94,15 @@ export function frontmatterLines(lines: readonly string[]): number {
 	return end === -1 ? 0 : end + 1;
 }
 
-/** Every task in a note, skipping front matter and code blocks. */
-export function parseTasks(path: string, content: string): Task[] {
+/**
+ * Every task in a note, skipping front matter and code blocks. With `parseYaml`, a yaml block on
+ * the line after a task is read into `props`.
+ */
+export function parseTasks(
+	path: string,
+	content: string,
+	parseYaml?: (text: string) => unknown,
+): Task[] {
 	const lines = content.split(/\r?\n/);
 	const tasks: Task[] = [];
 	const open: { task: Task & { children: ListItem[] }; width: number }[] = [];
@@ -88,6 +152,7 @@ export function parseTasks(path: string, content: string): Task[] {
 				block: parseTimeBlock(item.text),
 				children: [] as ListItem[],
 				heading,
+				props: readProps(lines, index + 1, parseYaml),
 			};
 			tasks.push(task);
 			open.push({ task, width });

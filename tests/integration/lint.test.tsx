@@ -3,12 +3,13 @@ import { act, fireEvent, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { loadPlugin, sleep } from "../fakes/plugin-harness";
+import { clockBlock } from "../fakes/yaml";
 
 const VAULT = {
 	"PPV/Pillars/Health.md": "---\ntype: pillar\n---\n",
 	"PPV/Goals/Lost.md": "---\ntype: goal\n---\n",
 	"PPV/Projects/Idle.md": '---\ntype: project\npillar: "[[Health]]"\n---\n',
-	"2026-10-29.md": "- [ ] 10:00 - 09:00 Backwards\n- [ ] Long\n\t- [clock::2026-10-27T09:00--]",
+	"2026-10-29.md": `- [ ] 10:00 - 09:00 Backwards\n- [ ] Long\n${clockBlock({ start: "2026-10-27 09:00:00" })}`,
 	"2026-W44.md": "```sbos-review\n```",
 };
 
@@ -76,12 +77,12 @@ describe("vault check", () => {
 		await userEvent.click(within(clockGroup).getByRole("button", { name: "Fix…" }));
 		const preview = screen.getByLabelText("Preview");
 		expect(preview.textContent).toBe(
-			"- \t- [clock::2026-10-27T09:00--]+ \t- [clock::2026-10-27T09:00--2026-10-29T12:00]",
+			"- start: 2026-10-27 09:00:00+ start: 2026-10-27 09:00:00, end: 2026-10-29 12:00:00",
 		);
 		await userEvent.click(screen.getByRole("button", { name: "Apply" }));
 		await act(() => sleep(10));
 		expect(harness.app.vault.contentOf("2026-10-29.md")).toContain(
-			"[clock::2026-10-27T09:00--2026-10-29T12:00]",
+			"      - start: 2026-10-27 09:00:00\n        end: 2026-10-29 12:00:00",
 		);
 		expect(ui.getByText("3 problems found.")).toBeInTheDocument();
 	});
@@ -117,15 +118,14 @@ describe("vault check", () => {
 			throw new Error("no fix");
 		}
 		await harness.container.clocks.stop();
+		await act(() => sleep(10));
+		expect(harness.container.linter.previewCloseClock(fix)).toBeNull();
 		const result = await harness.container.linter.closeClock(fix);
-		expect(!result.ok && result.error.message).toBe(
+		expect(!result.ok && result.error.message).toBe("That clock is not running.");
+		const moved = await harness.container.linter.closeClock({ ...fix, raw: "- [ ] Gone" });
+		expect(!moved.ok && moved.error.message).toBe(
 			"The note changed since it was read. Try again.",
 		);
-		const notRunning = await harness.container.linter.closeClock({
-			...fix,
-			raw: "\t- [clock::2026-10-27T09:00--2026-10-27T10:00]",
-		});
-		expect(!notRunning.ok && notRunning.error.message).toBe("That clock is no longer running.");
 		expect(
 			(await harness.container.linter.setParent("PPV/Goals/Lost.md", "missing.md")).ok,
 		).toBe(false);
