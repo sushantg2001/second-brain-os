@@ -96,23 +96,6 @@ export function registerClocks(plugin: Plugin, deps: ClocksModuleDeps): void {
 		},
 	});
 
-	plugin.addCommand({
-		id: "convert-clock-entries",
-		name: "Convert old clock entries to YAML",
-		callback: () =>
-			void clocks.convertLegacy().then((result) => {
-				if (!result.ok) {
-					notifier.notify(result.error.message);
-				} else {
-					notifier.notify(
-						result.value === 0
-							? "No old clock entries found."
-							: `Converted clock entries on ${result.value} ${result.value === 1 ? "task" : "tasks"}.`,
-					);
-				}
-			}),
-	});
-
 	const statusBar = plugin.addStatusBarItem();
 	statusBar.classList.add("sbos-status", "sbos-status--clock");
 	const render = (): void => {

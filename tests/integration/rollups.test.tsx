@@ -5,7 +5,6 @@ import userEvent from "@testing-library/user-event";
 import { reviewTemplate } from "../../src/features/rollups";
 import { Notice } from "../mocks/obsidian";
 import { loadPlugin, sleep } from "../fakes/plugin-harness";
-import { clockBlock } from "../fakes/yaml";
 
 const VAULT = {
 	"PPV/Pillars/Health.md": "---\ntype: pillar\n---\n",
@@ -18,7 +17,7 @@ const VAULT = {
 		"---",
 		"- [x] Buy shoes ✅ 2026-10-27",
 		"- [ ] Long run",
-		clockBlock({ start: "2026-10-28 07:00:00", end: "2026-10-28 08:30:00" }),
+		"\t- [clock::2026-10-28T07:00--2026-10-28T08:30]",
 	].join("\n"),
 	"PPV/Projects/Garden.md":
 		'---\ntype: project\npillar: "[[Health]]"\nstatus: done\ncompleted: 2026-10-30\n---\n- [x] Plant ✅ 2026-09-01',

@@ -4,7 +4,6 @@ import {
 	type NoteChange,
 	type NoteStore,
 	type ReadableStore,
-	type YamlCodec,
 } from "../../../shared/kernel";
 import { parseTasks, type Task } from "../domain/parse-note";
 
@@ -27,10 +26,7 @@ export class TaskIndex {
 		this.#resolveReady = resolve;
 	});
 
-	constructor(
-		private readonly notes: NoteStore,
-		private readonly yaml: YamlCodec | null = null,
-	) {}
+	constructor(private readonly notes: NoteStore) {}
 
 	get snapshot(): ReadableStore<TaskSnapshot> {
 		return this.#store;
@@ -100,16 +96,9 @@ export class TaskIndex {
 		return this.notes.onChange((change) => void this.apply(change));
 	}
 
-	readonly parseYaml = (text: string): unknown => {
-		if (!this.yaml) {
-			throw new Error("No YAML reader");
-		}
-		return this.yaml.parse(text);
-	};
-
 	private async parse(path: string): Promise<Task[]> {
 		const content = await this.notes.read(path).catch(() => "");
-		return MIGHT_HAVE_TASKS.test(content) ? parseTasks(path, content, this.parseYaml) : [];
+		return MIGHT_HAVE_TASKS.test(content) ? parseTasks(path, content) : [];
 	}
 
 	#commit(byPath: Map<string, readonly Task[]>): void {
