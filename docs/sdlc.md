@@ -52,16 +52,14 @@ make format   # fix formatting
 | -------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `ci.yml`       | every PR, push to `main`, called by `release.yml` | **quality**: `make format-check lint typecheck`. **test**: `make coverage` and upload lcov. **build**: `make check-bundle` and upload the plugin files. **dependency-review**: PRs only, fails on high-severity advisories. |
 | `pr-title.yml` | PR opened or edited                               | Conventional Commits title and `<type>/<slug>` branch name                                                                                                                                                                  |
-| `codeql.yml`   | PR to `main`, push to `main`, weekly              | CodeQL for JavaScript and TypeScript                                                                                                                                                                                        |
 | `release.yml`  | push to `main`, or manual with a bump             | Plans the version from commits since the last tag, reruns CI, updates the version files and changelog, commits `chore(release): x.y.z`, tags, attests provenance and publishes the GitHub release                           |
-| Dependabot     | weekly                                            | npm (dev deps grouped, `obsidian` pinned) and GitHub Actions                                                                                                                                                                |
 
 Bun is pinned by `.bun-version` in every job. Workflows default to `contents: read`, and jobs ask for more only when they need it.
 
 ### Branch protection for `main` (repository settings)
 
 - Require a pull request with one approval, and resolved conversations.
-- Required status checks: `Format, lint, typecheck`, `Tests and coverage`, `Build and bundle check`, `Dependency review`, `Title and branch`, `analyze`.
+- Required status checks: `Format, lint, typecheck`, `Tests and coverage`, `Build and bundle check`, `Dependency review`, `Title and branch`.
 - Let the release workflow push its version commit: allow GitHub Actions to bypass the rule, or add a `RELEASE_TOKEN` secret (a fine-grained token or GitHub App token with `contents: write`).
 - Require branches to be up to date. Squash merge only. No force pushes.
 
