@@ -19,6 +19,7 @@ const MIGHT_HAVE_TASKS = /^[ \t]*(?:[-*+]|\d+[.)])[ \t]+\[.\]/m;
 /** Every task in the vault, kept current from note changes. */
 export class TaskIndex {
 	readonly #store = new Store<TaskSnapshot>({ byPath: new Map(), version: 0 });
+	#scheduled: { snapshot: TaskSnapshot; byDate: Map<IsoDate, Task[]> } | null = null;
 	#resolveReady: () => void = () => {};
 	/** Resolves after the first full build. */
 	readonly ready: Promise<void> = new Promise((resolve) => {
@@ -41,8 +42,20 @@ export class TaskIndex {
 		}
 	}
 
-	scheduledOn(date: IsoDate): Task[] {
-		return [...this.all()].filter((task) => task.fields.scheduled === date);
+	/** Tasks with a scheduled date of `date`. Indexed once per change, so lookups are cheap. */
+	scheduledOn(date: IsoDate): readonly Task[] {
+		const snapshot = this.#store.get();
+		if (this.#scheduled?.snapshot !== snapshot) {
+			const byDate = new Map<IsoDate, Task[]>();
+			for (const task of this.all()) {
+				const scheduled = task.fields.scheduled;
+				if (scheduled) {
+					byDate.set(scheduled, [...(byDate.get(scheduled) ?? []), task]);
+				}
+			}
+			this.#scheduled = { snapshot, byDate };
+		}
+		return this.#scheduled.byDate.get(date) ?? [];
 	}
 
 	async rebuild(): Promise<void> {
