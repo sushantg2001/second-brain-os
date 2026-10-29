@@ -13,6 +13,7 @@ import { monthGrid, type Granularity } from "../../periodic";
 import { CalendarContext, type DayBadge } from "./services";
 
 const NO_BADGES = new Store<ReadonlyMap<IsoDate, readonly DayBadge[]>>(new Map());
+const NO_TICK = new Store<unknown>(null);
 
 const KEY_MOVES: Readonly<Record<string, number>> = {
 	ArrowLeft: -1,
@@ -33,6 +34,7 @@ export function Calendar(): ReactNode {
 	const settings = useStore(periodic.settingsStore);
 	const activePath = useStore(services.activePath);
 	const badges = useStore(services.badges ?? NO_BADGES);
+	useStore(services.tick ?? NO_TICK);
 	const gridRef = useRef<HTMLTableElement>(null);
 	// Set by keyboard navigation. The old day's button may unmount when the month changes, so
 	// DOM focus alone cannot tell us to move focus to the new day.

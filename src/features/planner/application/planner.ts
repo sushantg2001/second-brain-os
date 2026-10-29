@@ -13,6 +13,7 @@ import type { PeriodicNotes } from "../../periodic";
 import { appendToSection, type TaskActions, type TaskIndex, type TaskRef } from "../../tasks";
 import { newBlockLine, normalizeRange, withBlock, withoutBlock } from "../domain/block-edits";
 import { buildDayPlan, nextFreeSlot, type DayPlan, type PlannedTask } from "../domain/day-plan";
+import { removeCarried, tasksToCarry } from "../domain/rollover";
 import type { PlannerSettings } from "../domain/settings";
 
 export interface PlannerDeps {
@@ -67,10 +68,15 @@ export class Planner {
 		}
 		let plan = this.#cache.get(date);
 		if (!plan) {
+			const dailyPath = this.deps.periodic.find("day", date);
+			const daily = dailyPath ? this.deps.tasks.tasksIn(dailyPath) : [];
+			const scheduled = this.deps.tasks
+				.scheduledOn(date)
+				.filter((task) => task.path !== dailyPath);
 			plan = buildDayPlan(
 				date,
-				this.deps.periodic.find("day", date),
-				this.deps.tasks.all(),
+				dailyPath,
+				[...daily, ...scheduled],
 				this.settings.defaultDuration,
 			);
 			this.#cache.set(date, plan);
@@ -158,6 +164,53 @@ export class Planner {
 		);
 		await this.deps.tasks.update(note.value.path);
 		return ok(undefined);
+	}
+
+	/**
+	 * Moves open tasks from the most recent earlier daily note to today's note, without their old
+	 * times. Writes today's note first, so nothing is lost if the old note changed meanwhile.
+	 */
+	async carryOver(): Promise<Result<{ count: number; from: string | null }, Error>> {
+		const today = this.today();
+		const earlier = [...this.deps.periodic.index.get().day]
+			.filter(([date]) => date < today)
+			.sort(([a], [b]) => (a < b ? 1 : -1));
+		const from = earlier[0]?.[1] ?? null;
+		if (!from) {
+			return ok({ count: 0, from: null });
+		}
+		await this.deps.tasks.update(from);
+		const content = await this.deps.notes.read(from);
+		const carried = tasksToCarry(content, this.deps.tasks.tasksIn(from));
+		if (carried.length === 0) {
+			return ok({ count: 0, from });
+		}
+		const note = await this.deps.periodic.ensure("day", today);
+		if (!note.ok) {
+			return note;
+		}
+		await this.deps.notes.process(note.value.path, (text) =>
+			appendToSection(
+				text,
+				this.settings.heading,
+				carried.flatMap((item) => item.carried),
+			),
+		);
+		let removed = true;
+		await this.deps.notes.process(from, (text) => {
+			const next = removeCarried(text, carried);
+			removed = next !== null;
+			return next ?? text;
+		});
+		await Promise.all([this.deps.tasks.update(from), this.deps.tasks.update(note.value.path)]);
+		if (!removed) {
+			return err(
+				new Error(
+					`Copied ${carried.length} tasks to today, but ${from} changed, so they are still there too.`,
+				),
+			);
+		}
+		return ok({ count: carried.length, from });
 	}
 
 	toggleDone(task: PlannedTask): Promise<Result<void, Error>> {

@@ -32,6 +32,7 @@ export function renderPeriodicSettings(
 	section: SettingsSection<PeriodicSettings>,
 	periodic: PeriodicNotes,
 	redraw: () => void,
+	importSettings?: () => Promise<string>,
 ): void {
 	const current = (): PeriodicSettings => section.store.get();
 	const updateNote = (granularity: Granularity, patch: Partial<PeriodicConfig>) =>
@@ -44,6 +45,19 @@ export function renderPeriodicSettings(
 		}));
 
 	new Setting(containerEl).setName("Calendar").setHeading();
+	if (importSettings) {
+		const importRow = new Setting(containerEl)
+			.setName("Import settings")
+			.setDesc(
+				"Copy formats, folders, templates and week options from the periodic notes and calendar plugins.",
+			);
+		importRow.addButton((button) =>
+			button.setButtonText("Import").onClick(async () => {
+				importRow.setDesc(await importSettings());
+				redraw();
+			}),
+		);
+	}
 	new Setting(containerEl)
 		.setName("Start week on")
 		.setDesc("First day of the week in the calendar and for weekly notes.")

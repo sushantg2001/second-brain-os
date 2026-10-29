@@ -34,3 +34,4 @@ export {
 export { renderTemplate, type TemplateContext } from "./domain/template";
 export { registerPeriodic, type PeriodicModuleDeps } from "./ui/module";
 export { renderPeriodicSettings } from "./ui/settings-section";
+export { importForeignSettings, type ForeignSettings } from "./domain/import";
