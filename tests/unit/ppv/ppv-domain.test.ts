@@ -25,6 +25,7 @@ function note(partial: Partial<PpvNote> & Pick<PpvNote, "path" | "type">): PpvNo
 		parentLink: null,
 		due: null,
 		start: null,
+		completed: null,
 		kind: null,
 		...partial,
 	};
@@ -68,6 +69,7 @@ describe("readPpvNote", () => {
 			parentLink: "[[Ship v2]]",
 			due: "2026-12-01",
 			start: "2026-10-01",
+			completed: null,
 			kind: null,
 		});
 	});

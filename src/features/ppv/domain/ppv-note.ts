@@ -19,6 +19,8 @@ export interface PpvNote {
 	readonly parentLink: string | null;
 	readonly due: IsoDate | null;
 	readonly start: IsoDate | null;
+	/** When a project was finished or dropped. */
+	readonly completed: IsoDate | null;
 	/** Goals: "value" or "outcome". */
 	readonly kind: string | null;
 }
@@ -121,6 +123,7 @@ export function readPpvNote(
 		parentLink,
 		due: date(frontmatter?.due),
 		start: date(frontmatter?.start),
+		completed: date(frontmatter?.completed),
 		kind: type === "goal" ? (text(frontmatter?.kind) ?? "outcome") : null,
 	};
 }

@@ -23,6 +23,8 @@ export interface PpvServices {
 	readonly newNote: (type: PpvType, parent?: PpvNote) => void;
 	readonly toggleTask: (task: Task) => void;
 	readonly summary: (project: PpvNote) => ProjectSummary;
+	/** Totals for a goal or pillar across its projects, when the rollups feature provides them. */
+	readonly aggregate?: (note: PpvNote) => ProjectSummary;
 	readonly setUp: () => void;
 }
 

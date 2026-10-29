@@ -4,6 +4,7 @@ import { Clocks } from "../features/clocks";
 import { PeriodicNotes } from "../features/periodic";
 import { Planner } from "../features/planner";
 import { PpvIndex, PpvService } from "../features/ppv";
+import { Rollups } from "../features/rollups";
 import { DependencyGate } from "../features/setup";
 import { TaskActions, TaskIndex } from "../features/tasks";
 import {
@@ -45,6 +46,7 @@ export interface Container {
 	readonly clocks: Clocks;
 	readonly ppvIndex: PpvIndex;
 	readonly ppv: PpvService;
+	readonly rollups: Rollups;
 }
 
 export interface ContainerOverrides {
@@ -74,6 +76,17 @@ export function createContainer(plugin: Plugin, overrides: ContainerOverrides = 
 	const taskActions = new TaskActions(notes, clock, new TasksPluginToggler(app));
 	const now = new NowTicker(clock);
 	const ppvIndex = new PpvIndex(notes, settings.section("ppv").store);
+	const ppv = new PpvService({
+		index: ppvIndex,
+		tasks,
+		actions: taskActions,
+		notes,
+		periodic,
+		settings: settings.section("ppv").store,
+		templates,
+		clock,
+		formatDate: (date, format) => dates.format(date, format),
+	});
 	return {
 		app,
 		settings,
@@ -97,16 +110,7 @@ export function createContainer(plugin: Plugin, overrides: ContainerOverrides = 
 		}),
 		clocks: new Clocks({ tasks, notes, now }),
 		ppvIndex,
-		ppv: new PpvService({
-			index: ppvIndex,
-			tasks,
-			actions: taskActions,
-			notes,
-			periodic,
-			settings: settings.section("ppv").store,
-			templates,
-			clock,
-			formatDate: (date, format) => dates.format(date, format),
-		}),
+		ppv,
+		rollups: new Rollups({ ppv, index: ppvIndex, tasks, notes, periodic, now }),
 	};
 }

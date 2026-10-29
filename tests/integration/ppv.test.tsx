@@ -268,7 +268,13 @@ describe("PPV dashboard", () => {
 		expect(
 			within(health).getByRole("progressbar", { name: "Training plan: 1 of 4 tasks done" }),
 		).toHaveValue(25);
-		expect(within(health).getByText("⏱ 1h 30m")).toBeInTheDocument();
+		expect(within(health).getAllByText("⏱ 1h 30m")).toHaveLength(3);
+		expect(
+			within(health).getByRole("progressbar", { name: "Health: 1 of 4 tasks done" }),
+		).toBeInTheDocument();
+		expect(
+			within(health).getByRole("progressbar", { name: "Run a marathon: 1 of 4 tasks done" }),
+		).toBeInTheDocument();
 		expect(within(health).getByText("Due 2026-11-15")).toBeInTheDocument();
 		expect(within(health).getByRole("button", { name: "Long run" })).toBeInTheDocument();
 		expect(ui.getByRole("region", { name: "Work" })).toHaveTextContent("No goals yet.");

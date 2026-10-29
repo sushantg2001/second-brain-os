@@ -5,7 +5,7 @@ import { registerClocks } from "../features/clocks";
 import { registerPeriodic } from "../features/periodic";
 import { registerPlanner } from "../features/planner";
 import { registerPpv } from "../features/ppv";
-import { isClosed } from "../features/tasks";
+import { registerRollups, type Rollup } from "../features/rollups";
 import { formatDuration, Store, type IsoDate, type Minutes } from "../shared/kernel";
 import type { Container } from "./container";
 
@@ -86,29 +86,38 @@ export const FEATURES: readonly FeatureModule[] = [
 	{
 		id: "ppv",
 		register: (plugin, container) => {
-			const { ppv, clocks } = container;
+			const { rollups } = container;
 			registerPpv(plugin, {
 				app: container.app,
 				index: container.ppvIndex,
-				service: ppv,
+				service: container.ppv,
 				tasks: container.tasks,
 				actions: container.taskActions,
 				workspace: container.workspace,
 				notifier: container.notifier,
 				settings: container.settings.section("ppv").store,
-				summary: (project) => {
-					const tasks = ppv.projectTasks(project.path);
-					return {
-						done: tasks.filter((task) => isClosed(task.state)).length,
-						total: tasks.length,
-						clockedMinutes: tasks.reduce(
-							(sum, task) => sum + clocks.minutesFor(task),
-							0,
-						),
-					};
-				},
+				summary: (project) => summaryOf(rollups.project(project.path)),
+				aggregate: (note) => summaryOf(rollups.of(note)),
 			});
 		},
+	},
+	{
+		id: "rollups",
+		register: (plugin, container) =>
+			registerRollups(plugin, {
+				rollups: container.rollups,
+				periodic: container.periodic,
+				periodicSettings: container.settings.section("periodic"),
+				notes: container.notes,
+				workspace: container.workspace,
+				notifier: container.notifier,
+				sources: [
+					container.tasks.snapshot,
+					container.ppvIndex.snapshot,
+					container.periodic.index,
+					container.now,
+				],
+			}),
 	},
 	{
 		id: "calendar",
@@ -154,4 +163,8 @@ function dayBadges(
 	plugin.register(container.tasks.snapshot.subscribe(refresh));
 	refresh();
 	return badges;
+}
+
+function summaryOf(rollup: Rollup): { done: number; total: number; clockedMinutes: number } {
+	return { done: rollup.done, total: rollup.total, clockedMinutes: rollup.clockedMinutes };
 }
