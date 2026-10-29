@@ -57,11 +57,16 @@ describe("evaluateDependencies", () => {
 		);
 
 		expect(report.ready).toBe(false);
-		expect(report.statuses.map((status) => status.state)).toEqual(["ready", "missing"]);
+		expect(report.statuses.map((status) => status.state)).toEqual([
+			"ready",
+			"ready",
+			"missing",
+		]);
 	});
 
-	it("requires Tasks and Templater", () => {
+	it("requires Datacore, Tasks and Templater, not Dataview", () => {
 		expect(REQUIRED_PLUGINS.map((plugin) => plugin.id)).toEqual([
+			"datacore",
 			"obsidian-tasks-plugin",
 			"templater-obsidian",
 		]);

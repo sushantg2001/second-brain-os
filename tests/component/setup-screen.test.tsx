@@ -55,7 +55,7 @@ describe("SetupScreen", () => {
 	});
 
 	it("updates after the user enables the missing plugin and checks again", async () => {
-		const registry = new FakePluginRegistry(READY_PLUGINS.slice(0, 1));
+		const registry = new FakePluginRegistry(READY_PLUGINS.slice(0, 2));
 		renderScreen(registry);
 		expect(within(itemFor("Templater")).getByText("Not installed")).toBeInTheDocument();
 
