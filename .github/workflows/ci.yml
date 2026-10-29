@@ -40,7 +40,7 @@ jobs:
           bun-version-file: .bun-version
       - run: make install
       - run: make coverage
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: coverage
@@ -58,7 +58,7 @@ jobs:
           bun-version-file: .bun-version
       - run: make install
       - run: make check-bundle
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: plugin-${{ github.sha }}
           path: |
