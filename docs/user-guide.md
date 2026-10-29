@@ -63,27 +63,21 @@ The status bar shows the current block and the time left in it, or the next bloc
 
 ## Time tracking
 
-Clocks use Day Planner's format (0.29 and later): a fenced yaml block on the line right after the task. An entry without `end` is still running.
+A clock entry is a Dataview/Datacore inline field in a list item under the task. An entry without an end time is still running.
 
-````markdown
+```markdown
 - [ ] Write the spec
-    ```yaml
-    planner:
-        log:
-            - start: 2026-10-29 09:05:00
-              end: 2026-10-29 09:50:00
-            - start: 2026-10-29 14:00:00
-    ```
-````
+    - [clock::2026-10-29T09:05--2026-10-29T09:50]
+    - [clock::2026-10-29T14:00--]
+```
 
-Other keys in the block are kept. Older `[clock::2026-10-29T09:05--2026-10-29T09:50]` list items under a task are still read, counted and can be stopped. **Convert old clock entries to YAML** moves them into the yaml block.
+Because these are inline fields, Datacore can query them like any other field.
 
 | Command                                 | What it does                                                  |
 | --------------------------------------- | ------------------------------------------------------------- |
 | Start or stop clock on the current task | Uses the task at the cursor. Starting a clock stops any other |
 | Stop clock                              | Stops the running clock                                       |
 | Open task with running clock            | Jumps to it                                                   |
-| Convert old clock entries to YAML       | Moves `[clock::]` items into each task's yaml block           |
 
 You can also start and stop clocks from the play and stop buttons on timeline blocks. Clocked time shows as a bar beside the blocks and in the status bar. When Obsidian starts, it reminds you about clocks left running. An entry that runs past midnight counts on both days.
 

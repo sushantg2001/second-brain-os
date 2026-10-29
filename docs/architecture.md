@@ -97,7 +97,7 @@ All features share these types, defined in each owning feature's `domain/` and e
 
 - **Period**: `{ granularity: day | week | month | quarter | year, start }`. Owned by `periodic`. Resolves to a note path from per-granularity format, folder and template settings.
 - **Task**: a Markdown task line identified by `path + line + text hash`. Status comes from Tasks. Optional **time block** (`10:00 - 11:30` at the start of the text, Day Planner syntax) and optional scheduled date (Tasks' `⏳`).
-- **Clock entry**: an item in `planner.log` of the fenced yaml block on the line after a task, `{ start: "2026-10-29 10:00:00", end: "2026-10-29 11:15:00" }`, as Day Planner 0.29 writes it. An open entry has no end. Older `[clock::start--end]` list items are read too. Owned by `clocks`.
+- **Clock entry**: a child list item under a task holding a Dataview/Datacore inline field, `[clock::2026-10-29T10:00--2026-10-29T11:15]`. An open entry has no end. Owned by `clocks`.
 - **PPV entities**: notes typed by front matter `type:` with links upward.
     - `pillar`: an area of life you maintain, with no end date.
     - `goal`: a value goal or an outcome goal. Links to a `pillar`.

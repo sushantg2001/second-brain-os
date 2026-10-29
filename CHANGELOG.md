@@ -20,7 +20,7 @@ Second Brain OS replaces Calendar & Periodic Notes 1.x. It is a new plugin id (`
 
 - Rebuilt on React and Bun with a layered architecture (see `docs/architecture.md`).
 - Requires the Datacore, Tasks and Templater plugins. Dataview is not needed.
-- Clocks use Day Planner 0.29's yaml block under the task. Older `[clock::]` items are still read; a command converts them.
+- Clocks are `[clock::start--end]` inline fields under the task, which Dataview and Datacore can query.
 - The month calendar sits above the day planner's timeline, on the same day.
 - Time blocks accept `.` between hours and minutes.
 - Settings are versioned and migrated. Unreadable settings are never overwritten.
