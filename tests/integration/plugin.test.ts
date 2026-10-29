@@ -12,7 +12,7 @@ import { loadPlugin, sleep } from "../fakes/plugin-harness";
 
 describe("plugin lifecycle", () => {
 	it("waits for required plugins before registering features", async () => {
-		const app = await createTestApp({ plugins: READY_PLUGINS.slice(0, 2) });
+		const app = await createTestApp({ plugins: READY_PLUGINS.slice(0, 1) });
 		const plugin = new Plugin(app);
 		const obsidianPlugin = plugin as unknown as ObsidianPlugin;
 		const container = createContainer(obsidianPlugin);

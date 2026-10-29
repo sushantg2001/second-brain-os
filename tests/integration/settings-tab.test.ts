@@ -62,3 +62,47 @@ describe("settings tab", () => {
 		expect(harness.ui.getAllByRole("textbox", { name: "Format" })).toHaveLength(3);
 	});
 });
+
+describe("planner settings", () => {
+	const planner = (harness: Awaited<ReturnType<typeof openSettings>>) =>
+		harness.container.settings.section("planner").store.get();
+
+	it("accepts valid numbers and ignores invalid ones", async () => {
+		const harness = await openSettings();
+		const start = harness.ui.getByRole("textbox", { name: "Day starts at" });
+		fireEvent.input(start, { target: { value: "7" } });
+		await sleep(0);
+		expect(planner(harness).startHour).toBe(7);
+		fireEvent.input(start, { target: { value: "23" } });
+		fireEvent.input(harness.ui.getByRole("textbox", { name: "Snap to minutes" }), {
+			target: { value: "abc" },
+		});
+		fireEvent.input(harness.ui.getByRole("textbox", { name: "Day ends at" }), {
+			target: { value: "5" },
+		});
+		await sleep(0);
+		expect(planner(harness)).toMatchObject({ startHour: 7, endHour: 22, snapMinutes: 15 });
+		fireEvent.input(harness.ui.getByRole("textbox", { name: "Days in multi-day view" }), {
+			target: { value: "5" },
+		});
+		await sleep(0);
+		expect(planner(harness).multiDayCount).toBe(5);
+	});
+
+	it("changes heading and toggles", async () => {
+		const harness = await openSettings();
+		const heading = harness.ui.getByRole("textbox", { name: "Heading for new blocks" });
+		fireEvent.input(heading, { target: { value: "  Schedule " } });
+		fireEvent.input(heading, { target: { value: "   " } });
+		fireEvent.click(harness.ui.getByRole("checkbox", { name: "Notify when a block starts" }));
+		fireEvent.click(
+			harness.ui.getByRole("checkbox", { name: "Show current block in the status bar" }),
+		);
+		await sleep(0);
+		expect(planner(harness)).toMatchObject({
+			heading: "Schedule",
+			notifyOnStart: true,
+			showStatusBar: false,
+		});
+	});
+});

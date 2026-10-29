@@ -1,6 +1,6 @@
 # 1. One plugin, layered slices, React and Bun
 
-Status: accepted, 2026-10-29
+Status: accepted, 2026-10-29. The Dataview part is replaced by ADR 0002.
 
 ## Context
 

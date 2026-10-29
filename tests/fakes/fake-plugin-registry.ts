@@ -32,7 +32,6 @@ export class FakePluginRegistry implements PluginRegistry {
 }
 
 export const READY_PLUGINS: readonly FakePlugin[] = [
-	{ id: "dataview", version: "0.5.68", enabled: true },
 	{ id: "obsidian-tasks-plugin", version: "8.6.0", enabled: true },
 	{ id: "templater-obsidian", version: "2.26.0", enabled: true },
 ];

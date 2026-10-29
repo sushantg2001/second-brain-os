@@ -21,7 +21,7 @@ describe("SetupView", () => {
 		const view = new SetupView(new WorkspaceLeaf(), gate);
 
 		await act(() => view.onOpen());
-		expect(view.contentEl).toHaveTextContent("Dataview");
+		expect(view.contentEl).toHaveTextContent("Templater");
 
 		await act(() => view.onClose());
 	});

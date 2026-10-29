@@ -483,7 +483,10 @@ export class WorkspaceLeaf {
 		if (factory && this.view?.getViewType() !== state.type) {
 			await this.view?.onClose();
 			this.view = factory(this);
+			await this.view.setState(state.state ?? {}, { history: false });
 			await this.view.onOpen();
+		} else if (this.view && state.state) {
+			await this.view.setState(state.state, { history: false });
 		}
 		return Promise.resolve();
 	}

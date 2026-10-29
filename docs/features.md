@@ -4,12 +4,12 @@ Each feature has an ID used in issues, branches and PR titles (`feat(planner): â
 
 ## Setup (`setup`), phase 0, done
 
-| ID    | Feature                                                                                                          | Pri |
-| ----- | ---------------------------------------------------------------------------------------------------------------- | --- |
-| SET-1 | Check that Dataview, Tasks and Templater are installed, enabled and at the minimum version                       | M   |
-| SET-2 | "Required plugins" view with the state of each one and a recheck button; opens on load when something is missing | M   |
-| SET-3 | Features register only after the check passes, without needing a reload                                          | M   |
-| SET-4 | Settings schema with versioned migrations; unreadable settings are never overwritten                             | M   |
+| ID    | Feature                                                                                                           | Pri |
+| ----- | ----------------------------------------------------------------------------------------------------------------- | --- |
+| SET-1 | Check that Tasks and Templater are installed, enabled and at the minimum version (Dataview is optional, ADR 0002) | M   |
+| SET-2 | "Required plugins" view with the state of each one and a recheck button; opens on load when something is missing  | M   |
+| SET-3 | Features register only after the check passes, without needing a reload                                           | M   |
+| SET-4 | Settings schema with versioned migrations; unreadable settings are never overwritten                              | M   |
 
 ## Periodic notes (`periodic`), phase 1, done
 
@@ -34,7 +34,7 @@ Each feature has an ID used in issues, branches and PR titles (`feat(planner): â
 | CAL-6 | Per-day badges: task count, time planned, time clocked                                     | S   |
 | CAL-7 | Keyboard navigation of the grid                                                            | M   |
 
-## Planner (`planner`), phase 2
+## Planner (`planner`), phase 2, done (PLN-9 and PLN-10 later)
 
 | ID     | Feature                                                                                                                                                          | Pri |
 | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- |
@@ -106,7 +106,7 @@ Each feature has an ID used in issues, branches and PR titles (`feat(planner): â
 | ----- | ----------------------------------------------------------------------------- | ------------- | --------------------------------------------- |
 | 0     | Skeleton: React and Bun build, layers, settings, setup gate, CI               | â€”             | done                                          |
 | 1     | Periodic and calendar, ported from 1.x with parity tests                      | 2.0.0-alpha.1 | done (PER-5, PER-6 and CAL-6 data come later) |
-| 2     | Planner timeline (PLN-1 to PLN-5)                                             | alpha.2       | planned                                       |
+| 2     | Planner timeline (PLN-1 to PLN-8)                                             | alpha.2       | done                                          |
 | 3     | Clocks                                                                        | alpha.3       | planned                                       |
 | 4     | PPV model, commands, dashboard and capture                                    | beta.1        | planned                                       |
 | 5     | Rollups and review templates                                                  | beta.2        | planned                                       |

@@ -1,7 +1,9 @@
 import type { Plugin } from "obsidian";
 
-import { registerCalendar } from "../features/calendar";
+import { registerCalendar, type DayBadge } from "../features/calendar";
 import { registerPeriodic } from "../features/periodic";
+import { registerPlanner } from "../features/planner";
+import { formatDuration, select, type IsoDate } from "../shared/kernel";
 import type { Container } from "./container";
 
 /**
@@ -24,6 +26,29 @@ export const FEATURES: readonly FeatureModule[] = [
 			}),
 	},
 	{
+		id: "tasks",
+		register: (plugin, container) => {
+			plugin.register(container.tasks.attach());
+			// Reading every note can take a moment in large vaults, so it waits for the layout.
+			container.app.workspace.onLayoutReady(() => void container.tasks.rebuild());
+		},
+	},
+	{
+		id: "planner",
+		register: (plugin, container) => {
+			registerPlanner(plugin, {
+				app: container.app,
+				planner: container.planner,
+				tasks: container.tasks,
+				periodic: container.periodic,
+				dates: container.dates,
+				workspace: container.workspace,
+				clock: container.clock,
+				notifier: container.notifier,
+			});
+		},
+	},
+	{
 		id: "calendar",
 		register: (plugin, container) => {
 			registerCalendar(plugin, {
@@ -32,6 +57,21 @@ export const FEATURES: readonly FeatureModule[] = [
 				dates: container.dates,
 				workspace: container.workspace,
 				notifier: container.notifier,
+				badges: select(
+					container.planner.plannedByDate,
+					(planned) =>
+						new Map<IsoDate, readonly DayBadge[]>(
+							[...planned].map(([date, minutes]) => [
+								date,
+								[
+									{
+										text: formatDuration(minutes),
+										label: `${formatDuration(minutes)} planned`,
+									},
+								],
+							]),
+						),
+				),
 			});
 		},
 	},
