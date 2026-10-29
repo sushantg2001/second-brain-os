@@ -32,11 +32,18 @@ describe("planRelease", () => {
 		expect(planRelease("1.4.2", ["feat: a", "fix: b", "chore: c"]).version).toBe("2.0.0");
 		expect(planRelease("1.4.2", ["fix: b", "refactor: c"]).version).toBe("1.5.0");
 		expect(planRelease("1.4.2", ["chore: c"]).version).toBe("1.4.3");
-		expect(planRelease("1.4.2", ["refactor: c", "perf: d"]).version).toBe("1.4.3");
+		expect(planRelease("1.4.2", ["refactor: c"]).version).toBe("1.4.3");
 	});
 
 	it("does not release for docs, test and ci", () => {
-		const plan = planRelease("1.4.2", ["docs: a", "test: b", "ci: c", "Merge branch 'x'"]);
+		const plan = planRelease("1.4.2", [
+			"docs: a",
+			"test: b",
+			"ci: c",
+			"perf: d",
+			"build: e",
+			"Merge branch 'x'",
+		]);
 		expect(plan).toEqual({ bump: "none", current: "1.4.2", version: null, notes: "" });
 		expect(planRelease("1.4.2", []).version).toBeNull();
 	});
@@ -75,10 +82,6 @@ describe("release notes", () => {
 				"### Fixes",
 				"",
 				"- crash",
-				"",
-				"### Performance",
-				"",
-				"- faster",
 				"",
 				"### Maintenance",
 				"",

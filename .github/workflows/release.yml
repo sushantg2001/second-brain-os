@@ -1,7 +1,7 @@
 # Versions, tags and publishes the plugin from Conventional Commits on main.
 #
-#   feat -> major, fix -> minor, chore/refactor/perf/build/style/revert -> patch,
-#   docs/test/ci -> no release. The largest bump since the last tag wins.
+#   feat -> major, fix -> minor, chore/refactor -> patch,
+#   anything else (docs, test, ci, ...) -> no release. The largest bump since the last tag wins.
 #
 # The rules live in scripts/release-plan.ts (`make release-plan` shows the next release).
 name: Release
