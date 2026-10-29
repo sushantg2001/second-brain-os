@@ -63,8 +63,74 @@ const PARENT_KEYS: Readonly<Record<PpvType, Partial<Record<PpvType, string>>>> =
 	resource: { project: "project", pillar: "pillar" },
 };
 
+interface ProjectTaskIndex {
+	readonly inputs: readonly unknown[];
+	readonly byProject: Map<string, Task[]>;
+	readonly projectOf: Map<Task, string>;
+}
+
 export class PpvService {
+	#projectTasks: ProjectTaskIndex | null = null;
+
 	constructor(private readonly deps: PpvServiceDeps) {}
+
+	/**
+	 * Which tasks belong to which project, built once per change to tasks or PPV notes. A task
+	 * belongs to the project note it is in, or else to the first project it links to.
+	 */
+	private projectTaskIndex(): ProjectTaskIndex {
+		const inputs = [this.deps.tasks.snapshot.get(), this.deps.index.snapshot.get()];
+		if (
+			this.#projectTasks &&
+			inputs.every((input, index) => input === this.#projectTasks?.inputs[index])
+		) {
+			return this.#projectTasks;
+		}
+		const notes = this.deps.index.snapshot.get().notes;
+		const isProject = (path: string | null): path is string =>
+			path !== null && notes.get(path)?.type === "project";
+		const resolved = new Map<string, string | null>();
+		const resolve = (link: string, source: string): string | null => {
+			const folder = source.includes("/") ? source.slice(0, source.lastIndexOf("/")) : "";
+			const key = `${folder}\u0000${link}`;
+			if (!resolved.has(key)) {
+				resolved.set(key, this.deps.notes.resolveLink(link, source));
+			}
+			return resolved.get(key) ?? null;
+		};
+		const byProject = new Map<string, Task[]>();
+		const projectOf = new Map<Task, string>();
+		const add = (project: string, task: Task): void => {
+			byProject.set(project, [...(byProject.get(project) ?? []), task]);
+		};
+		for (const task of this.deps.tasks.all()) {
+			if (isProject(task.path)) {
+				add(task.path, task);
+				projectOf.set(task, task.path);
+				continue;
+			}
+			let first: string | null = null;
+			const linked = new Set<string>();
+			for (const link of task.fields.links) {
+				const target = resolve(link, task.path);
+				if (isProject(target) && !linked.has(target)) {
+					linked.add(target);
+					first ??= target;
+					add(target, task);
+				}
+			}
+			if (first) {
+				projectOf.set(task, first);
+			}
+		}
+		this.#projectTasks = { inputs, byProject, projectOf };
+		return this.#projectTasks;
+	}
+
+	/** The project a task belongs to, or null. */
+	projectOf(task: Task): string | null {
+		return this.projectTaskIndex().projectOf.get(task) ?? null;
+	}
 
 	get settings(): PpvSettings {
 		return this.deps.settings.get();
@@ -197,19 +263,12 @@ export class PpvService {
 
 	/** Tasks that belong to a project: in its note, or anywhere with a link to it. */
 	projectTasks(projectPath: string): Task[] {
-		const own = [...this.deps.tasks.tasksIn(projectPath)];
-		const linked: Task[] = [];
-		for (const task of this.deps.tasks.all()) {
-			if (
-				task.path !== projectPath &&
-				task.fields.links.some(
-					(link) => this.deps.notes.resolveLink(link, task.path) === projectPath,
-				)
-			) {
-				linked.push(task);
-			}
-		}
-		return [...own, ...linked];
+		const index = this.projectTaskIndex().byProject.get(projectPath) ?? [];
+		// Tasks in the note itself come first, then linked tasks, each in vault order.
+		return [
+			...index.filter((task) => task.path === projectPath),
+			...index.filter((task) => task.path !== projectPath),
+		];
 	}
 
 	nextActions(projectPath: string, limit = 3): Task[] {

@@ -33,16 +33,7 @@ export class Rollups {
 
 	/** The project a task belongs to: the note it is in, or the first project it links to. */
 	projectOf(task: Task): string | null {
-		if (this.deps.index.get(task.path)?.type === "project") {
-			return task.path;
-		}
-		for (const link of task.fields.links) {
-			const target = this.deps.notes.resolveLink(link, task.path);
-			if (target && this.deps.index.get(target)?.type === "project") {
-				return target;
-			}
-		}
-		return null;
+		return this.deps.ppv.projectOf(task);
 	}
 
 	/** The pillar above a note, following parent links. */
