@@ -17,6 +17,8 @@ const MIGRATIONS: Readonly<Record<number, Migration>> = {
 	2: (data) => ({ ...data, version: 3, planner: DEFAULT_SETTINGS.planner }),
 	// 2.0: pillars, pipelines and vaults.
 	3: (data) => ({ ...data, version: 4, ppv: DEFAULT_SETTINGS.ppv }),
+	// 2.0: vault check.
+	4: (data) => ({ ...data, version: 5, lint: DEFAULT_SETTINGS.lint }),
 };
 
 function isRecord(value: unknown): value is RawSettings {

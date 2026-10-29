@@ -1,6 +1,7 @@
 import { moment, type App, type Plugin } from "obsidian";
 
 import { Clocks } from "../features/clocks";
+import { Linter } from "../features/lint";
 import { PeriodicNotes } from "../features/periodic";
 import { Planner } from "../features/planner";
 import { PpvIndex, PpvService } from "../features/ppv";
@@ -47,6 +48,7 @@ export interface Container {
 	readonly ppvIndex: PpvIndex;
 	readonly ppv: PpvService;
 	readonly rollups: Rollups;
+	readonly linter: Linter;
 }
 
 export interface ContainerOverrides {
@@ -87,6 +89,14 @@ export function createContainer(plugin: Plugin, overrides: ContainerOverrides = 
 		clock,
 		formatDate: (date, format) => dates.format(date, format),
 	});
+	const planner = new Planner({
+		tasks,
+		actions: taskActions,
+		periodic,
+		notes,
+		settings: settings.section("planner").store,
+		clock,
+	});
 	return {
 		app,
 		settings,
@@ -100,17 +110,20 @@ export function createContainer(plugin: Plugin, overrides: ContainerOverrides = 
 		periodic,
 		tasks,
 		taskActions,
-		planner: new Planner({
-			tasks,
-			actions: taskActions,
-			periodic,
-			notes,
-			settings: settings.section("planner").store,
-			clock,
-		}),
+		planner,
 		clocks: new Clocks({ tasks, notes, now }),
 		ppvIndex,
 		ppv,
 		rollups: new Rollups({ ppv, index: ppvIndex, tasks, notes, periodic, now }),
+		linter: new Linter({
+			index: ppvIndex,
+			ppv,
+			tasks,
+			planner,
+			periodic,
+			notes,
+			settings: settings.section("lint").store,
+			now,
+		}),
 	};
 }

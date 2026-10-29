@@ -81,7 +81,7 @@ Each feature has an ID used in issues, branches and PR titles (`feat(planner): â
 | ROL-3 | Per period: tasks completed, time clocked by pillar, projects moved (for reviews) | M   |
 | ROL-4 | Optional write-back of `progress` into front matter, off by default               | C   |
 
-## Lint (`lint`), phase 6
+## Lint (`lint`), phase 6, done
 
 | ID    | Feature                                                                                                                                                                          | Pri |
 | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- |
@@ -110,5 +110,5 @@ Each feature has an ID used in issues, branches and PR titles (`feat(planner): â
 | 3     | Clocks                                                                        | alpha.3       | done                                 |
 | 4     | PPV model, commands, dashboard and capture                                    | beta.1        | done                                 |
 | 5     | Rollups and review templates                                                  | beta.2        | done                                 |
-| 6     | Lint                                                                          | rc.1          | planned                              |
+| 6     | Lint                                                                          | rc.1          | done                                 |
 | 7     | S items, performance and accessibility pass, docs, community store submission | 2.0.0         | planned                              |

@@ -1,6 +1,7 @@
 import type { Plugin } from "obsidian";
 
 import { registerCalendar, type DayBadge } from "../features/calendar";
+import { registerLint } from "../features/lint";
 import { registerClocks } from "../features/clocks";
 import { registerPeriodic } from "../features/periodic";
 import { registerPlanner } from "../features/planner";
@@ -102,8 +103,22 @@ export const FEATURES: readonly FeatureModule[] = [
 		},
 	},
 	{
-		id: "rollups",
-		register: (plugin, container) =>
+		id: "lint-and-rollups",
+		register: (plugin, container) => {
+			const sources = [
+				container.tasks.snapshot,
+				container.ppvIndex.snapshot,
+				container.periodic.index,
+				container.now,
+			];
+			const lint = registerLint(plugin, {
+				app: container.app,
+				linter: container.linter,
+				ppv: container.ppv,
+				workspace: container.workspace,
+				notifier: container.notifier,
+				sources: [...sources, container.settings.section("lint").store],
+			});
 			registerRollups(plugin, {
 				rollups: container.rollups,
 				periodic: container.periodic,
@@ -111,13 +126,10 @@ export const FEATURES: readonly FeatureModule[] = [
 				notes: container.notes,
 				workspace: container.workspace,
 				notifier: container.notifier,
-				sources: [
-					container.tasks.snapshot,
-					container.ppvIndex.snapshot,
-					container.periodic.index,
-					container.now,
-				],
-			}),
+				sources,
+				extra: () => lint.summary(),
+			});
+		},
 	},
 	{
 		id: "calendar",

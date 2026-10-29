@@ -683,3 +683,53 @@
 	font-weight: var(--font-normal);
 	padding-right: var(--size-4-4);
 }
+
+/* ---------------------------------------------------------------- vault check */
+
+.sbos-lint {
+	max-width: 48rem;
+}
+
+.sbos-finding-list {
+	list-style: none;
+	margin: var(--size-2-2) 0;
+	padding: 0;
+	display: grid;
+	gap: var(--size-2-2);
+}
+
+.sbos-finding {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--size-2-3);
+}
+
+.sbos-finding--error .sbos-pill {
+	color: var(--text-error);
+}
+
+.sbos-finding--warning .sbos-pill {
+	color: var(--text-warning);
+}
+
+.sbos-preview {
+	border: var(--border-width) solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	padding: var(--size-2-2) var(--size-4-2);
+	font-family: var(--font-monospace);
+	font-size: var(--font-ui-smaller);
+}
+
+.sbos-preview pre {
+	margin: 0;
+	white-space: pre-wrap;
+}
+
+.sbos-preview__before {
+	color: var(--text-error);
+}
+
+.sbos-preview__after {
+	color: var(--text-success);
+}
