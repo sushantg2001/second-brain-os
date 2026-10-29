@@ -20,7 +20,7 @@ A pull request merges only when all of these are true. Items 1 to 4 are automate
 1. **Gates pass:** `make check`, which runs format check, ESLint with layer rules and zero warnings, strict typecheck, tests with coverage thresholds, production build, and the bundle size and load check.
 2. **Tests added** at the levels the issue named. Every acceptance criterion maps to at least one test. A bug fix starts with a failing test.
 3. **Coverage does not drop.** Thresholds in `bunfig.toml` only go up.
-4. **Security checks pass:** dependency review and CodeQL report no new high-severity findings.
+4. **Security checks pass:** dependency review reports no new high-severity advisories.
 5. **Acceptance criteria demonstrated** in a real vault on desktop. For UI or editing changes, also on mobile, or with the mobile emulator (`app.emulateMobile(true)`). A screenshot or GIF goes in the PR.
 6. **No data loss paths.** Writes go through `NoteStore.process`, never overwrite unparsed user content, and are covered by a fixture test.
 7. **Settings migrated.** A schema change bumps `SETTINGS_VERSION` and adds a migration with a test.
