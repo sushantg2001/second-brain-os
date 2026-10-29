@@ -47,7 +47,7 @@ The thresholds in `bunfig.toml` are 90% of lines and 85% of functions in every f
 
 ## Manual acceptance checklist (release)
 
-Use a clean vault with Tasks and Templater at their minimum versions, then again at their latest versions.
+Use a clean vault with Datacore, Tasks and Templater at their minimum versions, then again at their latest versions.
 
 1. Fresh install: the setup view lists missing plugins. Enabling them unlocks features without a reload.
 2. Periodic: create and open each period. Templates render. Week 53 and the year boundary work.

@@ -14,7 +14,7 @@ The plugin stores everything as plain Markdown and front matter. Removing it lea
 
 - **One plugin, one settings tab, one model.** A task scheduled in the planner is the same task that rolls up into a project and appears in the weekly review.
 - **Markdown is the database.** No hidden store. Any derived data (indexes, rollups) can be rebuilt from the vault.
-- **Lean on proven plugins.** Tasks owns task statuses and toggling (including recurrence), Templater renders templates. The setup gate (`src/features/setup`) blocks features until both are installed, enabled and new enough. The plugin keeps its own task index (ADR 0002), so Dataview is optional.
+- **Lean on proven plugins.** Tasks owns task statuses and toggling (including recurrence), Templater renders templates. Datacore is required for queries over the notes the plugin writes. The setup gate (`src/features/setup`) blocks features until all three are installed, enabled and new enough. The plugin keeps its own task index (ADR 0002). Dataview is not used (ADR 0003).
 - **Mobile works.** `isDesktopOnly: false`, so no Node or Electron APIs at runtime. Lint blocks them.
 - **Small and fast.** `main.js` budget is 400 KB (`scripts/check-bundle.ts`). Plugin load stays under 50 ms of our own work. Index work runs after `onLayoutReady`.
 
@@ -81,9 +81,9 @@ Each feature declares what it needs from the outside world as interfaces in `app
 | ---------- | ---------------------------------------------------------------------- | ------------------------------------- |
 | `setup`    | Required-plugin check and setup view                                   | kernel                                |
 | `periodic` | Periods, note paths, templates, the index of periodic notes            | kernel                                |
-| `calendar` | Month view, jump-to-date                                               | periodic                              |
+| `calendar` | Month view, jump-to-date (also shown inside the day planner)           | periodic                              |
 | `tasks`    | Task parsing, verified line edits, task index, done toggle             | kernel                                |
-| `planner`  | Day plans, time-block edits, timeline, carry-over                      | periodic, tasks                       |
+| `planner`  | Day plans, time-block edits, timeline with the calendar, carry-over    | calendar, periodic, tasks             |
 | `clocks`   | Clock entries, start and stop, clocked time                            | tasks                                 |
 | `ppv`      | PPV notes and tree, creation, status, capture, dashboard, `sbos` block | periodic, tasks                       |
 | `rollups`  | Project, goal, pillar and period rollups, `sbos-review` block          | clocks, periodic, ppv, tasks          |
@@ -97,7 +97,7 @@ All features share these types, defined in each owning feature's `domain/` and e
 
 - **Period**: `{ granularity: day | week | month | quarter | year, start }`. Owned by `periodic`. Resolves to a note path from per-granularity format, folder and template settings.
 - **Task**: a Markdown task line identified by `path + line + text hash`. Status comes from Tasks. Optional **time block** (`10:00 - 11:30` at the start of the text, Day Planner syntax) and optional scheduled date (Tasks' `⏳`).
-- **Clock entry**: a child list item under a task, `[clock::2026-10-29T10:00--2026-10-29T11:15]`. An open entry has no end. Owned by `clocks`.
+- **Clock entry**: an item in `planner.log` of the fenced yaml block on the line after a task, `{ start: "2026-10-29 10:00:00", end: "2026-10-29 11:15:00" }`, as Day Planner 0.29 writes it. An open entry has no end. Older `[clock::start--end]` list items are read too. Owned by `clocks`.
 - **PPV entities**: notes typed by front matter `type:` with links upward.
     - `pillar`: an area of life you maintain, with no end date.
     - `goal`: a value goal or an outcome goal. Links to a `pillar`.
