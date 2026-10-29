@@ -36,7 +36,7 @@ jobs:
       version: ${{ steps.plan.outputs.version }}
       bump: ${{ steps.plan.outputs.bump }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: oven-sh/setup-bun@v2
@@ -74,7 +74,7 @@ jobs:
     env:
       VERSION: ${{ needs.plan.outputs.version }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           # A token that may push to a protected main; falls back to the workflow token.
