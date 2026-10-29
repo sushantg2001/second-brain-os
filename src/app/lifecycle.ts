@@ -3,6 +3,7 @@ import { Notice, type Plugin } from "obsidian";
 import { SetupView, VIEW_TYPE_SETUP } from "../features/setup";
 import type { Container } from "./container";
 import { FEATURES, type FeatureModule } from "./features";
+import { SecondBrainSettingTab } from "./settings-tab";
 
 async function revealSetupView(plugin: Plugin): Promise<void> {
 	const { workspace } = plugin.app;
@@ -28,6 +29,7 @@ export async function startPlugin(
 		);
 	}
 
+	plugin.addSettingTab(new SecondBrainSettingTab(plugin, container));
 	plugin.registerView(VIEW_TYPE_SETUP, (leaf) => new SetupView(leaf, container.dependencyGate));
 	plugin.addCommand({
 		id: "show-required-plugins",

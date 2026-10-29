@@ -11,7 +11,7 @@ Each feature has an ID used in issues, branches and PR titles (`feat(planner): â
 | SET-3 | Features register only after the check passes, without needing a reload                                          | M   |
 | SET-4 | Settings schema with versioned migrations; unreadable settings are never overwritten                             | M   |
 
-## Periodic notes (`periodic`), phase 1
+## Periodic notes (`periodic`), phase 1, done
 
 | ID    | Feature                                                                                                         | Pri |
 | ----- | --------------------------------------------------------------------------------------------------------------- | --- |
@@ -22,7 +22,7 @@ Each feature has an ID used in issues, branches and PR titles (`feat(planner): â
 | PER-5 | Import settings from an installed Periodic Notes or Calendar plugin                                             | S   |
 | PER-6 | Review templates per period (weekly, monthly, quarterly, yearly) that embed rollups and lint findings           | S   |
 
-## Calendar (`calendar`), phase 1
+## Calendar (`calendar`), phase 1, done
 
 | ID    | Feature                                                                                    | Pri |
 | ----- | ------------------------------------------------------------------------------------------ | --- |
@@ -102,13 +102,13 @@ Each feature has an ID used in issues, branches and PR titles (`feat(planner): â
 
 ## Roadmap
 
-| Phase | Scope                                                                         | Release       |
-| ----- | ----------------------------------------------------------------------------- | ------------- |
-| 0     | Skeleton: React and Bun build, layers, settings, setup gate, CI               | done          |
-| 1     | Periodic and calendar, ported from 1.x with parity tests                      | 2.0.0-alpha.1 |
-| 2     | Planner timeline (PLN-1 to PLN-5)                                             | alpha.2       |
-| 3     | Clocks                                                                        | alpha.3       |
-| 4     | PPV model, commands, dashboard and capture                                    | beta.1        |
-| 5     | Rollups and review templates                                                  | beta.2        |
-| 6     | Lint                                                                          | rc.1          |
-| 7     | S items, performance and accessibility pass, docs, community store submission | 2.0.0         |
+| Phase | Scope                                                                         | Release       | Status                                        |
+| ----- | ----------------------------------------------------------------------------- | ------------- | --------------------------------------------- |
+| 0     | Skeleton: React and Bun build, layers, settings, setup gate, CI               | â€”             | done                                          |
+| 1     | Periodic and calendar, ported from 1.x with parity tests                      | 2.0.0-alpha.1 | done (PER-5, PER-6 and CAL-6 data come later) |
+| 2     | Planner timeline (PLN-1 to PLN-5)                                             | alpha.2       | planned                                       |
+| 3     | Clocks                                                                        | alpha.3       | planned                                       |
+| 4     | PPV model, commands, dashboard and capture                                    | beta.1        | planned                                       |
+| 5     | Rollups and review templates                                                  | beta.2        | planned                                       |
+| 6     | Lint                                                                          | rc.1          | planned                                       |
+| 7     | S items, performance and accessibility pass, docs, community store submission | 2.0.0         | planned                                       |

@@ -64,3 +64,165 @@
 	color: var(--text-muted);
 	font-size: var(--font-ui-small);
 }
+
+/* ---------------------------------------------------------------- modal */
+
+.sbos-confirm .modal-button-container {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--size-4-2);
+}
+
+/* ---------------------------------------------------------------- calendar */
+
+.sbos-calendar {
+	--sbos-day-size: 2.2em;
+	font-size: var(--font-ui-small);
+}
+
+.sbos-calendar__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--size-4-2);
+	margin-bottom: var(--size-4-2);
+}
+
+.sbos-calendar__title {
+	margin: 0;
+	font-size: var(--font-ui-medium);
+}
+
+.sbos-calendar__title-button {
+	background: none;
+	box-shadow: none;
+	padding: 0 var(--size-2-1);
+	font: inherit;
+	color: var(--text-normal);
+}
+
+.sbos-calendar__title-button:hover {
+	color: var(--text-accent);
+}
+
+.sbos-calendar__nav {
+	display: flex;
+	gap: var(--size-2-1);
+}
+
+.sbos-calendar__nav button {
+	padding: var(--size-2-1) var(--size-2-3);
+}
+
+.sbos-calendar__grid {
+	width: 100%;
+	border-collapse: collapse;
+	table-layout: fixed;
+}
+
+.sbos-calendar__grid th {
+	color: var(--text-muted);
+	font-weight: var(--font-normal);
+	font-size: var(--font-ui-smaller);
+	padding-bottom: var(--size-2-2);
+}
+
+.sbos-calendar__grid td {
+	padding: 1px;
+	text-align: center;
+}
+
+.sbos-calendar__day,
+.sbos-calendar__week-button {
+	width: 100%;
+	min-height: var(--sbos-day-size);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 1px;
+	padding: 2px 0;
+	background: none;
+	box-shadow: none;
+	border-radius: var(--radius-s);
+	color: var(--text-normal);
+	font: inherit;
+}
+
+.sbos-calendar__day:hover,
+.sbos-calendar__week-button:hover {
+	background-color: var(--background-modifier-hover);
+}
+
+.sbos-calendar__day:focus-visible,
+.sbos-calendar__week-button:focus-visible {
+	box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+}
+
+.sbos-calendar__day.is-other-month {
+	color: var(--text-faint);
+}
+
+.sbos-calendar__day.is-today {
+	color: var(--text-accent);
+	font-weight: var(--font-bold);
+}
+
+.sbos-calendar__day.is-active {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+.sbos-calendar__week,
+.sbos-calendar__week-button {
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+}
+
+.sbos-calendar__week-button.has-note {
+	color: var(--text-accent);
+}
+
+.sbos-calendar__marks {
+	display: flex;
+	gap: 2px;
+	align-items: center;
+	min-height: 6px;
+}
+
+.sbos-calendar__dot {
+	width: 4px;
+	height: 4px;
+	border-radius: 50%;
+	background-color: currentColor;
+	opacity: 0.7;
+}
+
+.sbos-calendar__badge {
+	font-size: 0.7em;
+	line-height: 1;
+	color: var(--text-muted);
+}
+
+.sbos-calendar__day.is-active .sbos-calendar__badge {
+	color: var(--text-on-accent);
+}
+
+/* ---------------------------------------------------------------- jump to date */
+
+.sbos-jump__year {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-2);
+	margin-bottom: var(--size-4-3);
+}
+
+.sbos-jump__year input {
+	width: 6em;
+}
+
+.sbos-jump__months {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: var(--size-4-2);
+}

@@ -132,6 +132,15 @@ export default defineConfig(
 		},
 	},
 	{
+		// The declarative settings API needs Obsidian 1.13; minAppVersion is 1.7.2, so the tab
+		// must keep using display(). Revisit when minAppVersion reaches 1.13.
+		files: ["src/app/settings-tab.ts"],
+		rules: {
+			"obsidianmd/settings-tab/prefer-setting-definitions": "off",
+			"@typescript-eslint/no-deprecated": "off",
+		},
+	},
+	{
 		files: ["tests/**", "scripts/**", "eslint.config.mts"],
 		rules: {
 			"obsidianmd/prefer-create-el": "off",
@@ -142,8 +151,13 @@ export default defineConfig(
 			"obsidianmd/rule-custom-message": "off",
 			"@typescript-eslint/no-restricted-imports": "off",
 			"obsidianmd/prefer-window-timers": "off",
+			// Tests drive the mock vault directly.
+			"obsidianmd/prefer-file-manager-trash-file": "off",
 			"no-console": "off",
-			"@typescript-eslint/no-unused-vars": ["warn", { varsIgnorePattern: "^_" }],
+			"@typescript-eslint/no-unused-vars": [
+				"warn",
+				{ varsIgnorePattern: "^_", argsIgnorePattern: "^_" },
+			],
 		},
 	},
 );

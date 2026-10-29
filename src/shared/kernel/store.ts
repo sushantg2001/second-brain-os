@@ -40,3 +40,34 @@ export class Store<T> implements ReadableStore<T> {
 		this.set(updater(this.#value));
 	}
 }
+
+/**
+ * A read-only view of part of a store. Listeners run only when the selected value changes
+ * (by Object.is), and `get` is memoised on the source value so React sees a stable snapshot.
+ */
+export function select<T, S>(
+	source: ReadableStore<T>,
+	selector: (value: T) => S,
+): ReadableStore<S> {
+	let lastSource = source.get();
+	let lastValue = selector(lastSource);
+	const get = (): S => {
+		const current = source.get();
+		if (!Object.is(current, lastSource)) {
+			lastSource = current;
+			lastValue = selector(current);
+		}
+		return lastValue;
+	};
+	const subscribe = (listener: Listener): (() => void) => {
+		let previous = get();
+		return source.subscribe(() => {
+			const next = get();
+			if (!Object.is(next, previous)) {
+				previous = next;
+				listener();
+			}
+		});
+	};
+	return { get, subscribe };
+}
