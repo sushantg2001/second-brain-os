@@ -171,6 +171,8 @@ describe("clocks", () => {
 		const harness = await setup({
 			"2026-10-29.md": `- [ ] Write\n${clockBlock({ start: "2026-10-29 09:00:00", end: "2026-10-29 10:30:00" })}\n`,
 		});
+		harness.plugin.runCommand("open-calendar");
+		await act(() => sleep(0));
 		const leaf = harness.app.workspace.getLeavesOfType("sbos-calendar")[0];
 		document.body.append(leaf?.view?.containerEl ?? document.createElement("div"));
 		await act(() => sleep(0));

@@ -26,7 +26,12 @@ function isSplitClick(event: MouseEvent): boolean {
 	return event.ctrlKey || event.metaKey;
 }
 
-export function Calendar(): ReactNode {
+export interface CalendarProps {
+	/** Inside another view that has its own "Today" button, such as the day planner. */
+	readonly embedded?: boolean;
+}
+
+export function Calendar({ embedded = false }: CalendarProps): ReactNode {
 	const services = CalendarContext.useService();
 	const { periodic, dates, state, activate, openJumpToDate } = services;
 	const snapshot = useStore(state.snapshot);
@@ -113,9 +118,11 @@ export function Calendar(): ReactNode {
 					>
 						<Icon name="chevron-left" />
 					</button>
-					<button type="button" onClick={() => state.show(today)}>
-						Today
-					</button>
+					{!embedded && (
+						<button type="button" onClick={() => state.show(today)}>
+							Today
+						</button>
+					)}
 					<button
 						type="button"
 						aria-label="Next month"

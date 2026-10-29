@@ -5,7 +5,10 @@ import userEvent from "@testing-library/user-event";
 import { Modal } from "../mocks/obsidian";
 import { loadPlugin, sleep } from "../fakes/plugin-harness";
 
+/** Opens the standalone calendar view (the day planner shows its own calendar by default). */
 async function calendarIn(harness: Awaited<ReturnType<typeof loadPlugin>>) {
+	harness.plugin.runCommand("open-calendar");
+	await act(() => sleep(0));
 	const leaf = harness.app.workspace.getLeavesOfType("sbos-calendar")[0];
 	if (!leaf?.view) {
 		throw new Error("Calendar view is not open");
@@ -100,6 +103,7 @@ describe("calendar module", () => {
 describe("CalendarView", () => {
 	it("describes itself to the workspace", async () => {
 		const harness = await loadPlugin();
+		await calendarIn(harness);
 		const view = harness.app.workspace.getLeavesOfType("sbos-calendar")[0]?.view;
 		expect(view?.getViewType()).toBe("sbos-calendar");
 		expect(view?.getDisplayText()).toBe("Calendar");

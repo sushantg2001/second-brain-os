@@ -6,6 +6,7 @@ import type {
 	ReadableStore,
 } from "../../../shared/kernel";
 import { createServiceContext } from "../../../shared/react";
+import type { CalendarServices } from "../../calendar";
 import type { Planner } from "../application/planner";
 import type { PlannedTask } from "../domain/day-plan";
 
@@ -34,6 +35,12 @@ export interface PlannerServices {
 	readonly newBlock: (date: IsoDate, start: Minutes, end: Minutes) => void;
 	readonly report: (error: Error) => void;
 	readonly clocks?: PlannerClockControls;
+	/** The month calendar, shown above a single-day timeline and kept on the same day. */
+	readonly calendar?: CalendarServices;
+	/** Opens (or creates) a day's daily note. */
+	readonly openDay?: (date: IsoDate, split: boolean) => void;
+	/** Saves whether the calendar shows above the timeline. */
+	readonly setShowCalendar?: (show: boolean) => void;
 }
 
 export const PlannerContext = createServiceContext<PlannerServices>("PlannerServices");

@@ -22,6 +22,8 @@ export interface CalendarModuleDeps {
 	readonly notifier: Notifier;
 	readonly badges?: ReadableStore<ReadonlyMap<IsoDate, readonly DayBadge[]>>;
 	readonly tick?: ReadableStore<unknown>;
+	/** Open the calendar in the sidebar on start. Off when the day planner shows it instead. */
+	readonly openOnStart?: boolean;
 }
 
 async function revealCalendar(app: App): Promise<void> {
@@ -105,7 +107,10 @@ export function registerCalendar(plugin: Plugin, deps: CalendarModuleDeps): Cale
 		},
 	});
 	app.workspace.onLayoutReady(() => {
-		if (app.workspace.getLeavesOfType(VIEW_TYPE_CALENDAR).length === 0) {
+		if (
+			deps.openOnStart !== false &&
+			app.workspace.getLeavesOfType(VIEW_TYPE_CALENDAR).length === 0
+		) {
 			void app.workspace.getRightLeaf(false)?.setViewState({ type: VIEW_TYPE_CALENDAR });
 		}
 	});

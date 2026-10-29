@@ -57,34 +57,6 @@ export const FEATURES: readonly FeatureModule[] = [
 			}),
 	},
 	{
-		id: "planner",
-		register: (plugin, container) => {
-			const { clocks, notifier } = container;
-			registerPlanner(plugin, {
-				app: container.app,
-				planner: container.planner,
-				tasks: container.tasks,
-				periodic: container.periodic,
-				dates: container.dates,
-				workspace: container.workspace,
-				clock: container.clock,
-				now: container.now,
-				notifier: container.notifier,
-				clocks: {
-					isRunning: (task) => clocks.isRunning(task),
-					toggle: (task) =>
-						void clocks.toggle(task).then((result) => {
-							if (!result.ok) {
-								notifier.notify(result.error.message);
-							}
-						}),
-					rangesOn: (date) => clocks.rangesOn(date),
-					minutesOn: (date) => clocks.minutesOn(date),
-				},
-			});
-		},
-	},
-	{
 		id: "ppv",
 		register: (plugin, container) => {
 			const { rollups } = container;
@@ -132,16 +104,46 @@ export const FEATURES: readonly FeatureModule[] = [
 		},
 	},
 	{
-		id: "calendar",
+		// The calendar sits above the day planner's timeline, on the same day.
+		id: "planner-and-calendar",
 		register: (plugin, container) => {
-			registerCalendar(plugin, {
+			const { clocks, notifier } = container;
+			const calendar = registerCalendar(plugin, {
 				app: container.app,
 				periodic: container.periodic,
 				dates: container.dates,
 				workspace: container.workspace,
-				notifier: container.notifier,
+				notifier,
 				badges: dayBadges(plugin, container),
 				tick: container.now,
+				openOnStart: false,
+			});
+			registerPlanner(plugin, {
+				app: container.app,
+				planner: container.planner,
+				tasks: container.tasks,
+				periodic: container.periodic,
+				dates: container.dates,
+				workspace: container.workspace,
+				clock: container.clock,
+				now: container.now,
+				notifier,
+				calendar,
+				setShowCalendar: (show) =>
+					void container.settings
+						.section("planner")
+						.update((settings) => ({ ...settings, showCalendar: show })),
+				clocks: {
+					isRunning: (task) => clocks.isRunning(task),
+					toggle: (task) =>
+						void clocks.toggle(task).then((result) => {
+							if (!result.ok) {
+								notifier.notify(result.error.message);
+							}
+						}),
+					rangesOn: (date) => clocks.rangesOn(date),
+					minutesOn: (date) => clocks.minutesOn(date),
+				},
 			});
 		},
 	},

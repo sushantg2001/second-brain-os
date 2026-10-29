@@ -2,6 +2,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 
 import { addDays, formatDuration, formatTime, Store, type IsoDate } from "../../../shared/kernel";
 import { Icon, useStore } from "../../../shared/react";
+import { Calendar, CalendarContext, type CalendarServices } from "../../calendar";
 import { PlannerContext } from "./services";
 import { TASK_DRAG_TYPE, TimelineDay } from "./timeline-day";
 
@@ -17,6 +18,41 @@ export class TimelineState extends Store<TimelineRange> {
 	}
 }
 
+/**
+ * Keeps a single-day timeline and the calendar on the same day: picking a day in the calendar
+ * shows its plan, and moving the timeline moves the calendar.
+ */
+function useLinkedCalendar(
+	state: TimelineState,
+	calendar: CalendarServices | undefined,
+	active: boolean,
+): void {
+	useEffect(() => {
+		if (!calendar || !active) {
+			return;
+		}
+		const fromCalendar = (): void => {
+			const focused = calendar.state.snapshot.get().focused;
+			if (state.get().date !== focused) {
+				state.update((range) => ({ ...range, date: focused }));
+			}
+		};
+		const fromTimeline = (): void => {
+			const { date } = state.get();
+			if (calendar.state.snapshot.get().focused !== date) {
+				calendar.state.show(date);
+			}
+		};
+		fromTimeline();
+		const offCalendar = calendar.state.snapshot.subscribe(fromCalendar);
+		const offTimeline = state.subscribe(fromTimeline);
+		return () => {
+			offCalendar();
+			offTimeline();
+		};
+	}, [state, calendar, active]);
+}
+
 export function Timeline({ state }: { readonly state: TimelineState }): ReactNode {
 	const services = PlannerContext.useService();
 	const { planner, dates } = services;
@@ -27,6 +63,21 @@ export function Timeline({ state }: { readonly state: TimelineState }): ReactNod
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const days = Array.from({ length: range.days }, (_, index) => addDays(range.date, index));
 	const firstPlan = planner.plan(range.date);
+	const withCalendar = range.days === 1 && services.calendar !== undefined;
+	useLinkedCalendar(state, services.calendar, withCalendar);
+	const dayTitle = (date: IsoDate, text: string, className: string): ReactNode =>
+		services.openDay ? (
+			<button
+				type="button"
+				className={`sbos-link ${className}`}
+				aria-label={`Open daily note for ${dates.format(date, "dddd, MMMM D")}`}
+				onClick={(event) => services.openDay?.(date, event.ctrlKey || event.metaKey)}
+			>
+				{text}
+			</button>
+		) : (
+			text
+		);
 
 	// Scroll so the current time, or the first block, is in view when the view opens.
 	useEffect(() => {
@@ -62,8 +113,29 @@ export function Timeline({ state }: { readonly state: TimelineState }): ReactNod
 
 	return (
 		<div className="sbos-timeline">
+			{withCalendar && services.calendar && (
+				<div className="sbos-timeline__calendar">
+					{settings.showCalendar && (
+						<CalendarContext.Provider value={services.calendar}>
+							<Calendar embedded />
+						</CalendarContext.Provider>
+					)}
+					<button
+						type="button"
+						className="sbos-timeline__calendar-toggle"
+						aria-expanded={settings.showCalendar}
+						onClick={() => services.setShowCalendar?.(!settings.showCalendar)}
+					>
+						{settings.showCalendar ? "Hide calendar" : "Show calendar"}
+					</button>
+				</div>
+			)}
 			<div className="sbos-timeline__toolbar">
-				<h3 className="sbos-timeline__title">{title}</h3>
+				<h3 className="sbos-timeline__title">
+					{range.days === 1
+						? dayTitle(range.date, title, "sbos-timeline__title-button")
+						: title}
+				</h3>
 				<div className="sbos-timeline__nav">
 					<button
 						type="button"
@@ -105,7 +177,7 @@ export function Timeline({ state }: { readonly state: TimelineState }): ReactNod
 							key={date}
 							className={`sbos-timeline__day-header${date === now.date ? " is-today" : ""}`}
 						>
-							{dates.format(date, "ddd D")}
+							{dayTitle(date, dates.format(date, "ddd D"), "sbos-timeline__day-link")}
 							<span className="sbos-timeline__total">
 								{formatDuration(planner.plan(date).plannedMinutes)}
 							</span>

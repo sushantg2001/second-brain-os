@@ -10,7 +10,7 @@ import { DEFAULT_LINT_SETTINGS, type LintSettings } from "../../features/lint";
 import { DEFAULT_PLANNER_SETTINGS, type PlannerSettings } from "../../features/planner";
 import { CAPTURE_TARGETS, DEFAULT_PPV_SETTINGS, type PpvSettings } from "../../features/ppv";
 
-export const SETTINGS_VERSION = 5;
+export const SETTINGS_VERSION = 6;
 
 const periodicConfig = z.object({
 	enabled: z.boolean(),
@@ -42,6 +42,7 @@ const planner = z.object({
 	notifyOnStart: z.boolean(),
 	showStatusBar: z.boolean(),
 	multiDayCount: z.number(),
+	showCalendar: z.boolean(),
 });
 
 const byPpvType = z.object({

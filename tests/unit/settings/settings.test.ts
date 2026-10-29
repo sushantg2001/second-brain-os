@@ -39,6 +39,17 @@ describe("migrateSettings", () => {
 		}
 	});
 
+	it("adds the planner calendar switch to version 5 settings", () => {
+		const v5 = {
+			...structuredClone(DEFAULT_SETTINGS),
+			version: 5,
+			planner: { ...DEFAULT_SETTINGS.planner },
+		} as Record<string, unknown>;
+		delete (v5.planner as Record<string, unknown>).showCalendar;
+		const outcome = migrateSettings(v5);
+		expect(outcome.ok && outcome.value.settings.planner.showCalendar).toBe(true);
+	});
+
 	it("keeps current data unchanged", () => {
 		const outcome = migrateSettings(structuredClone(DEFAULT_SETTINGS));
 		expect(outcome.ok && outcome.value.changed).toBe(false);
