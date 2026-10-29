@@ -27,6 +27,7 @@ Pick an issue labelled `ready`, or open one with the templates. The [Definition 
 3. Add tests at the levels in [docs/testing.md](docs/testing.md). A bug fix starts with a failing test.
 4. Run `make check`. It runs the same gates as CI.
 5. Open a pull request with a Conventional Commits title (`feat(planner): …`); CI checks it and the branch name. The title decides the next version: `feat` is major, `fix` minor, `chore`/`refactor` patch, and anything else (`docs`, `test`, `ci`, …) releases nothing. Complete the checklist, which is the [Definition of Done](docs/definition-of-ready-and-done.md#definition-of-done).
+6. Releases are cut by a maintainer with `make release`, which signs the version commit and tag. Contributors do not tag; see [docs/sdlc.md](docs/sdlc.md#6-release).
 
 ## Code style
 

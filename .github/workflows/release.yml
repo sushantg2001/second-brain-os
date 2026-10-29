@@ -1,4 +1,8 @@
-# Versions, tags and publishes the plugin from Conventional Commits on main.
+# Publishes a release when a signed version tag is pushed. It never writes to main or to tags.
+#
+# `main` and every tag only accept hardware-key signatures, so the version commit and the tag
+# are made on a maintainer's machine with `make release` and pushed there. This workflow checks
+# that tag, reruns CI on it, and publishes the GitHub release.
 #
 #   feat -> major, fix -> minor, chore/refactor -> patch,
 #   anything else (docs, test, ci, ...) -> no release. The largest bump since the last tag wins.
@@ -9,32 +13,24 @@ name: Release
 on:
   push:
     branches: [main]
-  workflow_dispatch:
-    inputs:
-      bump:
-        description: Bump to apply, or auto to read it from commits
-        type: choice
-        options: [auto, major, minor, patch]
-        default: auto
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+      - "[0-9]+.[0-9]+.[0-9]+-*"
 
 permissions:
   contents: read
 
 concurrency:
-  group: release
+  group: release-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
+  # A push to main only reports what `make release` would publish.
   plan:
     name: Plan release
-    # The pipeline's own version commit must not start another release.
-    if: ${{ !startsWith(github.event.head_commit.message, 'chore(release):') }}
+    if: ${{ github.ref_type == 'branch' && !startsWith(github.event.head_commit.message, 'chore(release):') }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    outputs:
-      release: ${{ steps.plan.outputs.release }}
-      version: ${{ steps.plan.outputs.version }}
-      bump: ${{ steps.plan.outputs.bump }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -43,28 +39,58 @@ jobs:
         with:
           bun-version-file: .bun-version
       - id: plan
-        run: bun scripts/release-plan.ts --bump "${{ inputs.bump || 'auto' }}"
+        run: bun scripts/release-plan.ts
       - name: Summary
         run: |
           if [ "${{ steps.plan.outputs.release }}" = "true" ]; then
-            echo "Releasing ${{ steps.plan.outputs.version }} (${{ steps.plan.outputs.bump }})" >> "$GITHUB_STEP_SUMMARY"
+            echo "Next release: ${{ steps.plan.outputs.version }} (${{ steps.plan.outputs.bump }}). Cut it on your machine with \`make release\`." >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "No release: only docs, test or ci changes since the last tag." >> "$GITHUB_STEP_SUMMARY"
+            echo "No release pending: only docs, test or ci changes since the last tag." >> "$GITHUB_STEP_SUMMARY"
           fi
+
+  check:
+    name: Check tag
+    if: ${{ github.ref_type == 'tag' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      TAG: ${{ github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+      - name: Tag is annotated and signed
+        run: |
+          read -r type sha < <(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" --jq '"\(.object.type) \(.object.sha)"')
+          [ "$type" = "tag" ] || { echo "::error::$TAG is not an annotated tag. Create it with git tag -s."; exit 1; }
+          [ "$(gh api "repos/$GITHUB_REPOSITORY/git/tags/$sha" --jq .verification.verified)" = "true" ] \
+            || { echo "::error::The signature on tag $TAG is not verified."; exit 1; }
+      - name: Tagged commit is signed and on main
+        run: |
+          commit="$(git rev-parse "$TAG^{commit}")"
+          [ "$(gh api "repos/$GITHUB_REPOSITORY/commits/$commit" --jq .commit.verification.verified)" = "true" ] \
+            || { echo "::error::The signature on commit $commit is not verified."; exit 1; }
+          git merge-base --is-ancestor "$commit" origin/main \
+            || { echo "::error::$TAG is not on main."; exit 1; }
+      - name: Tag matches version files and changelog
+        run: bun scripts/release-check.ts "$TAG"
 
   verify:
     name: Verify
-    needs: plan
-    if: needs.plan.outputs.release == 'true'
+    needs: check
     # A called workflow may not ask for more than this; ci.yml's dependency review job asks for these.
     permissions:
       contents: read
       pull-requests: write
     uses: ./.github/workflows/ci.yml
 
-  release:
-    name: Tag and publish
-    needs: [plan, verify]
+  publish:
+    name: Publish
+    needs: [check, verify]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -72,36 +98,17 @@ jobs:
       id-token: write
       attestations: write
     env:
-      VERSION: ${{ needs.plan.outputs.version }}
+      VERSION: ${{ github.ref_name }}
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-          # A token that may push to a protected main; falls back to the workflow token.
-          token: ${{ secrets.RELEASE_TOKEN || github.token }}
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version-file: .bun-version
       - run: make install
-
-      - name: Update version files and changelog
-        run: |
-          bun scripts/version.ts "$VERSION"
-          bun scripts/release-plan.ts --bump "${{ needs.plan.outputs.bump }}" --changelog
-          bunx prettier --write CHANGELOG.md package.json manifest.json versions.json
-
+      - name: Release notes
+        run: bun scripts/release-check.ts "$VERSION"
       - name: Build
         run: make check-bundle
-
-      - name: Commit and tag
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package.json manifest.json versions.json CHANGELOG.md
-          git commit -m "chore(release): $VERSION [skip ci]"
-          git tag -a "$VERSION" -m "$VERSION"
-          git push origin HEAD:main
-          git push origin "$VERSION"
 
       - uses: actions/attest-build-provenance@v3
         with:
