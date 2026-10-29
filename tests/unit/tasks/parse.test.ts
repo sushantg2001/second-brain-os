@@ -118,6 +118,46 @@ describe("time blocks", () => {
 		});
 	});
 
+	it("keeps a title that starts with am or pm", () => {
+		expect(parseTimeBlock("09:00 - 10:00 PM review")).toEqual({
+			start: 540,
+			end: 600,
+			rest: "PM review",
+			malformed: false,
+		});
+		expect(parseTimeBlock("00:00 - 00:01 Am")).toEqual({
+			start: 0,
+			end: 1,
+			rest: "Am",
+			malformed: false,
+		});
+		expect(parseTimeBlock("10:00 pm sync")).toEqual({
+			start: 600,
+			end: null,
+			rest: "pm sync",
+			malformed: false,
+		});
+		expect(parseTimeBlock("9:00 am - 10:30 am Standup")).toEqual({
+			start: 540,
+			end: 630,
+			rest: "Standup",
+			malformed: false,
+		});
+		expect(parseTimeBlock("9:00 PM")).toEqual({
+			start: 1260,
+			end: null,
+			rest: "",
+			malformed: false,
+		});
+		expect(parseTimeBlock("12:30am-1:00am Late")).toEqual({
+			start: 30,
+			end: 60,
+			rest: "Late",
+			malformed: false,
+		});
+		expect(parseTimeBlock("0:30 am - 1:00 Odd")?.start).toBe(30);
+	});
+
 	it("flags an end before the start", () => {
 		expect(parseTimeBlock("10:00 - 09:00 Oops")).toEqual({
 			start: 600,

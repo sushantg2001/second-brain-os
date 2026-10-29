@@ -11,27 +11,69 @@ export interface TimeBlock {
 	readonly malformed: boolean;
 }
 
-const TIME = "(\\d{1,2}:\\d{2}(?:\\s?[ap]m)?)";
-const BLOCK = new RegExp(`^${TIME}(?:\\s*[-–—]\\s*${TIME})?(?:\\s+(.*))?$`, "i");
+const CLOCK = /^(\d{1,2}:\d{2})(?:(\s?)([ap]m)(?![\p{L}\p{N}]))?/iu;
+const RANGE = /^\s*[-–—]\s*/;
 
-export function parseTimeBlock(text: string): TimeBlock | null {
-	const match = BLOCK.exec(text.trim());
+interface ReadTime {
+	readonly minutes: Minutes;
+	readonly length: number;
+	readonly meridiem: boolean;
+}
+
+/**
+ * Reads a time at the start of `text`. On a start time, "am"/"pm" counts only when attached
+ * ("9:00pm") or followed by a dash or the end ("9:00 pm - 10:00 pm"). An end time takes one only
+ * after a 12-hour start. So "09:00 - 10:00 PM review" keeps "PM review" as text.
+ */
+function readTime(text: string, meridiem: "start" | "end" | "none"): ReadTime | null {
+	const match = CLOCK.exec(text);
 	if (!match) {
 		return null;
 	}
-	const start = parseTime(match[1] ?? "");
-	if (start === null || start >= 24 * 60) {
+	const clock = match[1] ?? "";
+	const suffix = match[3];
+	if (meridiem !== "none" && suffix) {
+		const rest = text.slice(match[0].length);
+		const attached = match[2] === "";
+		// An end time after a 12-hour start follows the start's style.
+		if (meridiem === "end" || attached || rest.trim() === "" || RANGE.test(rest)) {
+			const minutes = parseTime(`${clock}${suffix}`);
+			if (minutes !== null) {
+				return { minutes, length: match[0].length, meridiem: true };
+			}
+		}
+	}
+	const minutes = parseTime(clock);
+	return minutes === null ? null : { minutes, length: clock.length, meridiem: false };
+}
+
+export function parseTimeBlock(text: string): TimeBlock | null {
+	const trimmed = text.trim();
+	const start = readTime(trimmed, "start");
+	if (!start || start.minutes >= 24 * 60) {
 		return null;
 	}
-	const rest = (match[3] ?? "").trim();
-	if (match[2] === undefined) {
-		return { start, end: null, rest, malformed: false };
+	let after = trimmed.slice(start.length);
+	let end: ReadTime | null = null;
+	const range = RANGE.exec(after);
+	if (range) {
+		end = readTime(after.slice(range[0].length), start.meridiem ? "end" : "none");
+		if (!end) {
+			return null;
+		}
+		after = after.slice(range[0].length + end.length);
 	}
-	const end = parseTime(match[2]);
-	if (end === null || end <= start) {
-		return { start, end: null, rest, malformed: true };
+	if (after !== "" && !/^\s/.test(after)) {
+		return null;
 	}
-	return { start, end, rest, malformed: false };
+	const rest = after.trim();
+	if (!end) {
+		return { start: start.minutes, end: null, rest, malformed: false };
+	}
+	if (end.minutes <= start.minutes) {
+		return { start: start.minutes, end: null, rest, malformed: true };
+	}
+	return { start: start.minutes, end: end.minutes, rest, malformed: false };
 }
 
 export function formatTimeBlock(start: Minutes, end: Minutes | null, rest: string): string {
