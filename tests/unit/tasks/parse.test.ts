@@ -118,6 +118,17 @@ describe("time blocks", () => {
 		});
 	});
 
+	it("accepts a dot between hours and minutes, like Day Planner", () => {
+		expect(parseTimeBlock("09.00 - 10.30 Write")).toEqual({
+			start: 540,
+			end: 630,
+			rest: "Write",
+			malformed: false,
+		});
+		expect(parseTimeBlock("9 - 10 Write")).toBeNull();
+		expect(parseTimeBlock("09 00 Write")).toBeNull();
+	});
+
 	it("keeps a title that starts with am or pm", () => {
 		expect(parseTimeBlock("09:00 - 10:00 PM review")).toEqual({
 			start: 540,
