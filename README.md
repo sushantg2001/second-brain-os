@@ -9,9 +9,11 @@ One Obsidian plugin for a whole personal knowledge system:
 - **Calendar and periodic notes**: daily, weekly, monthly, quarterly and yearly notes, with a month calendar to move between them.
 - **Pillars, Pipelines & Vaults (PPV)**: pillars, goals and projects as linked notes, with progress rollups, reviews and a lint that keeps the structure healthy.
 
-Everything is plain Markdown, so your notes stay readable without the plugin.
+Everything is plain Markdown, so your notes stay readable without the plugin. Clocks, reviews and a vault check tie the three together: time you track rolls up into projects and pillars, and periodic reviews summarise it.
 
-> **Status:** 2.0 is in development. Periodic notes, the calendar, the day planner, time tracking and the PPV dashboard with rollups, period reviews and a vault check all work; phase 7 (polish and release) is next. See the [roadmap](docs/features.md#roadmap). Version 1.x was "Calendar & Periodic Notes".
+The [user guide](docs/user-guide.md) shows every note format, command and setting.
+
+> **Status:** 2.0 is feature-complete and waiting for its first release. See the [changelog](CHANGELOG.md). Version 1.x was "Calendar & Periodic Notes"; settings can be imported.
 
 ## Requirements
 
@@ -26,6 +28,8 @@ Obsidian 1.7.2 or later, plus these community plugins, which the plugin checks f
 
 | Document                                                             | Contents                                                  |
 | -------------------------------------------------------------------- | --------------------------------------------------------- |
+| [User guide](docs/user-guide.md)                                     | Note formats, commands and settings                       |
+| [Changelog](CHANGELOG.md)                                            | What changed in each release                              |
 | [Architecture](docs/architecture.md)                                 | Layers, domain model, ports and adapters, key decisions   |
 | [Features](docs/features.md)                                         | Full feature list with IDs, priorities and the roadmap    |
 | [Definition of Ready and Done](docs/definition-of-ready-and-done.md) | When work can start and when it is finished               |
