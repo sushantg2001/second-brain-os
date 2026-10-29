@@ -48,6 +48,7 @@ Each feature has an ID used in issues, branches and PR titles (`feat(planner): â
 | PLN-8  | Notification when a block starts or ends                                                                                                                         | S   |
 | PLN-9  | Read-only remote calendars (ICS URLs) shown as blocks                                                                                                            | C   |
 | PLN-10 | Rollover of unfinished blocks to the next daily note                                                                                                             | S   |
+| PLN-11 | Month calendar above the day planner's timeline, on the same day; date titles open daily notes                                                                   | M   |
 
 ## Clocks (`clocks`), phase 3, done
 
