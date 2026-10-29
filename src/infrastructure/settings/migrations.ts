@@ -19,6 +19,12 @@ const MIGRATIONS: Readonly<Record<number, Migration>> = {
 	3: (data) => ({ ...data, version: 4, ppv: DEFAULT_SETTINGS.ppv }),
 	// 2.0: vault check.
 	4: (data) => ({ ...data, version: 5, lint: DEFAULT_SETTINGS.lint }),
+	// 2.0: calendar inside the day planner.
+	5: (data) => ({
+		...data,
+		version: 6,
+		planner: { ...(data.planner as Record<string, unknown> | undefined), showCalendar: true },
+	}),
 };
 
 function isRecord(value: unknown): value is RawSettings {

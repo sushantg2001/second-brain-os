@@ -42,7 +42,9 @@ describe("plugin lifecycle", () => {
 		expect(ids).toContain("open-calendar");
 		expect(ids).toContain("jump-to-date");
 		expect(plugin.settingTabs).toHaveLength(1);
-		expect(app.workspace.getLeavesOfType("sbos-calendar")).toHaveLength(1);
+		// The calendar sits inside the day planner, so only the planner opens on start.
+		expect(app.workspace.getLeavesOfType("sbos-timeline")).toHaveLength(1);
+		expect(app.workspace.getLeavesOfType("sbos-calendar")).toHaveLength(0);
 		expect(app.workspace.getLeavesOfType("sbos-setup")).toHaveLength(0);
 	});
 

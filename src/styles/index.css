@@ -733,3 +733,28 @@
 .sbos-preview__after {
 	color: var(--text-success);
 }
+
+/* ---------------------------------------------------------------- calendar inside the day planner */
+
+.sbos-timeline__calendar {
+	margin-bottom: var(--size-4-3);
+	padding-bottom: var(--size-4-2);
+	border-bottom: var(--border-width) solid var(--background-modifier-border);
+}
+
+.sbos-timeline__calendar-toggle {
+	display: block;
+	margin-left: auto;
+	padding: 0;
+	height: auto;
+	background: none;
+	box-shadow: none;
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+}
+
+.sbos-timeline__title-button,
+.sbos-timeline__day-link {
+	color: inherit;
+	font-weight: inherit;
+}

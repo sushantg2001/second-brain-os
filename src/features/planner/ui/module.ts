@@ -6,11 +6,13 @@ import {
 	Store,
 	type Clock,
 	type DateFormatter,
+	type IsoDate,
 	type NowSnapshot,
 	type Notifier,
 	type ReadableStore,
 	type Workspace,
 } from "../../../shared/kernel";
+import type { CalendarServices } from "../../calendar";
 import type { PeriodicNotes } from "../../periodic";
 import type { TaskIndex } from "../../tasks";
 import type { Planner } from "../application/planner";
@@ -29,6 +31,8 @@ export interface PlannerModuleDeps {
 	readonly now: ReadableStore<NowSnapshot>;
 	readonly notifier: Notifier;
 	readonly clocks?: PlannerClockControls;
+	readonly calendar?: CalendarServices;
+	readonly setShowCalendar?: (show: boolean) => void;
 }
 
 /** Text for the status bar: the running block and time left, or the next block. */
@@ -81,6 +85,14 @@ export function registerPlanner(plugin: Plugin, deps: PlannerModuleDeps): Planne
 		newBlock: (date, start, end) => new NewBlockModal(app, services, date, start, end).open(),
 		report: (error) => deps.notifier.notify(error.message),
 		...(deps.clocks ? { clocks: deps.clocks } : {}),
+		...(deps.calendar
+			? {
+					calendar: deps.calendar,
+					openDay: (date: IsoDate, split: boolean) =>
+						deps.calendar?.activate("day", date, split),
+				}
+			: {}),
+		...(deps.setShowCalendar ? { setShowCalendar: deps.setShowCalendar } : {}),
 	};
 
 	plugin.registerView(VIEW_TYPE_TIMELINE, (leaf) => new TimelineView(leaf, services, 1));

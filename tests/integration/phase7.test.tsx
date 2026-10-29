@@ -95,6 +95,8 @@ describe("carry over", () => {
 describe("calendar at midnight", () => {
 	it("moves today when the clock passes midnight", async () => {
 		const harness = await loadPlugin({ today: "2026-10-29", minutes: 23 * 60 + 59 });
+		harness.plugin.runCommand("open-calendar");
+		await act(() => sleep(0));
 		const leaf = harness.app.workspace.getLeavesOfType("sbos-calendar")[0];
 		document.body.append(leaf?.view?.containerEl ?? document.createElement("div"));
 		await act(() => sleep(0));
