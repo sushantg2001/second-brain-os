@@ -103,7 +103,7 @@ jobs:
           git push origin HEAD:main
           git push origin "$VERSION"
 
-      - uses: actions/attest-build-provenance@v3
+      - uses: actions/attest-build-provenance@v4
         with:
           subject-path: |
             dist/main.js
