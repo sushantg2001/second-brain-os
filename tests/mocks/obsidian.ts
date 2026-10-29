@@ -624,6 +624,7 @@ export interface Command {
 	callback?: () => unknown;
 	checkCallback?: (checking: boolean) => boolean | void;
 	editorCallback?: (...args: never[]) => unknown;
+	editorCheckCallback?: (checking: boolean, editor: unknown, context: unknown) => boolean | void;
 }
 
 export interface PluginManifest {
@@ -679,6 +680,23 @@ export class Plugin extends Component {
 			return true;
 		}
 		void command.callback?.();
+		return true;
+	}
+
+	/** Test helper: runs an editor command with a cursor on `line` in `path`. */
+	runEditorCommand(id: string, path: string, line: number): boolean {
+		const command = this.commands.find(
+			(candidate) => candidate.id === `${this.manifest.id}:${id}`,
+		);
+		if (!command?.editorCheckCallback) {
+			throw new Error(`No editor command ${id}`);
+		}
+		const editor = { getCursor: () => ({ line, ch: 0 }) };
+		const context = { file: this.app.vault.getFileByPath(path) };
+		if (command.editorCheckCallback(true, editor, context) === false) {
+			return false;
+		}
+		command.editorCheckCallback(false, editor, context);
 		return true;
 	}
 

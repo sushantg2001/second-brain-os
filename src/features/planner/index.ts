@@ -13,6 +13,6 @@ export {
 } from "./domain/day-plan";
 export { DEFAULT_PLANNER_SETTINGS, type PlannerSettings } from "./domain/settings";
 export { registerPlanner, statusText, type PlannerModuleDeps } from "./ui/module";
-export type { NowSnapshot, PlannerServices } from "./ui/services";
+export type { PlannerClockControls, PlannerServices } from "./ui/services";
 export { renderPlannerSettings } from "./ui/settings-section";
 export { TimelineView, VIEW_TYPE_TIMELINE } from "./ui/timeline-view";

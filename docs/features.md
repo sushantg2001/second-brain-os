@@ -31,7 +31,7 @@ Each feature has an ID used in issues, branches and PR titles (`feat(planner): â
 | CAL-3 | Week number column that opens the weekly note; month and year titles open their notes      | M   |
 | CAL-4 | Jump-to-date picker (type a year, pick a month)                                            | M   |
 | CAL-5 | Reveal the active note's date in the calendar                                              | S   |
-| CAL-6 | Per-day badges: task count, time planned, time clocked                                     | S   |
+| CAL-6 | Per-day badges: time planned and time clocked                                              | S   |
 | CAL-7 | Keyboard navigation of the grid                                                            | M   |
 
 ## Planner (`planner`), phase 2, done (PLN-9 and PLN-10 later)
@@ -49,7 +49,7 @@ Each feature has an ID used in issues, branches and PR titles (`feat(planner): â
 | PLN-9  | Read-only remote calendars (ICS URLs) shown as blocks                                                                                                            | C   |
 | PLN-10 | Rollover of unfinished blocks to the next daily note                                                                                                             | S   |
 
-## Clocks (`clocks`), phase 3
+## Clocks (`clocks`), phase 3, done
 
 | ID    | Feature                                                                     | Pri |
 | ----- | --------------------------------------------------------------------------- | --- |
@@ -107,7 +107,7 @@ Each feature has an ID used in issues, branches and PR titles (`feat(planner): â
 | 0     | Skeleton: React and Bun build, layers, settings, setup gate, CI               | â€”             | done                                          |
 | 1     | Periodic and calendar, ported from 1.x with parity tests                      | 2.0.0-alpha.1 | done (PER-5, PER-6 and CAL-6 data come later) |
 | 2     | Planner timeline (PLN-1 to PLN-8)                                             | alpha.2       | done                                          |
-| 3     | Clocks                                                                        | alpha.3       | planned                                       |
+| 3     | Clocks                                                                        | alpha.3       | done                                          |
 | 4     | PPV model, commands, dashboard and capture                                    | beta.1        | planned                                       |
 | 5     | Rollups and review templates                                                  | beta.2        | planned                                       |
 | 6     | Lint                                                                          | rc.1          | planned                                       |

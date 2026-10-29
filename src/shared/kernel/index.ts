@@ -36,3 +36,4 @@ export type {
 	TemplateEngine,
 	Workspace,
 } from "./ports";
+export { NowTicker, type NowSnapshot } from "./now";

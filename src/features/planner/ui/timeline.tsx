@@ -90,6 +90,13 @@ export function Timeline({ state }: { readonly state: TimelineState }): ReactNod
 					</button>
 				</div>
 			</div>
+			{range.days === 1 && (
+				<p className="sbos-timeline__summary">
+					Planned {formatDuration(firstPlan.plannedMinutes)}
+					{services.clocks &&
+						` · Clocked ${formatDuration(services.clocks.minutesOn(range.date))}`}
+				</p>
+			)}
 			{range.days > 1 && (
 				<div className="sbos-timeline__day-headers">
 					<div className="sbos-timeline__gutter" />

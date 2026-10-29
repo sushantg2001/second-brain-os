@@ -33,21 +33,23 @@ async function setup(notify: boolean) {
 		dates: container.dates,
 		workspace: container.workspace,
 		clock,
+		now: container.now,
 		notifier: container.notifier,
 	});
-	return { app, plugin, clock, services };
+	const tick = (): void => container.now.tick();
+	return { app, plugin, clock, services, tick };
 }
 
 describe("planner module", () => {
 	it("notifies once when an open block starts", async () => {
 		Notice.messages.length = 0;
-		const { clock, services } = await setup(true);
+		const { clock, services, tick } = await setup(true);
 		clock.minutes = 10 * 60 + 30;
-		services.tick();
-		services.tick();
+		tick();
+		tick();
 		expect(Notice.messages).toEqual(["Starting now: Standup"]);
 		clock.minutes = 12 * 60;
-		services.tick();
+		tick();
 		expect(Notice.messages).toEqual(["Starting now: Standup", "Starting now: Lunch"]);
 		expect(services.now.get()).toEqual({ date: "2026-10-29", minutes: 720 });
 	});
@@ -56,13 +58,13 @@ describe("planner module", () => {
 		Notice.messages.length = 0;
 		const quiet = await setup(false);
 		quiet.clock.minutes = 10 * 60 + 30;
-		quiet.services.tick();
+		quiet.tick();
 		expect(Notice.messages).toEqual([]);
 
 		const rolled = await setup(true);
 		rolled.clock.date = "2026-10-30";
 		rolled.clock.minutes = 10 * 60 + 30;
-		rolled.services.tick();
+		rolled.tick();
 		expect(Notice.messages).toEqual([]);
 		expect(rolled.services.now.get().date).toBe("2026-10-30");
 	});
