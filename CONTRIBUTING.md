@@ -4,7 +4,7 @@ Thanks for helping with Second Brain OS. The full process is in [docs/sdlc.md](d
 
 ## Setup
 
-You need [Bun](https://bun.sh) (the version in `.bun-version`), `make` and an Obsidian vault with Tasks and Templater installed.
+You need [Bun](https://bun.sh) (the version in `.bun-version`), `make` and an Obsidian vault with Datacore, Tasks and Templater installed.
 
 ```bash
 git clone https://github.com/sushantg2001/second-brain-os.git
@@ -37,4 +37,4 @@ Pick an issue labelled `ready`, or open one with the templates. The [Definition 
 
 ## Reporting bugs
 
-Use the bug template, and include your Obsidian, plugin, Tasks and Templater versions and your platform.
+Use the bug template, and include your Obsidian, plugin, Datacore, Tasks and Templater versions and your platform.

@@ -4,7 +4,7 @@ Second Brain OS works on plain Markdown. This guide shows the note formats it re
 
 ## Getting started
 
-1. Install and enable **Tasks** and **Templater** from Community plugins. Until both are ready, the plugin shows a "Required plugins" view instead of its features.
+1. Install and enable **Datacore**, **Tasks** and **Templater** from Community plugins. Until all three are ready, the plugin shows a "Required plugins" view instead of its features. Dataview is not needed.
 2. Optional: in Settings → Second Brain OS → Calendar, choose **Import** to copy formats, folders and templates from Periodic Notes or Calendar.
 3. Run **Set up PPV folders** to create the PPV folders and an example pillar. It never overwrites anything.
 4. Run **Create review templates** to add weekly to yearly review templates.
@@ -15,14 +15,14 @@ Daily, weekly, monthly, quarterly and yearly notes each have their own on/off sw
 
 Templates can use Templater, and also these placeholders: `{{title}}`, `{{date}}`, `{{date:FORMAT}}`, `{{time}}`, `{{time:FORMAT}}`.
 
-| Command                                                               | What it does                                                   |
-| --------------------------------------------------------------------- | -------------------------------------------------------------- |
-| Open today's daily note (and this week's, month's, quarter's, year's) | Opens the note, creating it from the template if needed        |
-| Create today's daily note (and the others)                            | Creates the note without opening it                            |
-| Jump forwards / backwards to closest daily note (and the others)      | Opens the nearest existing note after or before the active one |
-| Open calendar                                                         | Shows the month calendar in the right sidebar                  |
-| Jump to date                                                          | Type a year, pick a month                                      |
-| Reveal active note in calendar                                        | Shows the month of the open periodic note                      |
+| Command                                                               | What it does                                                                 |
+| --------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Open today's daily note (and this week's, month's, quarter's, year's) | Opens the note, creating it from the template if needed                      |
+| Create today's daily note (and the others)                            | Creates the note without opening it                                          |
+| Jump forwards / backwards to closest daily note (and the others)      | Opens the nearest existing note after or before the active one               |
+| Open calendar                                                         | Opens the calendar on its own. It also sits above the day planner's timeline |
+| Jump to date                                                          | Type a year, pick a month                                                    |
+| Reveal active note in calendar                                        | Shows the month of the open periodic note                                    |
 
 In the calendar:
 
@@ -33,7 +33,7 @@ In the calendar:
 
 ## Day planner
 
-A task with a time at the start of its text is a **time block**:
+A task with a time at the start of its text is a **time block**. Hours and minutes can be separated by `:` or `.`:
 
 ```markdown
 - [ ] 09:00 - 10:30 Write the spec
@@ -41,7 +41,9 @@ A task with a time at the start of its text is a **time block**:
 - [ ] 1:00pm - 2:15pm Lunch (12-hour times work too)
 ```
 
-The timeline shows blocks from today's daily note, plus tasks anywhere with a scheduled date of today (`⏳ 2026-10-29` or `[scheduled:: 2026-10-29]`). Open tasks without a time are listed under **Unscheduled**.
+The day planner sits in the right sidebar with the month calendar above its timeline. Both always show the same day: pick a day in the calendar to see its plan (its daily note opens too), or move the timeline and the calendar follows. Click the date above the timeline, or a day header in the multi-day view, to open that day's note. **Hide calendar** collapses it; the choice is remembered.
+
+The timeline shows blocks from the day's daily note, plus tasks anywhere with a scheduled date of today (`⏳ 2026-10-29` or `[scheduled:: 2026-10-29]`). Open tasks without a time are listed under **Unscheduled**.
 
 | Action                       | Mouse or touch                   | Keyboard                                     |
 | ---------------------------- | -------------------------------- | -------------------------------------------- |
@@ -61,23 +63,33 @@ The status bar shows the current block and the time left in it, or the next bloc
 
 ## Time tracking
 
-A clock entry is a list item under a task:
+Clocks use Day Planner's format (0.29 and later): a fenced yaml block on the line right after the task. An entry without `end` is still running.
 
-```markdown
+````markdown
 - [ ] Write the spec
-    - [clock::2026-10-29T09:05--2026-10-29T09:50]
-    - [clock::2026-10-29T14:00--] (still running)
-```
+    ```yaml
+    planner:
+        log:
+            - start: 2026-10-29 09:05:00
+              end: 2026-10-29 09:50:00
+            - start: 2026-10-29 14:00:00
+    ```
+````
+
+Other keys in the block are kept. Older `[clock::2026-10-29T09:05--2026-10-29T09:50]` list items under a task are still read, counted and can be stopped. **Convert old clock entries to YAML** moves them into the yaml block.
 
 | Command                                 | What it does                                                  |
 | --------------------------------------- | ------------------------------------------------------------- |
 | Start or stop clock on the current task | Uses the task at the cursor. Starting a clock stops any other |
 | Stop clock                              | Stops the running clock                                       |
 | Open task with running clock            | Jumps to it                                                   |
+| Convert old clock entries to YAML       | Moves `[clock::]` items into each task's yaml block           |
 
 You can also start and stop clocks from the play and stop buttons on timeline blocks. Clocked time shows as a bar beside the blocks and in the status bar. When Obsidian starts, it reminds you about clocks left running. An entry that runs past midnight counts on both days.
 
 ## Pillars, pipelines and vaults
+
+Everything below is front matter and inline fields, so Datacore can query it: for example `@page and type = "project" and status = "active"`.
 
 PPV notes are typed by front matter. A note directly inside a type's folder gets that type even without `type`.
 
@@ -146,13 +158,13 @@ Quick fixes show the exact change before they apply it. Each rule can be turned 
 
 ## Settings
 
-| Section                       | Settings                                                                                                                                                |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Calendar                      | Import settings, start week on, confirm before creating notes, show week numbers                                                                        |
-| Daily to yearly notes         | Enabled, format, folder, template                                                                                                                       |
-| Day planner                   | Day starts and ends at, snap to minutes, default duration, hour height, days in multi-day view, heading for new blocks, status bar, start notifications |
-| Pillars, pipelines and vaults | Folder and template per type, archive folder, archive finished projects, capture to, inbox note, capture heading                                        |
-| Vault check                   | Per rule: on or off, and severity                                                                                                                       |
+| Section                       | Settings                                                                                                                                                                                      |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Calendar                      | Import settings, start week on, confirm before creating notes, show week numbers                                                                                                              |
+| Daily to yearly notes         | Enabled, format, folder, template                                                                                                                                                             |
+| Day planner                   | Show the calendar in the day planner, day starts and ends at, snap to minutes, default duration, hour height, days in multi-day view, heading for new blocks, status bar, start notifications |
+| Pillars, pipelines and vaults | Folder and template per type, archive folder, archive finished projects, capture to, inbox note, capture heading                                                                              |
+| Vault check                   | Per rule: on or off, and severity                                                                                                                                                             |
 
 ## Public API
 

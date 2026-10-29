@@ -4,12 +4,12 @@ Each feature has an ID used in issues, branches and PR titles (`feat(planner): â
 
 ## Setup (`setup`), phase 0, done
 
-| ID    | Feature                                                                                                           | Pri |
-| ----- | ----------------------------------------------------------------------------------------------------------------- | --- |
-| SET-1 | Check that Tasks and Templater are installed, enabled and at the minimum version (Dataview is optional, ADR 0002) | M   |
-| SET-2 | "Required plugins" view with the state of each one and a recheck button; opens on load when something is missing  | M   |
-| SET-3 | Features register only after the check passes, without needing a reload                                           | M   |
-| SET-4 | Settings schema with versioned migrations; unreadable settings are never overwritten                              | M   |
+| ID    | Feature                                                                                                            | Pri |
+| ----- | ------------------------------------------------------------------------------------------------------------------ | --- |
+| SET-1 | Check that Datacore, Tasks and Templater are installed, enabled and at the minimum version (no Dataview, ADR 0003) | M   |
+| SET-2 | "Required plugins" view with the state of each one and a recheck button; opens on load when something is missing   | M   |
+| SET-3 | Features register only after the check passes, without needing a reload                                            | M   |
+| SET-4 | Settings schema with versioned migrations; unreadable settings are never overwritten                               | M   |
 
 ## Periodic notes (`periodic`), phase 1, done (PER-5 in phase 7, PER-6 in phase 5)
 
@@ -51,13 +51,13 @@ Each feature has an ID used in issues, branches and PR titles (`feat(planner): â
 
 ## Clocks (`clocks`), phase 3, done
 
-| ID    | Feature                                                                     | Pri |
-| ----- | --------------------------------------------------------------------------- | --- |
-| CLK-1 | Start and stop a clock on a task; writes a `[clock::start--end]` child item | M   |
-| CLK-2 | At most one running clock; starting another stops the first                 | M   |
-| CLK-3 | Running clock in the status bar and on the timeline                         | M   |
-| CLK-4 | Recover a clock that was left running after a restart                       | M   |
-| CLK-5 | Planned versus clocked comparison per day and per project                   | S   |
+| ID    | Feature                                                                                                                                  | Pri |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------- | --- |
+| CLK-1 | Start and stop a clock on a task, in Day Planner 0.29's yaml block under the task; older `[clock::]` items are read and can be converted | M   |
+| CLK-2 | At most one running clock; starting another stops the first                                                                              | M   |
+| CLK-3 | Running clock in the status bar and on the timeline                                                                                      | M   |
+| CLK-4 | Recover a clock that was left running after a restart                                                                                    | M   |
+| CLK-5 | Planned versus clocked comparison per day and per project                                                                                | S   |
 
 ## PPV (`ppv`), phase 4, done
 

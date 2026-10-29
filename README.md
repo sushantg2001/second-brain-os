@@ -5,7 +5,7 @@
 
 One Obsidian plugin for a whole personal knowledge system:
 
-- **Day planner**: a timeline of time-blocked tasks, drag to plan your day, and clocks to track time.
+- **Day planner**: a timeline of time-blocked tasks with the month calendar above it, drag to plan your day, and clocks to track time in Day Planner's yaml format.
 - **Calendar and periodic notes**: daily, weekly, monthly, quarterly and yearly notes, with a month calendar to move between them.
 - **Pillars, Pipelines & Vaults (PPV)**: pillars, goals and projects as linked notes, with progress rollups, reviews and a lint that keeps the structure healthy.
 
@@ -19,10 +19,11 @@ The [user guide](docs/user-guide.md) shows every note format, command and settin
 
 Obsidian 1.7.2 or later, plus these community plugins, which the plugin checks for on start:
 
-| Plugin           | Why                      |
-| ---------------- | ------------------------ |
-| Tasks 7.0.0+     | Task syntax and statuses |
-| Templater 2.0.0+ | Note templates           |
+| Plugin           | Why                                  |
+| ---------------- | ------------------------------------ |
+| Datacore 0.1.0+  | Queries over notes, tasks and fields |
+| Tasks 7.0.0+     | Task syntax and statuses             |
+| Templater 2.0.0+ | Note templates                       |
 
 ## Documentation
 
