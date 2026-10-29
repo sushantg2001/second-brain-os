@@ -5,7 +5,8 @@ GlobalRegistrator.register();
 
 // Imported after the DOM exists: Testing Library binds `screen` to document.body on load.
 const { cleanup } = await import("@testing-library/react");
-const matchers = await import("@testing-library/jest-dom/matchers");
+// The default export duplicates the named matchers and does not fit expect.extend.
+const { default: _default, ...matchers } = await import("@testing-library/jest-dom/matchers");
 expect.extend(matchers);
 
 await mock.module("obsidian", () => import("./mocks/obsidian"));

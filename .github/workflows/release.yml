@@ -1,48 +1,68 @@
-name: Release Obsidian plugin
+# Publishes a draft GitHub release when a version tag (x.y.z or x.y.z-pre.N, no "v") is pushed.
+# Start it with `make version BUMP=...`, merge, then `make release` on main.
+name: Release
 
 on:
-    push:
-        tags:
-            - '*'
-    workflow_dispatch:
-        inputs:
-            tag:
-                description: 'Tag to release (e.g. 1.0.1). Defaults to the ref the run was started from.'
-                required: false
-                type: string
+  push:
+    tags: ["[0-9]+.[0-9]+.[0-9]+", "[0-9]+.[0-9]+.[0-9]+-*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to release, such as 1.2.0
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
-        permissions:
-            contents: write
-            id-token: write
-            attestations: write
-        steps:
-            - uses: actions/checkout@v6
+  verify:
+    uses: ./.github/workflows/ci.yml
 
-            - uses: oven-sh/setup-bun@v2
-              with:
-                  bun-version: latest
+  release:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ env.TAG }}
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
 
-            - name: Build plugin
-              run: |
-                  bun install --frozen-lockfile
-                  bun run lint
-                  bun run test
-                  bun run build
+      - name: Check the tag matches every version file
+        run: |
+          for file in manifest.json package.json; do
+            version=$(jq -r .version "$file")
+            [ "$version" = "$TAG" ] || { echo "::error::$file is $version, tag is $TAG"; exit 1; }
+          done
+          jq -e --arg v "$TAG" 'has($v)' versions.json >/dev/null \
+            || { echo "::error::versions.json has no entry for $TAG"; exit 1; }
 
-            - name: Attest build provenance
-              uses: actions/attest-build-provenance@v3
-              with:
-                  subject-path: main.js
+      - run: make install
+      - run: make check-bundle
 
-            - name: Create release
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  TAG: ${{ inputs.tag || github.ref_name }}
-              run: |
-                  gh release create "$TAG" \
-                    --title="$TAG" \
-                    --draft \
-                    main.js manifest.json styles.css
+      - uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: |
+            dist/main.js
+            dist/styles.css
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          prerelease=()
+          [[ "$TAG" == *-* ]] && prerelease=(--prerelease)
+          gh release create "$TAG" --draft --verify-tag --title "$TAG" --generate-notes "${prerelease[@]}" \
+            dist/main.js dist/manifest.json dist/styles.css

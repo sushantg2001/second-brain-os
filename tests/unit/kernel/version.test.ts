@@ -1,12 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import fc from "fast-check";
 
-import {
-	compareVersions,
-	isAtLeast,
-	parseVersion,
-	type Version,
-} from "../../../src/shared/kernel";
+import { compareVersions, isAtLeast, parseVersion, type Version } from "../../../src/shared/kernel";
 
 function parsed(text: string): Version {
 	const version = parseVersion(text);
@@ -39,9 +34,12 @@ describe("parseVersion", () => {
 		});
 	});
 
-	it.each(["v1.0.0", "1.0", "01.0.0", "1.0.0-", "", "1.0.0.0", "latest"])("rejects %p", (text) => {
-		expect(parseVersion(text)).toBeNull();
-	});
+	it.each(["v1.0.0", "1.0", "01.0.0", "1.0.0-", "", "1.0.0.0", "latest"])(
+		"rejects %p",
+		(text) => {
+			expect(parseVersion(text)).toBeNull();
+		},
+	);
 });
 
 describe("compareVersions", () => {

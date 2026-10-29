@@ -37,9 +37,7 @@ describe("SetupScreen", () => {
 
 		expect(screen.getByRole("heading", { name: "Required plugins" })).toBeInTheDocument();
 		expect(within(itemFor("Dataview")).getByText("Ready")).toBeInTheDocument();
-		expect(
-			within(itemFor("Tasks")).getByText("Installed but not enabled"),
-		).toBeInTheDocument();
+		expect(within(itemFor("Tasks")).getByText("Installed but not enabled")).toBeInTheDocument();
 		expect(within(itemFor("Templater")).getByText("Not installed")).toBeInTheDocument();
 		expect(
 			screen.getByText(/Install and enable these plugins from Community plugins/),

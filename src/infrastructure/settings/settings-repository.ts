@@ -32,7 +32,9 @@ export class SettingsRepository {
 		return ok(outcome.value.settings);
 	}
 
-	async update(updater: (current: Settings) => Settings): Promise<Result<Settings, SettingsError>> {
+	async update(
+		updater: (current: Settings) => Settings,
+	): Promise<Result<Settings, SettingsError>> {
 		if (!this.#writable) {
 			return err(new SettingsError("Settings are read-only until they load successfully."));
 		}
