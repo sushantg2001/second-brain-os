@@ -88,9 +88,13 @@ version: ## Bump version files: make version BUMP=patch|minor|major|x.y.z[-pre.N
 	$(BUN) run version:bump $(BUMP)
 
 .PHONY: release-plan
-release-plan: ## Show the version the release pipeline would publish from commits since the last tag
+release-plan: ## Show the version the next release would have, from commits since the last tag
 	$(BUN) scripts/release-plan.ts
 	@rm -f RELEASE_NOTES.md
+
+.PHONY: release
+release: node_modules ## Cut a release, signed commit and tag, no push: make release [BUMP=auto|major|minor|patch]
+	$(BUN) scripts/release.ts $(or $(BUMP),auto)
 
 .PHONY: package
 package: check-bundle ## Zip dist/ for a manual install
