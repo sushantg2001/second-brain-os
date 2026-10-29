@@ -52,13 +52,13 @@ Each feature has an ID used in issues, branches and PR titles (`feat(planner): â
 
 ## Clocks (`clocks`), phase 3, done
 
-| ID    | Feature                                                                                                                                  | Pri |
-| ----- | ---------------------------------------------------------------------------------------------------------------------------------------- | --- |
-| CLK-1 | Start and stop a clock on a task, in Day Planner 0.29's yaml block under the task; older `[clock::]` items are read and can be converted | M   |
-| CLK-2 | At most one running clock; starting another stops the first                                                                              | M   |
-| CLK-3 | Running clock in the status bar and on the timeline                                                                                      | M   |
-| CLK-4 | Recover a clock that was left running after a restart                                                                                    | M   |
-| CLK-5 | Planned versus clocked comparison per day and per project                                                                                | S   |
+| ID    | Feature                                                                                  | Pri |
+| ----- | ---------------------------------------------------------------------------------------- | --- |
+| CLK-1 | Start and stop a clock on a task; writes a `[clock::start--end]` inline-field child item | M   |
+| CLK-2 | At most one running clock; starting another stops the first                              | M   |
+| CLK-3 | Running clock in the status bar and on the timeline                                      | M   |
+| CLK-4 | Recover a clock that was left running after a restart                                    | M   |
+| CLK-5 | Planned versus clocked comparison per day and per project                                | S   |
 
 ## PPV (`ppv`), phase 4, done
 
