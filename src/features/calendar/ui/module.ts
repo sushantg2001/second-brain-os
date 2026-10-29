@@ -21,6 +21,7 @@ export interface CalendarModuleDeps {
 	readonly workspace: Workspace;
 	readonly notifier: Notifier;
 	readonly badges?: ReadableStore<ReadonlyMap<IsoDate, readonly DayBadge[]>>;
+	readonly tick?: ReadableStore<unknown>;
 }
 
 async function revealCalendar(app: App): Promise<void> {
@@ -68,6 +69,7 @@ export function registerCalendar(plugin: Plugin, deps: CalendarModuleDeps): Cale
 		state,
 		activePath,
 		...(deps.badges ? { badges: deps.badges } : {}),
+		...(deps.tick ? { tick: deps.tick } : {}),
 		activate: (granularity, date, split) => void activate(granularity, date, split),
 		openJumpToDate: () => new JumpToDateModal(app, services).open(),
 	};

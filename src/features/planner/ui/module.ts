@@ -136,6 +136,22 @@ export function registerPlanner(plugin: Plugin, deps: PlannerModuleDeps): Planne
 			services.newBlock(date, start, start + planner.settings.defaultDuration);
 		},
 	});
+	plugin.addCommand({
+		id: "carry-over-tasks",
+		name: "Carry unfinished tasks over to today",
+		callback: () =>
+			void planner.carryOver().then((result) => {
+				if (!result.ok) {
+					deps.notifier.notify(result.error.message);
+				} else if (result.value.count === 0) {
+					deps.notifier.notify("No unfinished tasks to carry over.");
+				} else {
+					deps.notifier.notify(
+						`Carried ${result.value.count} tasks over from ${result.value.from ?? "the last daily note"}.`,
+					);
+				}
+			}),
+	});
 	app.workspace.onLayoutReady(() => {
 		if (app.workspace.getLeavesOfType(VIEW_TYPE_TIMELINE).length === 0) {
 			void app.workspace

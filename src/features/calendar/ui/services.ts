@@ -17,6 +17,8 @@ export interface CalendarServices {
 	readonly activePath: ReadableStore<string | null>;
 	/** Optional extra information per day, such as planned time. */
 	readonly badges?: ReadableStore<ReadonlyMap<IsoDate, readonly DayBadge[]>>;
+	/** Ticks with the clock, so "today" moves at midnight. */
+	readonly tick?: ReadableStore<unknown>;
 	readonly activate: (granularity: Granularity, date: IsoDate, split: boolean) => void;
 	readonly openJumpToDate: () => void;
 }

@@ -141,6 +141,7 @@ export const FEATURES: readonly FeatureModule[] = [
 				workspace: container.workspace,
 				notifier: container.notifier,
 				badges: dayBadges(plugin, container),
+				tick: container.now,
 			});
 		},
 	},
