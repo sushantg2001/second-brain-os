@@ -1,7 +1,7 @@
 {
 	"id": "second-brain-os",
 	"name": "Second Brain OS",
-	"version": "1.0.0",
+	"version": "2.0.0",
 	"minAppVersion": "1.7.2",
 	"description": "Day planner, calendar and periodic notes, and the Pillars, Pipelines & Vaults system in one plugin.",
 	"author": "Sushant Gupta",
