@@ -6,7 +6,7 @@
  *   chore, refactor -> patch   (1.4.2 -> 1.4.3)
  *   anything else (docs, test, ci, ...) -> no release
  *
- * The largest bump wins. "chore(release):" commits made by the pipeline are ignored.
+ * The largest bump wins. "chore(release):" commits made by `make release` are ignored.
  *
  * Usage: bun scripts/release-plan.ts [--bump auto|major|minor|patch] [--changelog]
  * Prints the plan as JSON and, on GitHub Actions, writes `release`, `version`, `tag` and
