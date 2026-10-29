@@ -1,0 +1,17 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      dev-dependencies:
+        dependency-type: development
+        update-types: [minor, patch]
+    ignore:
+      # Pinned to the Obsidian API version the plugin targets; bumped by hand with minAppVersion.
+      - dependency-name: obsidian
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

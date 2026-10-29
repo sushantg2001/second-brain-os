@@ -1,19 +1,22 @@
 {
 	"compilerOptions": {
-		"inlineSourceMap": true,
-		"inlineSources": true,
+		"target": "ES2022",
 		"module": "ESNext",
-		"target": "ES2021",
+		"moduleResolution": "bundler",
+		"lib": ["ES2022", "DOM", "DOM.Iterable"],
+		"jsx": "react-jsx",
+		"types": ["bun"],
 		"strict": true,
+		"exactOptionalPropertyTypes": true,
+		"noUncheckedIndexedAccess": true,
+		"noImplicitOverride": true,
 		"noImplicitReturns": true,
 		"noFallthroughCasesInSwitch": true,
-		"noUncheckedIndexedAccess": true,
-		"moduleResolution": "node",
+		"verbatimModuleSyntax": true,
 		"isolatedModules": true,
-		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
-		"allowSyntheticDefaultImports": true,
-		"lib": ["ES2021", "DOM", "DOM.Iterable"]
+		"skipLibCheck": true,
+		"noEmit": true
 	},
-	"include": ["src/**/*.ts", "tests/**/*.ts", "vitest.config.ts"]
+	"include": ["src", "tests", "scripts", "eslint.config.mts"]
 }
