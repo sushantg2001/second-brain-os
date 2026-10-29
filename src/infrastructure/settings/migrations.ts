@@ -33,7 +33,9 @@ export function migrateSettings(raw: unknown): Result<MigrationOutcome, Settings
 
 	let version = typeof raw.version === "number" ? raw.version : 0;
 	if (!Number.isInteger(version) || version < 0) {
-		return err(new SettingsError(`Stored settings have an invalid version: ${String(raw.version)}.`));
+		return err(
+			new SettingsError(`Stored settings have an invalid version: ${String(raw.version)}.`),
+		);
 	}
 	if (version > SETTINGS_VERSION) {
 		return err(

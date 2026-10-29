@@ -1,78 +1,55 @@
-# Calendar & Periodic Notes
+# Second Brain OS
 
-[![CI](https://github.com/sushantg2001/calendar-periodic-notes/actions/workflows/ci.yml/badge.svg)](https://github.com/sushantg2001/calendar-periodic-notes/actions/workflows/ci.yml)
+[![CI](https://github.com/sushantg2001/second-brain-os/actions/workflows/ci.yml/badge.svg)](https://github.com/sushantg2001/second-brain-os/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-An Obsidian plugin that combines a calendar view with periodic notes (daily, weekly, monthly, quarterly, and yearly) in a single plugin.
+One Obsidian plugin for a whole personal knowledge system:
 
-## Features
+- **Day planner**: a timeline of time-blocked tasks, drag to plan your day, and clocks to track time.
+- **Calendar and periodic notes**: daily, weekly, monthly, quarterly and yearly notes, with a month calendar to move between them.
+- **Pillars, Pipelines & Vaults (PPV)**: pillars, goals and projects as linked notes, with progress rollups, reviews and a lint that keeps the structure healthy.
 
-### Periodic notes
+Everything is plain Markdown, so your notes stay readable without the plugin.
 
-- Daily, weekly, monthly, quarterly, and yearly notes, each with its own filename format, folder, and template.
-- Commands per enabled granularity:
-  - **Open today's daily note** (and the equivalent for week/month/quarter/year)
-  - **Create today's daily note** — creates the note without opening it
-  - **Jump forwards/backwards to closest note** — navigate between existing notes relative to the active one
-- Template placeholders: `{{title}}`, `{{date}}`, `{{date:FORMAT}}`, `{{time}}`, `{{time:FORMAT}}`.
+> **Status:** 2.0 is in development. Phase 0 (foundation) is done; see the [roadmap](docs/features.md#roadmap). Version 1.x was "Calendar & Periodic Notes".
 
-### Calendar
+## Requirements
 
-- Month calendar in the right sidebar showing a dot on days that have a daily note.
-- Click a day to open (or create) its daily note. Ctrl/Cmd-click opens it in a new split.
-- Optional week number column; click a week number to open the weekly note.
-- Click the month title (or run **Jump to date**) to open a two-step picker — type a year, pick a month — and jump anywhere instantly.
-- **Reveal active note in calendar** command.
-- Optional confirmation dialog before creating new notes.
+Obsidian 1.7.2 or later, plus these community plugins, which the plugin checks for on start:
 
-## Settings
+| Plugin           | Why                             |
+| ---------------- | ------------------------------- |
+| Dataview 0.5.64+ | Indexes notes, tasks and fields |
+| Tasks 7.0.0+     | Task syntax and statuses        |
+| Templater 2.0.0+ | Note templates                  |
 
-| Setting | Description |
-| --- | --- |
-| Start week on | First day of the calendar week (locale default or a fixed weekday) |
-| Confirm before creating new note | Ask before creating a note from the calendar |
-| Show week numbers | Adds the week number column |
-| Per-granularity: Enabled / Format / Folder / Template | Configure each periodic note type. Formats use [moment.js syntax](https://momentjs.com/docs/#/displaying/format/) |
+## Documentation
 
-Default formats: `YYYY-MM-DD` (day), `gggg-[W]ww` (week), `YYYY-MM` (month), `YYYY-[Q]Q` (quarter), `YYYY` (year).
-
-## API
-
-Other plugins and userscripts can use the public API:
-
-```js
-const plugin = app.plugins.getPlugin("calendar-periodic-notes");
-
-plugin.api.getGranularities(); // ["day", "week", ...] (enabled only)
-await plugin.api.createPeriodicNote("day"); // create without opening
-await plugin.api.createPeriodicNote("week", true, window.moment("2024-03-01")); // create and open
-plugin.api.getPeriodicNote("day", window.moment()); // TFile | null
-```
-
-## Installation
-
-Manual install: download `main.js`, `manifest.json`, and `styles.css` from the latest release into `<Vault>/.obsidian/plugins/calendar-periodic-notes/`, then enable the plugin in **Settings → Community plugins**.
+| Document                                                             | Contents                                                  |
+| -------------------------------------------------------------------- | --------------------------------------------------------- |
+| [Architecture](docs/architecture.md)                                 | Layers, domain model, ports and adapters, key decisions   |
+| [Features](docs/features.md)                                         | Full feature list with IDs, priorities and the roadmap    |
+| [Definition of Ready and Done](docs/definition-of-ready-and-done.md) | When work can start and when it is finished               |
+| [Testing strategy](docs/testing.md)                                  | Test levels, fixtures, coverage and the release checklist |
+| [Development lifecycle](docs/sdlc.md)                                | Branching, CI workflows, releases                         |
 
 ## Development
 
+Requires [Bun](https://bun.sh) (version in `.bun-version`) and `make`.
+
 ```bash
-bun install
-bun run dev        # watch build
-bun run build      # typecheck + production build
-bun run test       # unit and component tests
-bun run test:watch
-bun run lint
+make install                 # dependencies
+make dev                     # watch build into dist/
+make link VAULT=~/DevVault   # load dist/ in a vault
+make check                   # every CI gate
+make help                    # all targets
 ```
 
-Tests run with [Vitest](https://vitest.dev) against a mocked Obsidian API (`tests/mocks/obsidian.ts`). CI runs lint, tests, and the build on every push and pull request. Pushing a tag creates a draft GitHub release with the plugin artifacts; the release workflow can also be run manually from the **Actions** tab, supplying the tag to release.
-
-## Contributing
-
-Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, scripts, and the pull request process, and please follow the [Code of Conduct](CODE_OF_CONDUCT.md). Bug reports and feature requests go through the issue templates.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow.
 
 ## Credits
 
-Based on the ideas behind [obsidian-calendar-plugin](https://github.com/liamcain/obsidian-calendar-plugin) and [obsidian-periodic-notes](https://github.com/liamcain/obsidian-periodic-notes) by Liam Cain, including the jump-to-date picker ([calendar#411](https://github.com/liamcain/obsidian-calendar-plugin/pull/411)) and the create-note command and public API ([periodic-notes#182](https://github.com/liamcain/obsidian-periodic-notes/pull/182)).
+Builds on ideas from [Day Planner](https://github.com/ivan-lednev/obsidian-day-planner) by Ivan Lednev, [Calendar](https://github.com/liamcain/obsidian-calendar-plugin) and [Periodic Notes](https://github.com/liamcain/obsidian-periodic-notes) by Liam Cain, [LifeOS](https://github.com/quanru/obsidian-lifeos) by quanru, and August Bradley's Pillars, Pipelines & Vaults method.
 
 ## License
 

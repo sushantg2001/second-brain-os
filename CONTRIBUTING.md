@@ -1,64 +1,40 @@
 # Contributing
 
-Thanks for your interest in improving Calendar & Periodic Notes. This guide covers everything you need to get set up and land a change.
+Thanks for helping with Second Brain OS. The full process is in [docs/sdlc.md](docs/sdlc.md). This page is the short version.
 
-## Prerequisites
+## Setup
 
-- [Bun](https://bun.sh) (used for dependencies, scripts, and tests)
-- An Obsidian vault for manual testing
-
-## Getting started
+You need [Bun](https://bun.sh) (the version in `.bun-version`), `make` and an Obsidian vault with Dataview, Tasks and Templater installed.
 
 ```bash
-git clone https://github.com/sushantg2001/calendar-periodic-notes.git
-cd calendar-periodic-notes
-bun install
+git clone https://github.com/sushantg2001/second-brain-os.git
+cd second-brain-os
+make install
+make dev                     # watch build into dist/
+make link VAULT=/path/to/vault
 ```
 
-## Scripts
+Install the Hot Reload community plugin in that vault to pick up rebuilds automatically.
 
-| Command | Description |
-| --- | --- |
-| `bun run dev` | Watch build — rebuilds `main.js` on save |
-| `bun run build` | Typecheck and produce a production `main.js` |
-| `bun run test` | Run the unit and component suites once |
-| `bun run test:watch` | Run tests in watch mode |
-| `bun run lint` | Lint with ESLint and the Obsidian rules |
+## Before you start
 
-## Testing in a vault
-
-Symlink the repo into a vault's plugin folder, then run the watch build:
-
-```bash
-ln -s "$(pwd)" /path/to/Vault/.obsidian/plugins/calendar-periodic-notes
-bun run dev
-```
-
-Reload Obsidian (or use the community Hot Reload plugin) to pick up changes.
+Pick an issue labelled `ready`, or open one with the templates. The [Definition of Ready](docs/definition-of-ready-and-done.md#definition-of-ready) lists what an issue needs before work starts.
 
 ## Making a change
 
-1. Fork the repository and create a branch off `main`.
-2. Keep changes focused. Split unrelated work into separate pull requests.
-3. Add or update tests for the behaviour you change. Tests live in `tests/` and run against a mocked Obsidian API (`tests/mocks/obsidian.ts`).
-4. Before pushing, make sure the full check passes:
-
-   ```bash
-   bun run lint && bun run test && bun run build
-   ```
-
-5. Open a pull request against `main`. CI runs lint, tests, and the build on every pull request.
+1. Branch off `main`: `<type>/<feature-id>-<slug>`, for example `feat/pln-3-drag-blocks`.
+2. Follow the layers in [docs/architecture.md](docs/architecture.md). Lint fails on imports that cross them the wrong way.
+3. Add tests at the levels in [docs/testing.md](docs/testing.md). A bug fix starts with a failing test.
+4. Run `make check`. It runs the same gates as CI.
+5. Open a pull request with a Conventional Commits title (`feat(planner): …`) and complete the checklist, which is the [Definition of Done](docs/definition-of-ready-and-done.md#definition-of-done).
 
 ## Code style
 
-- TypeScript in strict mode. Keep `main.ts` limited to lifecycle wiring and delegate features to modules.
-- Match the surrounding style: tabs for indentation, sentence case for UI copy, no unnecessary comments.
-- Prefer small, single-responsibility modules over large files.
+- TypeScript strict mode. Prettier formats (`make format`). ESLint has zero tolerance for warnings.
+- Domain code is pure: no `obsidian`, no React. Side effects go through ports.
+- Sentence case for UI text. Obsidian CSS variables only. Class names start with `sbos-`.
+- Comments explain why, not what.
 
-## Commit messages
+## Reporting bugs
 
-Use short, imperative subjects (for example, `Add quarterly note template support`). Group related changes into a single commit where it makes sense.
-
-## Reporting bugs and requesting features
-
-Open an issue using the templates. Include your Obsidian version, the plugin version, and steps to reproduce for bugs.
+Use the bug template, and include your Obsidian, plugin, Dataview, Tasks and Templater versions and your platform.

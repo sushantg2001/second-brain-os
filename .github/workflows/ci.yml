@@ -1,43 +1,82 @@
+# Runs the Definition of Done gates. Every step is a make target, so `make ci` reproduces it.
 name: CI
 
 on:
-    pull_request:
-        branches: ['**']
+  pull_request:
+  push:
+    branches: [main]
+  workflow_call:
 
 permissions:
-    contents: read
+  contents: read
 
 concurrency:
-    group: ci-${{ github.ref }}
-    cancel-in-progress: true
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-    test:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v6
+  quality:
+    name: Format, lint, typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+      - run: make install
+      - run: make format-check
+      - run: make lint
+      - run: make typecheck
 
-            - uses: oven-sh/setup-bun@v2
-              with:
-                  bun-version: latest
+  test:
+    name: Tests and coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+      - run: make install
+      - run: make coverage
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: coverage/lcov.info
+          if-no-files-found: ignore
 
-            - name: Install dependencies
-              run: bun install --frozen-lockfile
+  build:
+    name: Build and bundle check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+      - run: make install
+      - run: make check-bundle
+      - uses: actions/upload-artifact@v4
+        with:
+          name: plugin-${{ github.sha }}
+          path: |
+            dist/main.js
+            dist/manifest.json
+            dist/styles.css
 
-            - name: Lint
-              run: bun run lint
-
-            - name: Test
-              run: bun run test
-
-            - name: Build
-              run: bun run build
-
-            - name: Upload build artifacts
-              uses: actions/upload-artifact@v4
-              with:
-                  name: plugin-build
-                  path: |
-                      main.js
-                      manifest.json
-                      styles.css
+  dependency-review:
+    name: Dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: on-failure

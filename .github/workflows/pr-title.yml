@@ -1,0 +1,24 @@
+# Squash merges use the PR title as the commit subject, and release notes group by it.
+name: PR title
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  title:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Check Conventional Commits format
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          pattern='^(feat|fix|perf|refactor|test|docs|build|ci|chore|revert)(\([a-z0-9-]+\))?!?: .+'
+          [[ "$TITLE" =~ $pattern ]] || {
+            echo "::error::PR title must look like 'feat(planner): drag to reschedule'. Got: $TITLE"
+            exit 1
+          }

@@ -1,9 +1,26 @@
 {
 	"name": "second-brain-os",
 	"version": "1.0.0",
-	"description": "Obsidian plugin for calendar, periodic notes, timeline and the Pillars/Projects/Vault workflow",
+	"description": "Obsidian plugin that combines a day planner, calendar and periodic notes, and the Pillars, Pipelines & Vaults (PPV) system",
 	"private": true,
 	"type": "module",
+	"scripts": {
+		"dev": "bun scripts/build.ts --watch",
+		"build": "bun scripts/build.ts",
+		"check:bundle": "bun scripts/check-bundle.ts",
+		"typecheck": "tsc --noEmit",
+		"lint": "eslint . --max-warnings 0",
+		"lint:fix": "eslint . --fix",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"test": "bun test",
+		"test:unit": "bun test tests/unit",
+		"test:component": "bun test tests/component",
+		"test:integration": "bun test tests/integration",
+		"test:coverage": "bun test --coverage",
+		"test:watch": "bun test --watch",
+		"version:bump": "bun scripts/version.ts"
+	},
 	"keywords": [
 		"obsidian-plugin"
 	],

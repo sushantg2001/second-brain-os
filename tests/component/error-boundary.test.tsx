@@ -15,7 +15,7 @@ function Fragile(): ReactNode {
 }
 
 describe("ErrorBoundary", () => {
-	let consoleError: ReturnType<typeof spyOn>;
+	let consoleError: { mockRestore: () => void };
 
 	beforeEach(() => {
 		shouldThrow = true;

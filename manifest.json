@@ -1,9 +1,9 @@
 {
-	"id": "calendar-periodic-notes",
-	"name": "Calendar & Periodic Notes",
+	"id": "second-brain-os",
+	"name": "Second Brain OS",
 	"version": "1.0.0",
 	"minAppVersion": "1.7.2",
-	"description": "Calendar view combined with daily, weekly, monthly, quarterly, and yearly notes.",
+	"description": "Day planner, calendar and periodic notes, and the Pillars, Pipelines & Vaults system in one plugin.",
 	"author": "Sushant Gupta",
 	"isDesktopOnly": false
 }
