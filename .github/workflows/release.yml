@@ -71,9 +71,10 @@ jobs:
             || { echo "::error::The signature on tag $TAG is not verified."; exit 1; }
       - name: Tagged commit is signed and on main
         run: |
-          [ "$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA" --jq .commit.verification.verified)" = "true" ] \
-            || { echo "::error::The signature on commit $GITHUB_SHA is not verified."; exit 1; }
-          git merge-base --is-ancestor "$GITHUB_SHA" origin/main \
+          commit="$(git rev-parse "$TAG^{commit}")"
+          [ "$(gh api "repos/$GITHUB_REPOSITORY/commits/$commit" --jq .commit.verification.verified)" = "true" ] \
+            || { echo "::error::The signature on commit $commit is not verified."; exit 1; }
+          git merge-base --is-ancestor "$commit" origin/main \
             || { echo "::error::$TAG is not on main."; exit 1; }
       - name: Tag matches version files and changelog
         run: bun scripts/release-check.ts "$TAG"

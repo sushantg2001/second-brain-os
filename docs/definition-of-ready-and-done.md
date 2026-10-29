@@ -28,4 +28,4 @@ A pull request merges only when all of these are true. Items 1 to 4 are automate
 9. **Docs updated:** README for user-facing behaviour and settings, `features.md` status, and an ADR if the architecture changed.
 10. **Reviewed:** one approving review, all conversations resolved, and a Conventional Commits PR title.
 
-A **release** is done when its tag passes the release workflow, the draft release has been smoke-tested by installing its artifacts into a clean vault, and it is published.
+A **release** is done when its signed tag passes the release workflow, the published release has been smoke-tested by installing its artifacts into a clean vault, and any problem found is fixed forward.

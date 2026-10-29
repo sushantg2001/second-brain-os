@@ -71,6 +71,12 @@ async function main(): Promise<void> {
 		fail(`tag ${version} already exists.`);
 	}
 
+	const pinned = (await Bun.file(".bun-version").text()).trim();
+	if (Bun.version !== pinned) {
+		console.warn(
+			`release: CI runs Bun ${pinned} and this is ${Bun.version}. Gates can differ; install Bun ${pinned} if they fail.`,
+		);
+	}
 	console.info(`Releasing ${version}. Running every gate first.`);
 	await run(["make", "check"]);
 

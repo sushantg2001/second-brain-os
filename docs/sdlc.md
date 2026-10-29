@@ -8,9 +8,9 @@ flowchart LR
   ready --> branch[Branch off main]
   branch --> pr[Pull request]
   pr -->|CI, review, Definition of Done| main[main]
-  main -->|release workflow reads commits| tag[Tag x.y.z]
-  tag -->|release workflow| draft[Draft release]
-  draft -->|smoke test, publish| users[Users]
+  main -->|make release: signed commit and tag| tag[Tag x.y.z]
+  tag -->|release workflow checks and publishes| release[GitHub release]
+  release -->|smoke test| users[Users]
 ```
 
 ## 1. Plan
@@ -48,11 +48,11 @@ make format   # fix formatting
 
 ## 5. Continuous integration
 
-| Workflow       | Trigger                                           | Jobs                                                                                                                                                                                                                        |
-| -------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ci.yml`       | every PR, push to `main`, called by `release.yml` | **quality**: `make format-check lint typecheck`. **test**: `make coverage` and upload lcov. **build**: `make check-bundle` and upload the plugin files. **dependency-review**: PRs only, fails on high-severity advisories. |
-| `pr-title.yml` | PR opened or edited                               | Conventional Commits title and `<type>/<slug>` branch name                                                                                                                                                                  |
-| `release.yml`  | push to `main`, or manual with a bump             | Plans the version from commits since the last tag, reruns CI, updates the version files and changelog, commits `chore(release): x.y.z`, tags, attests provenance and publishes the GitHub release                           |
+| Workflow       | Trigger                                             | Jobs                                                                                                                                                                                                                        |
+| -------------- | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ci.yml`       | every PR, push to `main`, called by `release.yml`   | **quality**: `make format-check lint typecheck`. **test**: `make coverage` and upload lcov. **build**: `make check-bundle` and upload the plugin files. **dependency-review**: PRs only, fails on high-severity advisories. |
+| `pr-title.yml` | PR opened or edited                                 | Conventional Commits title and `<type>/<slug>` branch name                                                                                                                                                                  |
+| `release.yml`  | push to `main` (report only), push of a version tag | **plan** (branch push): reports the next version. **check**, **verify**, **publish** (tag push): checks the tag, reruns CI on it, attests provenance and publishes the GitHub release. Never writes to `main` or to tags    |
 
 Bun is pinned by `.bun-version` in every job. Workflows default to `contents: read`, and jobs ask for more only when they need it.
 
@@ -60,12 +60,14 @@ Bun is pinned by `.bun-version` in every job. Workflows default to `contents: re
 
 - Require a pull request with one approval, and resolved conversations.
 - Required status checks: `Format, lint, typecheck`, `Tests and coverage`, `Build and bundle check`, `Dependency review`, `Title and branch`.
-- Let the release workflow push its version commit: allow GitHub Actions to bypass the rule, or add a `RELEASE_TOKEN` secret (a fine-grained token or GitHub App token with `contents: write`).
+- Every commit and every tag must carry a verified signature, and only admins create tags. No bot is exempt, so the release workflow cannot push; see [6. Release](#6-release).
 - Require branches to be up to date. Squash merge only. No force pushes.
 
 ## 6. Release
 
-Releases are automatic. Every push to `main` runs `release.yml`, which reads the Conventional Commit subjects since the last version tag and takes the largest bump:
+The version commit and the tag are signed with the maintainer's hardware key, and GitHub rejects anything else on `main` or on a tag. So a maintainer cuts the release on their machine, and the pipeline publishes the tag they push. The pipeline never writes to `main` or to tags.
+
+The version comes from the Conventional Commit subjects since the last version tag, taking the largest bump:
 
 | Commit types                            | Version change     | Example       |
 | --------------------------------------- | ------------------ | ------------- |
@@ -76,20 +78,39 @@ Releases are automatic. Every push to `main` runs `release.yml`, which reads the
 
 This project's rule makes every feature a major release on purpose, which is stricter than plain semver. The rules live in `scripts/release-plan.ts` and are unit-tested.
 
-When there is a bump, the workflow:
-
-1. Reruns the CI gates.
-2. Writes the version into `package.json`, `manifest.json` and `versions.json`, and adds a section to `CHANGELOG.md` (the `## [Unreleased]` text becomes part of it).
-3. Builds and checks the bundle, commits `chore(release): x.y.z [skip ci]` to `main` and pushes the tag `x.y.z`. Its own commit does not start another release.
-4. Attests build provenance and publishes the GitHub release with `main.js`, `manifest.json`, `styles.css` and notes grouped by type.
-
-Useful commands:
+### Cut a release (maintainer)
 
 ```bash
-make release-plan    # show the version the next push to main would release, and its notes
+make release-plan    # what would be released, and its notes
+make release         # gates, then a signed commit and a signed tag; nothing is pushed
+git push --atomic origin main 2.0.0
 ```
 
-To force a release (for example a patch after a docs-only change), run the **Release** workflow by hand and pick `major`, `minor` or `patch`.
+`make release` stops, changing nothing, unless you are on a clean `main` that equals `origin/main`. Then it:
+
+1. Runs `make check`. A tag that fails CI cannot be undone without an admin deleting it, so the gates run first.
+2. Writes the version into `package.json`, `manifest.json` and `versions.json`, and adds a section to `CHANGELOG.md` (the `## [Unreleased]` text becomes part of it).
+3. Makes the signed commit `chore(release): x.y.z` and the signed tag `x.y.z`. Each needs a touch of the key.
+
+`make release BUMP=patch` (or `minor`, `major`) forces a bump, for example a patch after a docs-only change. Without one it reads the commits and does nothing when only docs, test or ci changed.
+
+Use `--atomic` so `main` and the tag land together or not at all. The push goes over SSH with the key, like any other push.
+
+### What the pipeline does with the tag
+
+`release.yml` runs when a tag like `2.0.0` or `2.0.0-alpha.1` is pushed:
+
+1. **check**: the tag is annotated and GitHub reports its signature as verified, the tagged commit is verified and is on `main`, `package.json`, `manifest.json` and `versions.json` carry the tag's version, and `CHANGELOG.md` has its section. A failure here means the tag was not made by `make release`.
+2. **verify**: reruns the CI gates on the tagged commit.
+3. **publish**: builds, attests build provenance, and publishes the GitHub release with `main.js`, `manifest.json` and `styles.css`. The notes are the version's `CHANGELOG.md` section. A tag with a `-` in it is a pre-release.
+
+A push to `main` only runs **plan**, which writes the pending version to the run summary.
+
+### If something goes wrong
+
+- **`make release` fails on the gates:** nothing was changed. Fix the cause and run it again. The script warns when your Bun differs from `.bun-version`, since coverage thresholds differ between Bun versions.
+- **The tag was pushed but the workflow failed:** re-run the failed jobs. If the tag itself is wrong, an admin deletes it (`git push origin --delete x.y.z`), `main` is fixed forward, and the release is cut again as the next version.
+- **Check fails with an unverified signature:** the signing key is not uploaded to GitHub, or the committer email does not match it.
 
 After a release, install its files into a clean vault and run the manual checklist in [testing.md](testing.md#manual-acceptance-checklist-release). Obsidian reads `manifest.json` and `versions.json` from `main` and the assets from the release whose tag equals the version.
 
