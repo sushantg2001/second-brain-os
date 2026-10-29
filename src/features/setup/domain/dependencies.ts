@@ -28,6 +28,12 @@ export interface DependencyReport {
 
 export const REQUIRED_PLUGINS: readonly RequiredPlugin[] = [
 	{
+		id: "datacore",
+		name: "Datacore",
+		minVersion: "0.1.0",
+		purpose: "Queries over notes, tasks and fields in your own notes and templates.",
+	},
+	{
 		id: "obsidian-tasks-plugin",
 		name: "Tasks",
 		minVersion: "7.0.0",
