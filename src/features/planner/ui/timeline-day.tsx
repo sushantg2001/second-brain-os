@@ -8,7 +8,7 @@ import {
 } from "react";
 
 import { formatDuration, formatTime, type IsoDate, type Minutes } from "../../../shared/kernel";
-import { useStore } from "../../../shared/react";
+import { Icon, useStore } from "../../../shared/react";
 import { isClosed } from "../../tasks";
 import type { PlannedBlock } from "../domain/day-plan";
 import { PlannerContext } from "./services";
@@ -208,6 +208,17 @@ export function TimelineDay({ date }: { readonly date: IsoDate }): ReactNode {
 							onPointerDown={(event) => event.stopPropagation()}
 							onChange={() => run(planner.toggleDone(block))}
 						/>
+						{services.clocks && !closed && (
+							<button
+								type="button"
+								className={`sbos-block__clock${services.clocks.isRunning(block) ? " is-running" : ""}`}
+								aria-label={`${services.clocks.isRunning(block) ? "Stop" : "Start"} clock on ${block.title}`}
+								onPointerDown={(event) => event.stopPropagation()}
+								onClick={() => services.clocks?.toggle(block)}
+							>
+								<Icon name={services.clocks.isRunning(block) ? "square" : "play"} />
+							</button>
+						)}
 						<button
 							type="button"
 							className="sbos-block__title"
@@ -235,6 +246,18 @@ export function TimelineDay({ date }: { readonly date: IsoDate }): ReactNode {
 					</div>
 				);
 			})}
+			{services.clocks?.rangesOn(date).map((range) => (
+				<div
+					key={`${range.taskId}-${range.start}`}
+					className={`sbos-clocked${range.running ? " is-running" : ""}`}
+					style={{
+						top: `${top(range.start)}px`,
+						height: `${Math.max(top(range.end) - top(range.start), 2)}px`,
+					}}
+					title={`Clocked: ${range.title}, ${formatDuration(range.end - range.start)}`}
+					aria-hidden="true"
+				/>
+			))}
 			{drag?.kind === "create" && (
 				<div
 					className="sbos-block is-ghost"

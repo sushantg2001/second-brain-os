@@ -261,10 +261,14 @@ describe("timeline view", () => {
 	});
 });
 
+function plannerStatus(plugin: { statusBarItems: HTMLElement[] }): HTMLElement | undefined {
+	return plugin.statusBarItems.find((item) => !item.classList.contains("sbos-status--clock"));
+}
+
 describe("planner status and notifications", () => {
 	it("shows the current or next block in the status bar", async () => {
 		const harness = await setup();
-		const status = harness.plugin.statusBarItems[0];
+		const status = plannerStatus(harness.plugin);
 		expect(status?.textContent).toBe("▶ Write spec · 50m left");
 		const now = { date: "2026-10-29", minutes: 10 * 60 + 5 };
 		expect(statusText(harness.container.planner, now)).toBe("Next: Standup at 10:30");
@@ -276,7 +280,7 @@ describe("planner status and notifications", () => {
 		await harness.container.settings
 			.section("planner")
 			.update((settings) => ({ ...settings, showStatusBar: false }));
-		const status = harness.plugin.statusBarItems[0];
+		const status = plannerStatus(harness.plugin);
 		expect(status?.textContent).toBe("");
 		expect(status?.hidden).toBe(true);
 	});

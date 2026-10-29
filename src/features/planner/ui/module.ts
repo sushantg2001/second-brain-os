@@ -6,6 +6,7 @@ import {
 	Store,
 	type Clock,
 	type DateFormatter,
+	type NowSnapshot,
 	type Notifier,
 	type ReadableStore,
 	type Workspace,
@@ -14,7 +15,7 @@ import type { PeriodicNotes } from "../../periodic";
 import type { TaskIndex } from "../../tasks";
 import type { Planner } from "../application/planner";
 import { currentBlock, nextBlock } from "../domain/day-plan";
-import type { NowSnapshot, PlannerServices } from "./services";
+import type { PlannerClockControls, PlannerServices } from "./services";
 import { NewBlockModal, TimelineView, VIEW_TYPE_TIMELINE } from "./timeline-view";
 
 export interface PlannerModuleDeps {
@@ -25,10 +26,10 @@ export interface PlannerModuleDeps {
 	readonly dates: DateFormatter;
 	readonly workspace: Workspace;
 	readonly clock: Clock;
+	readonly now: ReadableStore<NowSnapshot>;
 	readonly notifier: Notifier;
+	readonly clocks?: PlannerClockControls;
 }
-
-const TICK_MS = 30_000;
 
 /** Text for the status bar: the running block and time left, or the next block. */
 export function statusText(planner: Planner, now: NowSnapshot): string {
@@ -57,12 +58,9 @@ async function openTimeline(app: App, days: number, inSidebar: boolean): Promise
 }
 
 /** Timeline views, commands, the status bar and start notifications. */
-export function registerPlanner(
-	plugin: Plugin,
-	deps: PlannerModuleDeps,
-): PlannerServices & { readonly tick: () => void } {
+export function registerPlanner(plugin: Plugin, deps: PlannerModuleDeps): PlannerServices {
 	const { app, planner, clock } = deps;
-	const now = new Store<NowSnapshot>({ date: clock.today(), minutes: clock.nowMinutes() });
+	const { now } = deps;
 	const version = new Store(0);
 	const bump = (): void => version.update((value) => value + 1);
 	for (const source of [
@@ -82,6 +80,7 @@ export function registerPlanner(
 		openTask: (task) => void deps.workspace.open(task.path, "current", task.line),
 		newBlock: (date, start, end) => new NewBlockModal(app, services, date, start, end).open(),
 		report: (error) => deps.notifier.notify(error.message),
+		...(deps.clocks ? { clocks: deps.clocks } : {}),
 	};
 
 	plugin.registerView(VIEW_TYPE_TIMELINE, (leaf) => new TimelineView(leaf, services, 1));
@@ -96,30 +95,26 @@ export function registerPlanner(
 	plugin.register(version.subscribe(renderStatus));
 	plugin.register(now.subscribe(renderStatus));
 
+	// Notify for blocks that started since the last tick, on the same day.
 	let lastChecked = now.get();
 	const notified = new Set<string>();
-	const tick = (): void => {
-		const current = { date: clock.today(), minutes: clock.nowMinutes() };
-		if (planner.settings.notifyOnStart && current.date === lastChecked.date) {
-			for (const block of planner.plan(current.date).blocks) {
-				const key = `${current.date}|${block.id}|${block.start}`;
-				if (
-					block.start > lastChecked.minutes &&
-					block.start <= current.minutes &&
-					block.state !== "done" &&
-					!notified.has(key)
-				) {
-					notified.add(key);
-					deps.notifier.notify(`Starting now: ${block.title}`);
+	plugin.register(
+		now.subscribe(() => {
+			const current = now.get();
+			if (planner.settings.notifyOnStart && current.date === lastChecked.date) {
+				for (const block of planner.plan(current.date).blocks) {
+					const key = `${current.date}|${block.id}|${block.start}`;
+					const started =
+						block.start > lastChecked.minutes && block.start <= current.minutes;
+					if (started && block.state !== "done" && !notified.has(key)) {
+						notified.add(key);
+						deps.notifier.notify(`Starting now: ${block.title}`);
+					}
 				}
 			}
-		}
-		lastChecked = current;
-		if (current.date !== now.get().date || current.minutes !== now.get().minutes) {
-			now.set(current);
-		}
-	};
-	plugin.registerInterval(window.setInterval(tick, TICK_MS));
+			lastChecked = current;
+		}),
+	);
 	renderStatus();
 
 	plugin.addCommand({
@@ -148,5 +143,5 @@ export function registerPlanner(
 				?.setViewState({ type: VIEW_TYPE_TIMELINE, state: { days: 1 } });
 		}
 	});
-	return Object.assign(services, { tick });
+	return services;
 }

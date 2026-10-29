@@ -11,7 +11,7 @@ One Obsidian plugin for a whole personal knowledge system:
 
 Everything is plain Markdown, so your notes stay readable without the plugin.
 
-> **Status:** 2.0 is in development. Periodic notes, the calendar and the day planner work; time tracking and PPV are next. See the [roadmap](docs/features.md#roadmap). Version 1.x was "Calendar & Periodic Notes".
+> **Status:** 2.0 is in development. Periodic notes, the calendar, the day planner and time tracking work; PPV is next. See the [roadmap](docs/features.md#roadmap). Version 1.x was "Calendar & Periodic Notes".
 
 ## Requirements
 

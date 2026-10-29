@@ -456,3 +456,38 @@
 .sbos-status[hidden] {
 	display: none;
 }
+
+/* ---------------------------------------------------------------- clocks */
+
+.sbos-block__clock {
+	flex: 0 0 auto;
+	padding: 0 var(--size-2-1);
+	height: auto;
+	background: none;
+	box-shadow: none;
+	color: var(--text-muted);
+}
+
+.sbos-block__clock.is-running {
+	color: var(--color-red);
+}
+
+.sbos-clocked {
+	position: absolute;
+	right: 0;
+	width: 4px;
+	border-radius: 2px;
+	background-color: var(--color-green);
+	opacity: 0.7;
+	pointer-events: none;
+	z-index: 2;
+}
+
+.sbos-clocked.is-running {
+	background-color: var(--color-red);
+}
+
+.sbos-timeline__summary {
+	margin: 0 0 var(--size-2-2);
+	color: var(--text-muted);
+}

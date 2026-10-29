@@ -1,9 +1,10 @@
 import type { Plugin } from "obsidian";
 
 import { registerCalendar, type DayBadge } from "../features/calendar";
+import { registerClocks } from "../features/clocks";
 import { registerPeriodic } from "../features/periodic";
 import { registerPlanner } from "../features/planner";
-import { formatDuration, select, type IsoDate } from "../shared/kernel";
+import { formatDuration, Store, type IsoDate, type Minutes } from "../shared/kernel";
 import type { Container } from "./container";
 
 /**
@@ -15,7 +16,15 @@ export interface FeatureModule {
 	register(plugin: Plugin, container: Container): void;
 }
 
+const TICK_MS = 30_000;
+
 export const FEATURES: readonly FeatureModule[] = [
+	{
+		id: "time",
+		register: (plugin, container) => {
+			plugin.registerInterval(window.setInterval(() => container.now.tick(), TICK_MS));
+		},
+	},
 	{
 		id: "periodic",
 		register: (plugin, container) =>
@@ -34,8 +43,20 @@ export const FEATURES: readonly FeatureModule[] = [
 		},
 	},
 	{
+		id: "clocks",
+		register: (plugin, container) =>
+			registerClocks(plugin, {
+				clocks: container.clocks,
+				tasks: container.tasks,
+				workspace: container.workspace,
+				now: container.now,
+				notifier: container.notifier,
+			}),
+	},
+	{
 		id: "planner",
 		register: (plugin, container) => {
+			const { clocks, notifier } = container;
 			registerPlanner(plugin, {
 				app: container.app,
 				planner: container.planner,
@@ -44,7 +65,19 @@ export const FEATURES: readonly FeatureModule[] = [
 				dates: container.dates,
 				workspace: container.workspace,
 				clock: container.clock,
+				now: container.now,
 				notifier: container.notifier,
+				clocks: {
+					isRunning: (task) => clocks.isRunning(task),
+					toggle: (task) =>
+						void clocks.toggle(task).then((result) => {
+							if (!result.ok) {
+								notifier.notify(result.error.message);
+							}
+						}),
+					rangesOn: (date) => clocks.rangesOn(date),
+					minutesOn: (date) => clocks.minutesOn(date),
+				},
 			});
 		},
 	},
@@ -57,22 +90,39 @@ export const FEATURES: readonly FeatureModule[] = [
 				dates: container.dates,
 				workspace: container.workspace,
 				notifier: container.notifier,
-				badges: select(
-					container.planner.plannedByDate,
-					(planned) =>
-						new Map<IsoDate, readonly DayBadge[]>(
-							[...planned].map(([date, minutes]) => [
-								date,
-								[
-									{
-										text: formatDuration(minutes),
-										label: `${formatDuration(minutes)} planned`,
-									},
-								],
-							]),
-						),
-				),
+				badges: dayBadges(plugin, container),
 			});
 		},
 	},
 ];
+
+/** Planned and clocked time per day for the calendar, kept current. */
+function dayBadges(
+	plugin: Plugin,
+	container: Container,
+): Store<ReadonlyMap<IsoDate, readonly DayBadge[]>> {
+	const badges = new Store<ReadonlyMap<IsoDate, readonly DayBadge[]>>(new Map());
+	const refresh = (): void => {
+		const planned = container.planner.plannedByDate.get();
+		const clocked: ReadonlyMap<IsoDate, Minutes> = container.clocks.minutesByDate();
+		const next = new Map<IsoDate, DayBadge[]>();
+		for (const [date, minutes] of planned) {
+			next.set(date, [
+				{ text: formatDuration(minutes), label: `${formatDuration(minutes)} planned` },
+			]);
+		}
+		for (const [date, minutes] of clocked) {
+			const list = next.get(date) ?? [];
+			list.push({
+				text: `⏱${formatDuration(minutes)}`,
+				label: `${formatDuration(minutes)} clocked`,
+			});
+			next.set(date, list);
+		}
+		badges.set(next);
+	};
+	plugin.register(container.planner.plannedByDate.subscribe(refresh));
+	plugin.register(container.tasks.snapshot.subscribe(refresh));
+	refresh();
+	return badges;
+}

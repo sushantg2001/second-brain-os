@@ -19,6 +19,11 @@ const MIGHT_HAVE_TASKS = /^[ \t]*(?:[-*+]|\d+[.)])[ \t]+\[.\]/m;
 /** Every task in the vault, kept current from note changes. */
 export class TaskIndex {
 	readonly #store = new Store<TaskSnapshot>({ byPath: new Map(), version: 0 });
+	#resolveReady: () => void = () => {};
+	/** Resolves after the first full build. */
+	readonly ready: Promise<void> = new Promise((resolve) => {
+		this.#resolveReady = resolve;
+	});
 
 	constructor(private readonly notes: NoteStore) {}
 
@@ -49,6 +54,7 @@ export class TaskIndex {
 			}
 		}
 		this.#commit(byPath);
+		this.#resolveReady();
 	}
 
 	/** Re-reads one note. */
