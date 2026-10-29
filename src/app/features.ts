@@ -4,6 +4,8 @@ import { registerCalendar, type DayBadge } from "../features/calendar";
 import { registerClocks } from "../features/clocks";
 import { registerPeriodic } from "../features/periodic";
 import { registerPlanner } from "../features/planner";
+import { registerPpv } from "../features/ppv";
+import { isClosed } from "../features/tasks";
 import { formatDuration, Store, type IsoDate, type Minutes } from "../shared/kernel";
 import type { Container } from "./container";
 
@@ -77,6 +79,33 @@ export const FEATURES: readonly FeatureModule[] = [
 						}),
 					rangesOn: (date) => clocks.rangesOn(date),
 					minutesOn: (date) => clocks.minutesOn(date),
+				},
+			});
+		},
+	},
+	{
+		id: "ppv",
+		register: (plugin, container) => {
+			const { ppv, clocks } = container;
+			registerPpv(plugin, {
+				app: container.app,
+				index: container.ppvIndex,
+				service: ppv,
+				tasks: container.tasks,
+				actions: container.taskActions,
+				workspace: container.workspace,
+				notifier: container.notifier,
+				settings: container.settings.section("ppv").store,
+				summary: (project) => {
+					const tasks = ppv.projectTasks(project.path);
+					return {
+						done: tasks.filter((task) => isClosed(task.state)).length,
+						total: tasks.length,
+						clockedMinutes: tasks.reduce(
+							(sum, task) => sum + clocks.minutesFor(task),
+							0,
+						),
+					};
 				},
 			});
 		},

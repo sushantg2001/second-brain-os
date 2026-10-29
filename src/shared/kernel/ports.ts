@@ -26,6 +26,15 @@ export interface NoteStore {
 	create(path: string, content: string): Promise<void>;
 	/** Atomic read-modify-write. The edit must be pure. Returns the new content. */
 	process(path: string, edit: (content: string) => string): Promise<string>;
+	/** Edits front matter in place through Obsidian, keeping the body untouched. */
+	updateFrontmatter(
+		path: string,
+		edit: (frontmatter: Record<string, unknown>) => void,
+	): Promise<void>;
+	/** Moves or renames a note, updating links to it. Creates the target folder if needed. */
+	move(path: string, newPath: string): Promise<void>;
+	/** Creates a folder and its parents when missing. True when something was created. */
+	ensureFolder(path: string): Promise<boolean>;
 	/** Parsed front matter from the metadata cache, or null. */
 	frontmatter(path: string): Readonly<Record<string, unknown>> | null;
 	/** Resolves a wikilink target as written in `sourcePath`, or null when unresolved. */

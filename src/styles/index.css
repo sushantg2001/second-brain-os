@@ -491,3 +491,169 @@
 	margin: 0 0 var(--size-2-2);
 	color: var(--text-muted);
 }
+
+/* ---------------------------------------------------------------- PPV */
+
+.sbos-link {
+	padding: 0;
+	height: auto;
+	background: none;
+	box-shadow: none;
+	color: var(--link-color);
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+
+.sbos-link:hover {
+	text-decoration: underline;
+}
+
+.sbos-muted {
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
+
+.sbos-pill {
+	display: inline-block;
+	padding: 0 var(--size-2-2);
+	border-radius: var(--radius-l);
+	background-color: var(--background-modifier-hover);
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+}
+
+.sbos-icon-button {
+	padding: 0 var(--size-2-2);
+	height: auto;
+	background: none;
+	box-shadow: none;
+	color: var(--text-muted);
+}
+
+.sbos-dashboard {
+	max-width: 56rem;
+}
+
+.sbos-dashboard__toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--size-4-2);
+	margin-bottom: var(--size-4-4);
+}
+
+.sbos-dashboard__toolbar h2 {
+	flex: 1 1 100%;
+	margin: 0;
+}
+
+.sbos-dashboard__toolbar label {
+	display: flex;
+	align-items: center;
+	gap: var(--size-2-2);
+}
+
+.sbos-empty {
+	padding: var(--size-4-4);
+	border: var(--border-width) dashed var(--background-modifier-border);
+	border-radius: var(--radius-m);
+}
+
+.sbos-pillar {
+	margin-bottom: var(--size-4-6);
+}
+
+.sbos-pillar__header,
+.sbos-goal__header,
+.sbos-project__main,
+.sbos-project__meta,
+.sbos-project__next {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--size-2-3);
+}
+
+.sbos-pillar__header h3 {
+	margin: 0;
+}
+
+.sbos-goal-list,
+.sbos-project-list,
+.sbos-task-list {
+	list-style: none;
+	margin: var(--size-2-2) 0;
+	padding: 0;
+}
+
+.sbos-goal {
+	margin: var(--size-4-2) 0 var(--size-4-2) var(--size-4-3);
+}
+
+.sbos-goal__title {
+	font-weight: var(--font-semibold);
+}
+
+.sbos-project {
+	margin: var(--size-2-2) 0 var(--size-2-2) var(--size-4-3);
+	padding: var(--size-2-3) var(--size-4-2);
+	border-left: 2px solid var(--interactive-accent);
+	background-color: var(--background-secondary);
+	border-radius: var(--radius-s);
+}
+
+.sbos-project--paused,
+.sbos-project--backlog {
+	border-left-color: var(--text-faint);
+}
+
+.sbos-project--done,
+.sbos-project--dropped {
+	opacity: 0.6;
+}
+
+.sbos-project__due {
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+}
+
+.sbos-project__meta {
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+}
+
+.sbos-project__meta progress {
+	width: 8em;
+}
+
+.sbos-form {
+	display: grid;
+	gap: var(--size-4-2);
+}
+
+.sbos-form label {
+	display: grid;
+	gap: var(--size-2-1);
+}
+
+.sbos-form .sbos-form__inline {
+	display: flex;
+	align-items: center;
+	gap: var(--size-2-2);
+}
+
+.sbos-form__error {
+	color: var(--text-error);
+	margin: 0;
+}
+
+.sbos-status-picker {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--size-2-2);
+}
+
+.sbos-block-query .sbos-project {
+	margin-left: 0;
+}

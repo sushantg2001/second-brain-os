@@ -36,6 +36,22 @@ export class VaultNoteStore implements NoteStore {
 		return this.app.vault.process(this.require(path), edit);
 	}
 
+	updateFrontmatter(
+		path: string,
+		edit: (frontmatter: Record<string, unknown>) => void,
+	): Promise<void> {
+		return this.app.fileManager.processFrontMatter(this.require(path), edit);
+	}
+
+	async move(path: string, newPath: string): Promise<void> {
+		const file = this.require(path);
+		if (this.app.vault.getAbstractFileByPath(newPath)) {
+			throw new Error(`${newPath} already exists.`);
+		}
+		await this.ensureFolder(folderOf(newPath));
+		await this.app.fileManager.renameFile(file, newPath);
+	}
+
 	frontmatter(path: string): Readonly<Record<string, unknown>> | null {
 		const file = this.file(path);
 		const frontmatter = file
@@ -99,11 +115,12 @@ export class VaultNoteStore implements NoteStore {
 		return file;
 	}
 
-	private async ensureFolder(folder: string): Promise<void> {
+	async ensureFolder(folder: string): Promise<boolean> {
 		if (!folder || this.app.vault.getAbstractFileByPath(folder)) {
-			return;
+			return false;
 		}
 		await this.ensureFolder(folderOf(folder));
 		await this.app.vault.createFolder(folder);
+		return true;
 	}
 }
