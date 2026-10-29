@@ -24,7 +24,8 @@ The plugin stores everything as plain Markdown and front matter. Removing it lea
 src/
   main.ts               Plugin class. Calls app/ and nothing else.
   app/                  Composition root: container, lifecycle, feature list.
-  features/<feature>/   Vertical slices (setup, periodic, calendar, planner, clocks, ppv, rollups, lint).
+  features/<feature>/   Vertical slices: setup, periodic, calendar, tasks, planner, clocks, ppv,
+                        rollups, lint.
     domain/             Pure types and rules. No obsidian, no React.
     application/        Use cases and ports (interfaces). No obsidian, no React, no UI.
     ui/                 React components and Obsidian views, modals, settings sections.
@@ -73,6 +74,22 @@ Each feature declares what it needs from the outside world as interfaces in `app
 | `Clock`, `DateFormatter`, `Workspace`, `Notifier`                               | `infrastructure/obsidian`  | Date, `moment`, `app.workspace`, `Notice` |
 | `RemoteCalendar` (read-only ICS)                                                | `infrastructure/ics`       | `requestUrl`                              |
 | `SettingsPersistence`                                                           | `infrastructure/settings`  | `loadData` and `saveData`                 |
+
+### Feature slices
+
+| Slice      | Owns                                                                   | Uses                                  |
+| ---------- | ---------------------------------------------------------------------- | ------------------------------------- |
+| `setup`    | Required-plugin check and setup view                                   | kernel                                |
+| `periodic` | Periods, note paths, templates, the index of periodic notes            | kernel                                |
+| `calendar` | Month view, jump-to-date                                               | periodic                              |
+| `tasks`    | Task parsing, verified line edits, task index, done toggle             | kernel                                |
+| `planner`  | Day plans, time-block edits, timeline, carry-over                      | periodic, tasks                       |
+| `clocks`   | Clock entries, start and stop, clocked time                            | tasks                                 |
+| `ppv`      | PPV notes and tree, creation, status, capture, dashboard, `sbos` block | periodic, tasks                       |
+| `rollups`  | Project, goal, pillar and period rollups, `sbos-review` block          | clocks, periodic, ppv, tasks          |
+| `lint`     | Vault check rules and quick fixes                                      | clocks, planner, ppv, tasks, periodic |
+
+Features that show another feature's data get it through optional services wired in `app/features.ts`. For example, the planner's clock buttons and the calendar's badges work this way, so each feature stays testable on its own.
 
 ## Core domain model
 

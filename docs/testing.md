@@ -30,8 +30,8 @@ Tests that run on Bun (`bun test`) share `tests/setup.ts`, which registers happy
 
 ## Fixtures
 
-- `tests/fixtures/vault/` is a small vault with periodic notes across a year boundary and ISO week 53, a PPV tree (2 pillars, 3 goals, 5 projects), time blocks, clocks and deliberately broken notes for lint. It is excluded from Prettier because the bytes matter.
-- `tests/fakes/` has hand-written fakes for every port. Fakes are preferred over mocks. Use `mock.module` only for `obsidian`.
+- Tests build small vaults inline with `createTestApp({ files })` (`tests/fakes/fake-obsidian-app.ts`), so each test shows the exact notes it uses. `tests/mocks/obsidian.ts` is an in-memory Obsidian: a vault that fires events, a metadata cache, a workspace, plugins, modals and settings controls.
+- `tests/fakes/` has harnesses (`loadPlugin`, `createPeriodicHarness`, `FixedClock`) and fakes. Fakes are preferred over mocks. Use `mock.module` only for `obsidian`.
 
 ## Coverage
 
@@ -43,7 +43,7 @@ Bun reports line and function coverage. The threshold in `bunfig.toml` applies t
 | `application/`                | 90%          |
 | `ui/` and `infrastructure/`   | 80%          |
 
-The threshold starts at 80% and is raised as phases land. It is never lowered without an ADR.
+The thresholds in `bunfig.toml` are 90% of lines and 85% of functions in every file (the whole suite is at about 99% and 98%). They only go up. Lowering one needs an ADR.
 
 ## Manual acceptance checklist (release)
 

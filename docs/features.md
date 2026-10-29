@@ -11,16 +11,16 @@ Each feature has an ID used in issues, branches and PR titles (`feat(planner): â
 | SET-3 | Features register only after the check passes, without needing a reload                                           | M   |
 | SET-4 | Settings schema with versioned migrations; unreadable settings are never overwritten                              | M   |
 
-## Periodic notes (`periodic`), phase 1, done (PER-6 in phase 5)
+## Periodic notes (`periodic`), phase 1, done (PER-5 in phase 7, PER-6 in phase 5)
 
-| ID    | Feature                                                                                                         | Pri |
-| ----- | --------------------------------------------------------------------------------------------------------------- | --- |
-| PER-1 | Daily, weekly, monthly, quarterly and yearly notes, each with its own on/off, format, folder and template       | M   |
-| PER-2 | Commands per period: open current, create without opening, previous and next, jump to the closest existing note | M   |
-| PER-3 | Templates rendered through Templater, with `{{title}}`, `{{date[:fmt]}}` and `{{time[:fmt]}}` as a fallback     | M   |
-| PER-4 | Public API compatible with Periodic Notes (`getPeriodicNote`, `createPeriodicNote`, `getGranularities`)         | M   |
-| PER-5 | Import settings from an installed Periodic Notes or Calendar plugin                                             | S   |
-| PER-6 | Review templates per period (weekly, monthly, quarterly, yearly) that embed rollups and lint findings           | S   |
+| ID    | Feature                                                                                                         | Pri                 |
+| ----- | --------------------------------------------------------------------------------------------------------------- | ------------------- |
+| PER-1 | Daily, weekly, monthly, quarterly and yearly notes, each with its own on/off, format, folder and template       | M                   |
+| PER-2 | Commands per period: open current, create without opening, previous and next, jump to the closest existing note | M                   |
+| PER-3 | Templates rendered through Templater, with `{{title}}`, `{{date[:fmt]}}` and `{{time[:fmt]}}` as a fallback     | M                   |
+| PER-4 | Public API compatible with Periodic Notes (`getPeriodicNote`, `createPeriodicNote`, `getGranularities`)         | M                   |
+| PER-5 | Import settings from an installed Periodic Notes or Calendar plugin                                             | S (done in phase 7) |
+| PER-6 | Review templates per period (weekly, monthly, quarterly, yearly) that embed rollups and lint findings           | S                   |
 
 ## Calendar (`calendar`), phase 1, done
 
@@ -34,7 +34,7 @@ Each feature has an ID used in issues, branches and PR titles (`feat(planner): â
 | CAL-6 | Per-day badges: time planned and time clocked                                              | S   |
 | CAL-7 | Keyboard navigation of the grid                                                            | M   |
 
-## Planner (`planner`), phase 2, done (PLN-9 and PLN-10 later)
+## Planner (`planner`), phase 2, done (PLN-10 in phase 7; PLN-9 deferred)
 
 | ID     | Feature                                                                                                                                                          | Pri |
 | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- |
@@ -90,7 +90,7 @@ Each feature has an ID used in issues, branches and PR titles (`feat(planner): â
 | LNT-3 | Quick fixes where safe (close clock, set parent), always previewed first                                                                                                         | S   |
 | LNT-4 | Per-rule on, off and severity settings                                                                                                                                           | S   |
 
-## Platform (`app`), all phases
+## Platform (`app`), all phases (PLT-5 deferred)
 
 | ID    | Feature                                                      | Pri |
 | ----- | ------------------------------------------------------------ | --- |
@@ -102,13 +102,20 @@ Each feature has an ID used in issues, branches and PR titles (`feat(planner): â
 
 ## Roadmap
 
-| Phase | Scope                                                                         | Release       | Status                               |
-| ----- | ----------------------------------------------------------------------------- | ------------- | ------------------------------------ |
-| 0     | Skeleton: React and Bun build, layers, settings, setup gate, CI               | â€”             | done                                 |
-| 1     | Periodic and calendar, ported from 1.x with parity tests                      | 2.0.0-alpha.1 | done (PER-5 later; PER-6 in phase 5) |
-| 2     | Planner timeline (PLN-1 to PLN-8)                                             | alpha.2       | done                                 |
-| 3     | Clocks                                                                        | alpha.3       | done                                 |
-| 4     | PPV model, commands, dashboard and capture                                    | beta.1        | done                                 |
-| 5     | Rollups and review templates                                                  | beta.2        | done                                 |
-| 6     | Lint                                                                          | rc.1          | done                                 |
-| 7     | S items, performance and accessibility pass, docs, community store submission | 2.0.0         | planned                              |
+| Phase | Scope                                                                 | Release       | Status                                        |
+| ----- | --------------------------------------------------------------------- | ------------- | --------------------------------------------- |
+| 0     | Skeleton: React and Bun build, layers, settings, setup gate, CI       | â€”             | done                                          |
+| 1     | Periodic and calendar, ported from 1.x with parity tests              | 2.0.0-alpha.1 | done                                          |
+| 2     | Planner timeline (PLN-1 to PLN-8)                                     | alpha.2       | done                                          |
+| 3     | Clocks                                                                | alpha.3       | done                                          |
+| 4     | PPV model, commands, dashboard and capture                            | beta.1        | done                                          |
+| 5     | Rollups and review templates                                          | beta.2        | done                                          |
+| 6     | Lint                                                                  | rc.1          | done                                          |
+| 7     | Settings import, carry-over, performance and accessibility pass, docs | 2.0.0         | done; release and store submission are manual |
+
+## Deferred after 2.0
+
+| ID    | Why                                                                                                           |
+| ----- | ------------------------------------------------------------------------------------------------------------- |
+| PLN-9 | Remote calendars need a full iCalendar parser with recurrence rules. Doing it partly would show wrong events. |
+| PLT-5 | Translations need the UI text to settle first. All text is in English and in sentence case.                   |
