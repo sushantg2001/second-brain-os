@@ -1,0 +1,760 @@
+/* Second Brain OS styles. Every class is prefixed `sbos-` and uses Obsidian theme variables. */
+
+.sbos-view {
+	padding: var(--size-4-4);
+}
+
+.sbos-icon {
+	display: inline-flex;
+	align-items: center;
+}
+
+.sbos-error {
+	color: var(--text-error);
+}
+
+.sbos-error__message {
+	white-space: pre-wrap;
+	font-size: var(--font-ui-smaller);
+}
+
+.sbos-setup {
+	max-width: 40rem;
+}
+
+.sbos-setup__list {
+	list-style: none;
+	padding: 0;
+	margin: var(--size-4-4) 0;
+	display: grid;
+	gap: var(--size-4-2);
+}
+
+.sbos-setup__item {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: var(--size-2-1) var(--size-4-2);
+	padding: var(--size-4-2) var(--size-4-3);
+	border: var(--border-width) solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+}
+
+.sbos-setup__name {
+	font-weight: var(--font-semibold);
+}
+
+.sbos-setup__state {
+	justify-self: end;
+	font-size: var(--font-ui-small);
+}
+
+.sbos-setup__item--ready .sbos-setup__state {
+	color: var(--text-success);
+}
+
+.sbos-setup__item--missing .sbos-setup__state,
+.sbos-setup__item--disabled .sbos-setup__state,
+.sbos-setup__item--outdated .sbos-setup__state {
+	color: var(--text-warning);
+}
+
+.sbos-setup__purpose,
+.sbos-setup__version {
+	grid-column: 1 / -1;
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
+
+/* ---------------------------------------------------------------- modal */
+
+.sbos-confirm .modal-button-container {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--size-4-2);
+}
+
+/* ---------------------------------------------------------------- calendar */
+
+.sbos-calendar {
+	--sbos-day-size: 2.2em;
+	font-size: var(--font-ui-small);
+}
+
+.sbos-calendar__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--size-4-2);
+	margin-bottom: var(--size-4-2);
+}
+
+.sbos-calendar__title {
+	margin: 0;
+	font-size: var(--font-ui-medium);
+}
+
+.sbos-calendar__title-button {
+	background: none;
+	box-shadow: none;
+	padding: 0 var(--size-2-1);
+	font: inherit;
+	color: var(--text-normal);
+}
+
+.sbos-calendar__title-button:hover {
+	color: var(--text-accent);
+}
+
+.sbos-calendar__nav {
+	display: flex;
+	gap: var(--size-2-1);
+}
+
+.sbos-calendar__nav button {
+	padding: var(--size-2-1) var(--size-2-3);
+}
+
+.sbos-calendar__grid {
+	width: 100%;
+	border-collapse: collapse;
+	table-layout: fixed;
+}
+
+.sbos-calendar__grid th {
+	color: var(--text-muted);
+	font-weight: var(--font-normal);
+	font-size: var(--font-ui-smaller);
+	padding-bottom: var(--size-2-2);
+}
+
+.sbos-calendar__grid td {
+	padding: 1px;
+	text-align: center;
+}
+
+.sbos-calendar__day,
+.sbos-calendar__week-button {
+	width: 100%;
+	min-height: var(--sbos-day-size);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 1px;
+	padding: 2px 0;
+	background: none;
+	box-shadow: none;
+	border-radius: var(--radius-s);
+	color: var(--text-normal);
+	font: inherit;
+}
+
+.sbos-calendar__day:hover,
+.sbos-calendar__week-button:hover {
+	background-color: var(--background-modifier-hover);
+}
+
+.sbos-calendar__day:focus-visible,
+.sbos-calendar__week-button:focus-visible {
+	box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+}
+
+.sbos-calendar__day.is-other-month {
+	color: var(--text-faint);
+}
+
+.sbos-calendar__day.is-today {
+	color: var(--text-accent);
+	font-weight: var(--font-bold);
+}
+
+.sbos-calendar__day.is-active {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+.sbos-calendar__week,
+.sbos-calendar__week-button {
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+}
+
+.sbos-calendar__week-button.has-note {
+	color: var(--text-accent);
+}
+
+.sbos-calendar__marks {
+	display: flex;
+	gap: 2px;
+	align-items: center;
+	min-height: 6px;
+}
+
+.sbos-calendar__dot {
+	width: 4px;
+	height: 4px;
+	border-radius: 50%;
+	background-color: currentColor;
+	opacity: 0.7;
+}
+
+.sbos-calendar__badge {
+	font-size: 0.7em;
+	line-height: 1;
+	color: var(--text-muted);
+}
+
+.sbos-calendar__day.is-active .sbos-calendar__badge {
+	color: var(--text-on-accent);
+}
+
+/* ---------------------------------------------------------------- jump to date */
+
+.sbos-jump__year {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-2);
+	margin-bottom: var(--size-4-3);
+}
+
+.sbos-jump__year input {
+	width: 6em;
+}
+
+.sbos-jump__months {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: var(--size-4-2);
+}
+
+/* ---------------------------------------------------------------- day planner */
+
+.sbos-timeline {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	font-size: var(--font-ui-small);
+}
+
+.sbos-timeline__toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--size-4-2);
+	margin-bottom: var(--size-4-2);
+}
+
+.sbos-timeline__title {
+	margin: 0;
+	font-size: var(--font-ui-medium);
+}
+
+.sbos-timeline__nav {
+	display: flex;
+	gap: var(--size-2-1);
+}
+
+.sbos-timeline__nav button {
+	padding: var(--size-2-1) var(--size-2-3);
+}
+
+.sbos-timeline__day-headers {
+	display: flex;
+	gap: var(--size-2-1);
+	border-bottom: var(--border-width) solid var(--background-modifier-border);
+	padding-bottom: var(--size-2-2);
+}
+
+.sbos-timeline__day-header {
+	flex: 1;
+	display: flex;
+	justify-content: space-between;
+	color: var(--text-muted);
+}
+
+.sbos-timeline__day-header.is-today {
+	color: var(--text-accent);
+	font-weight: var(--font-semibold);
+}
+
+.sbos-timeline__total {
+	color: var(--text-faint);
+}
+
+.sbos-timeline__scroll {
+	flex: 1;
+	overflow-y: auto;
+	min-height: 0;
+}
+
+.sbos-timeline__body {
+	display: flex;
+	gap: var(--size-2-1);
+}
+
+.sbos-timeline__gutter {
+	flex: 0 0 3em;
+}
+
+.sbos-timeline__label {
+	color: var(--text-faint);
+	font-size: var(--font-ui-smaller);
+	transform: translateY(-0.6em);
+}
+
+.sbos-timeline__day {
+	flex: 1;
+	min-width: 0;
+}
+
+.sbos-timeline__column {
+	position: relative;
+	touch-action: none;
+	user-select: none;
+}
+
+.sbos-timeline__hour {
+	position: absolute;
+	left: 0;
+	right: 0;
+	border-top: var(--border-width) solid var(--background-modifier-border);
+	pointer-events: none;
+}
+
+.sbos-timeline__now {
+	position: absolute;
+	left: 0;
+	right: 0;
+	border-top: 2px solid var(--color-red);
+	pointer-events: none;
+	z-index: 2;
+}
+
+.sbos-block {
+	position: absolute;
+	box-sizing: border-box;
+	display: flex;
+	align-items: flex-start;
+	gap: var(--size-2-2);
+	padding: var(--size-2-1) var(--size-2-2);
+	border: var(--border-width) solid var(--background-modifier-border);
+	border-left: 3px solid var(--interactive-accent);
+	border-radius: var(--radius-s);
+	background-color: var(--background-secondary);
+	overflow: hidden;
+	cursor: grab;
+	z-index: 1;
+}
+
+.sbos-block.is-scheduled {
+	border-left-style: dashed;
+}
+
+.sbos-block.is-done {
+	opacity: 0.6;
+}
+
+.sbos-block.is-done .sbos-block__title {
+	text-decoration: line-through;
+}
+
+.sbos-block.is-dragging {
+	cursor: grabbing;
+	box-shadow: var(--shadow-s);
+	z-index: 3;
+}
+
+.sbos-block.is-ghost {
+	left: 0;
+	right: 0;
+	border-style: dashed;
+	color: var(--text-muted);
+	pointer-events: none;
+}
+
+.sbos-block__title {
+	flex: 1;
+	min-width: 0;
+	height: auto;
+	padding: 0;
+	background: none;
+	box-shadow: none;
+	text-align: left;
+	white-space: normal;
+	color: var(--text-normal);
+	font: inherit;
+}
+
+.sbos-block__title:focus-visible {
+	outline: 2px solid var(--background-modifier-border-focus);
+}
+
+.sbos-block__time {
+	color: var(--text-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+.sbos-block__resize {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 6px;
+	cursor: ns-resize;
+}
+
+.sbos-unscheduled {
+	border-top: var(--border-width) solid var(--background-modifier-border);
+	margin-top: var(--size-4-2);
+	padding-top: var(--size-4-2);
+}
+
+.sbos-unscheduled h4 {
+	margin: 0 0 var(--size-2-2);
+	font-size: var(--font-ui-small);
+	color: var(--text-muted);
+}
+
+.sbos-unscheduled ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: var(--size-2-1);
+}
+
+.sbos-unscheduled li {
+	display: flex;
+	align-items: center;
+	gap: var(--size-2-2);
+	cursor: grab;
+}
+
+.sbos-unscheduled__title {
+	flex: 1;
+	justify-content: flex-start;
+	background: none;
+	box-shadow: none;
+	text-align: left;
+}
+
+.sbos-new-block {
+	display: grid;
+	gap: var(--size-4-2);
+}
+
+.sbos-new-block label {
+	display: grid;
+	gap: var(--size-2-1);
+}
+
+.sbos-new-block__error {
+	color: var(--text-error);
+	margin: 0;
+}
+
+.sbos-status[hidden] {
+	display: none;
+}
+
+/* ---------------------------------------------------------------- clocks */
+
+.sbos-block__clock {
+	flex: 0 0 auto;
+	padding: 0 var(--size-2-1);
+	height: auto;
+	background: none;
+	box-shadow: none;
+	color: var(--text-muted);
+}
+
+.sbos-block__clock.is-running {
+	color: var(--color-red);
+}
+
+.sbos-clocked {
+	position: absolute;
+	right: 0;
+	width: 4px;
+	border-radius: 2px;
+	background-color: var(--color-green);
+	opacity: 0.7;
+	pointer-events: none;
+	z-index: 2;
+}
+
+.sbos-clocked.is-running {
+	background-color: var(--color-red);
+}
+
+.sbos-timeline__summary {
+	margin: 0 0 var(--size-2-2);
+	color: var(--text-muted);
+}
+
+/* ---------------------------------------------------------------- PPV */
+
+.sbos-link {
+	padding: 0;
+	height: auto;
+	background: none;
+	box-shadow: none;
+	color: var(--link-color);
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+
+.sbos-link:hover {
+	text-decoration: underline;
+}
+
+.sbos-muted {
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
+
+.sbos-pill {
+	display: inline-block;
+	padding: 0 var(--size-2-2);
+	border-radius: var(--radius-l);
+	background-color: var(--background-modifier-hover);
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+}
+
+.sbos-icon-button {
+	padding: 0 var(--size-2-2);
+	height: auto;
+	background: none;
+	box-shadow: none;
+	color: var(--text-muted);
+}
+
+.sbos-dashboard {
+	max-width: 56rem;
+}
+
+.sbos-dashboard__toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--size-4-2);
+	margin-bottom: var(--size-4-4);
+}
+
+.sbos-dashboard__toolbar h2 {
+	flex: 1 1 100%;
+	margin: 0;
+}
+
+.sbos-dashboard__toolbar label {
+	display: flex;
+	align-items: center;
+	gap: var(--size-2-2);
+}
+
+.sbos-empty {
+	padding: var(--size-4-4);
+	border: var(--border-width) dashed var(--background-modifier-border);
+	border-radius: var(--radius-m);
+}
+
+.sbos-pillar {
+	margin-bottom: var(--size-4-6);
+}
+
+.sbos-pillar__header,
+.sbos-goal__header,
+.sbos-project__main,
+.sbos-project__meta,
+.sbos-project__next {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--size-2-3);
+}
+
+.sbos-pillar__header h3 {
+	margin: 0;
+}
+
+.sbos-goal-list,
+.sbos-project-list,
+.sbos-task-list {
+	list-style: none;
+	margin: var(--size-2-2) 0;
+	padding: 0;
+}
+
+.sbos-goal {
+	margin: var(--size-4-2) 0 var(--size-4-2) var(--size-4-3);
+}
+
+.sbos-goal__title {
+	font-weight: var(--font-semibold);
+}
+
+.sbos-project {
+	margin: var(--size-2-2) 0 var(--size-2-2) var(--size-4-3);
+	padding: var(--size-2-3) var(--size-4-2);
+	border-left: 2px solid var(--interactive-accent);
+	background-color: var(--background-secondary);
+	border-radius: var(--radius-s);
+}
+
+.sbos-project--paused,
+.sbos-project--backlog {
+	border-left-color: var(--text-faint);
+}
+
+.sbos-project--done,
+.sbos-project--dropped {
+	opacity: 0.6;
+}
+
+.sbos-project__due {
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+}
+
+.sbos-project__meta {
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+}
+
+.sbos-project__meta progress {
+	width: 8em;
+}
+
+.sbos-form {
+	display: grid;
+	gap: var(--size-4-2);
+}
+
+.sbos-form label {
+	display: grid;
+	gap: var(--size-2-1);
+}
+
+.sbos-form .sbos-form__inline {
+	display: flex;
+	align-items: center;
+	gap: var(--size-2-2);
+}
+
+.sbos-form__error {
+	color: var(--text-error);
+	margin: 0;
+}
+
+.sbos-status-picker {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--size-2-2);
+}
+
+.sbos-block-query .sbos-project {
+	margin-left: 0;
+}
+
+/* ---------------------------------------------------------------- rollups and reviews */
+
+.sbos-progress {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--size-2-2);
+}
+
+.sbos-progress progress {
+	width: 6em;
+}
+
+.sbos-review h4 {
+	margin: var(--size-4-3) 0 var(--size-2-2);
+}
+
+.sbos-review ul {
+	margin: 0;
+}
+
+.sbos-review__table th {
+	text-align: left;
+	font-weight: var(--font-normal);
+	padding-right: var(--size-4-4);
+}
+
+/* ---------------------------------------------------------------- vault check */
+
+.sbos-lint {
+	max-width: 48rem;
+}
+
+.sbos-finding-list {
+	list-style: none;
+	margin: var(--size-2-2) 0;
+	padding: 0;
+	display: grid;
+	gap: var(--size-2-2);
+}
+
+.sbos-finding {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--size-2-3);
+}
+
+.sbos-finding--error .sbos-pill {
+	color: var(--text-error);
+}
+
+.sbos-finding--warning .sbos-pill {
+	color: var(--text-warning);
+}
+
+.sbos-preview {
+	border: var(--border-width) solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	padding: var(--size-2-2) var(--size-4-2);
+	font-family: var(--font-monospace);
+	font-size: var(--font-ui-smaller);
+}
+
+.sbos-preview pre {
+	margin: 0;
+	white-space: pre-wrap;
+}
+
+.sbos-preview__before {
+	color: var(--text-error);
+}
+
+.sbos-preview__after {
+	color: var(--text-success);
+}
+
+/* ---------------------------------------------------------------- calendar inside the day planner */
+
+.sbos-timeline__calendar {
+	margin-bottom: var(--size-4-3);
+	padding-bottom: var(--size-4-2);
+	border-bottom: var(--border-width) solid var(--background-modifier-border);
+}
+
+.sbos-timeline__calendar-toggle {
+	display: block;
+	margin-left: auto;
+	padding: 0;
+	height: auto;
+	background: none;
+	box-shadow: none;
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+}
+
+.sbos-timeline__title-button,
+.sbos-timeline__day-link {
+	color: inherit;
+	font-weight: inherit;
+}

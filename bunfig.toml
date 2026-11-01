@@ -1,0 +1,14 @@
+[install]
+exact = false
+
+[test]
+root = "tests"
+preload = ["./tests/setup.ts"]
+coverageSkipTestFiles = true
+# Build tooling under scripts/ is tested but held to no coverage bar.
+coveragePathIgnorePatterns = ["tests/**", "node_modules/**", "scripts/**"]
+coverageReporter = ["text", "lcov"]
+coverageDir = "coverage"
+# Bun reports line and function coverage only, per file. Raised after phase 7;
+# thresholds only go up (docs/testing.md).
+coverageThreshold = { lines = 0.9, functions = 0.85 }

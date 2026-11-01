@@ -1,0 +1,99 @@
+# Release PR and draft on main; the release itself runs from a tag you sign.
+#
+# release-please keeps one "chore(main): release x.y.z" pull request up to date and a draft
+# release with the notes. It creates NO tag: a tag it created would not be signed by you, and a
+# tag made with GITHUB_TOKEN starts no workflow. After you merge the release PR you create the tag:
+#
+#   git tag -s x.y.z -m x.y.z && git push origin x.y.z     (one YubiKey tap)
+#
+# That push starts this workflow: `check` verifies the tag, then `release` waits for your approval
+# (environment "release"), builds, attests, attaches the files and publishes the draft.
+#
+#   feat -> minor, fix -> patch, feat! / BREAKING CHANGE -> major, anything else -> no release.
+#
+# Force a version with a commit whose body has `Release-As: x.y.z`.
+name: Release
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+      - "[0-9]+.[0-9]+.[0-9]+-*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # Push to main: keep the release PR and the draft release current.
+  release-please:
+    name: Release PR and draft
+    if: ${{ github.ref_type == 'branch' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  # Push of a tag: it must be a signed, annotated tag on the default branch.
+  check:
+    name: Check tag
+    if: ${{ github.ref_type == 'tag' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      TAG: ${{ github.ref_name }}
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+      - name: Tag is annotated and signed
+        run: |
+          read -r type sha < <(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" --jq '"\(.object.type) \(.object.sha)"')
+          [ "$type" = "tag" ] || { echo "::error::$TAG is not an annotated tag. Create it with git tag -s."; exit 1; }
+          [ "$(gh api "repos/$GITHUB_REPOSITORY/git/tags/$sha" --jq .verification.verified)" = "true" ] \
+            || { echo "::error::The signature on tag $TAG is not verified."; exit 1; }
+      - name: Tagged commit is on the default branch
+        run: |
+          commit="$(git rev-parse "$TAG^{commit}")"
+          git merge-base --is-ancestor "$commit" "origin/$DEFAULT_BRANCH" \
+            || { echo "::error::$TAG is not on $DEFAULT_BRANCH."; exit 1; }
+      # TODO: check that the repo's version files carry the tag's version, for example
+      #   [ "$(jq -r .version package.json)" = "$TAG" ] || { echo "::error::package.json differs from $TAG"; exit 1; }
+
+  release:
+    name: Release
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Waits for your approval. `just github repo --harden` creates the environment with you as reviewer.
+    environment: release
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    env:
+      TAG: ${{ github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      # TODO: set up the toolchain and build the release files.
+      # TODO: attest the built files, for example:
+      #   - uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+      #     with:
+      #       subject-path: dist/app.zip
+      - name: Attach files and publish the draft
+        run: |
+          # TODO: list the built files, for example: gh release upload "$TAG" dist/app.zip --clobber
+          gh release edit "$TAG" --draft=false --verify-tag

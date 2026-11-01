@@ -1,0 +1,34 @@
+# Squash merges use the PR title as the commit on main, and the release pipeline reads it.
+name: PR conventions
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  title:
+    name: Title and branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Check Conventional Commits title
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          pattern='^(feat|fix|perf|refactor|test|docs|build|ci|chore|style|revert)(\([a-z0-9,-]+\))?!?: .+'
+          [[ "$TITLE" =~ $pattern ]] || {
+            echo "::error::PR title must look like 'feat(planner): drag to reschedule'. Got: $TITLE"
+            exit 1
+          }
+      - name: Check branch name
+        env:
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          pattern='^(feat|fix|perf|refactor|test|docs|build|ci|chore|style|revert)/[a-z0-9][a-z0-9._-]*$'
+          [[ "$BRANCH" =~ $pattern ]] || {
+            echo "::error::Branch must look like 'feat/pln-3-drag-blocks' (type/slug). Got: $BRANCH"
+            exit 1
+          }

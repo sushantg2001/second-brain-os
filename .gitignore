@@ -1,0 +1,28 @@
+# Editors
+.vscode
+.idea
+*.iml
+
+# Dependencies
+node_modules
+
+# Build output: main.js, styles.css and manifest.json go to GitHub releases, not the repo.
+dist
+main.js
+*.map
+
+# Test output
+coverage
+
+# Obsidian plugin data written by a dev vault (fixture vault settings are tracked)
+data.json
+!tests/fixtures/vault/.obsidian/plugins/*/data.json
+
+# OS
+.DS_Store
+
+# Local secrets and Claude Code state
+.env
+.env.*
+!.env.example
+.claude/

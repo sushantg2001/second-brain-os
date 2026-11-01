@@ -1,0 +1,6 @@
+dist
+coverage
+node_modules
+bun.lock
+# Fixture notes must stay byte-exact.
+tests/fixtures
