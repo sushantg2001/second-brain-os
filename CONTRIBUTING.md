@@ -14,7 +14,7 @@ Urgent fixes follow the same path as any `fix/<slug>` branch. There is no separa
 
 ## Collaboration
 
-Right now collaboration means opening pull requests: fork the repo, or push a `<type>/<slug>` branch if you were invited, then open a PR. You do not need to sign commits. Only the maintainer merges and tags. `claude/*` branches are local-only and GitHub rejects them.
+Right now collaboration means opening pull requests: fork the repo, or push a `<type>/<slug>` branch if you were invited, then open a PR. You do not need to sign commits. Only the maintainer merges and tags.
 
 ## Releases
 

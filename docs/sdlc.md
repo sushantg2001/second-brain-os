@@ -13,11 +13,10 @@ flowchart LR
 
 `main` is the only long-lived branch. Everything else is short-lived and deleted after merge.
 
-| Branch          | Use                                                                                                         |
-| --------------- | ----------------------------------------------------------------------------------------------------------- |
-| `main`          | Protected. Signed. Only reached through a pull request or a signed direct push by an admin.                 |
-| `<type>/<slug>` | All work, pushed to GitHub. Types: `feat fix perf refactor test docs build ci chore style revert`.          |
-| `claude/<slug>` | Made by Claude, **local only**. Rename it to `<type>/<slug>` before pushing; GitHub rejects any other name. |
+| Branch          | Use                                                                                                |
+| --------------- | -------------------------------------------------------------------------------------------------- |
+| `main`          | Protected. Signed. Only reached through a pull request or a signed direct push by an admin.        |
+| `<type>/<slug>` | All work, pushed to GitHub. Types: `feat fix perf refactor test docs build ci chore style revert`. |
 
 An urgent fix is an ordinary `fix/<slug>` branch and pull request.
 
@@ -81,7 +80,6 @@ Right now collaboration means opening pull requests.
 
 - **Anyone** can fork a public repo and open a PR from the fork. Workflows run for a fork's PR with a read-only token and no secrets, and GitHub holds a first-time contributor's runs until you approve them.
 - **An invited collaborator** can push a `<type>/<slug>` branch to this repo and open a PR.
-- `claude/*` branches are local only; GitHub rejects them for everyone.
 - Only the owner merges, and only the owner can create a tag, so only the owner can release. Contributors do not need to sign commits.
 
 ## 6. How `main` is protected (repository rulesets)
