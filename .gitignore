@@ -21,8 +21,7 @@ data.json
 # OS
 .DS_Store
 
-# Local secrets and Claude Code state
+# Local secrets
 .env
 .env.*
 !.env.example
-.claude/

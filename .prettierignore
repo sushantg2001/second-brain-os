@@ -4,3 +4,6 @@ node_modules
 bun.lock
 # Fixture notes must stay byte-exact.
 tests/fixtures
+# Written by release-please in its own style on every release PR.
+.release-please-manifest.json
+CHANGELOG.md

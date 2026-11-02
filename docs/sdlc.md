@@ -13,11 +13,10 @@ flowchart LR
 
 `main` is the only long-lived branch. Everything else is short-lived and deleted after merge.
 
-| Branch          | Use                                                                                                          |
-| --------------- | ------------------------------------------------------------------------------------------------------------ |
-| `main`          | Protected. Signed. Only reached through a pull request or a signed direct push by an admin.                  |
-| `<type>/<slug>` | All work, pushed to GitHub. Types: `feat fix perf refactor test docs build ci chore style revert`.           |
-| `claude/<slug>` | Made by Claude, **local only**. Rename it to `<type>/<slug>` before pushing; GitHub rejects any other name.  |
+| Branch          | Use                                                                                                |
+| --------------- | -------------------------------------------------------------------------------------------------- |
+| `main`          | Protected. Signed. Only reached through a pull request or a signed direct push by an admin.        |
+| `<type>/<slug>` | All work, pushed to GitHub. Types: `feat fix perf refactor test docs build ci chore style revert`. |
 
 An urgent fix is an ordinary `fix/<slug>` branch and pull request.
 
@@ -29,10 +28,10 @@ An urgent fix is an ordinary `fix/<slug>` branch and pull request.
 
 ## 3. Continuous integration
 
-| Workflow       | Trigger                | What it does |
-| -------------- | ---------------------- | ------------ |
-| `ci.yml`       | every PR, push to main | Runs the repo's gates behind one command |
-| `pr-title.yml` | PR opened or edited    | Conventional Commits title and `<type>/<slug>` branch name |
+| Workflow       | Trigger                | What it does                                                                                                                              |
+| -------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `ci.yml`       | every PR, push to main | Runs the repo's gates behind one command                                                                                                  |
+| `pr-title.yml` | PR opened or edited    | Conventional Commits title and `<type>/<slug>` branch name                                                                                |
 | `release.yml`  | push to main, tag push | A push to main keeps the release PR and draft current; a tag push checks the tag, waits for your approval, builds and publishes the draft |
 
 CI does not run on the release PR, because pull requests opened with `GITHUB_TOKEN` start no workflows. The same commits have already passed CI on `main`, and the release job builds before it publishes anything.
@@ -55,13 +54,13 @@ The release PR updates the version files listed in `release-please-config.json` 
 1. Merge PRs as usual. The release PR and the draft update themselves after each push to `main`.
 2. When you want to ship, review the release PR and squash-merge it.
 3. Create the tag yourself, signed, on the release commit, and push it (one YubiKey tap):
-   ```bash
-   git switch main && git pull --ff-only
-   git tag -s x.y.z -m x.y.z && git push origin x.y.z
-   ```
+    ```bash
+    git switch main && git pull --ff-only
+    git tag -s x.y.z -m x.y.z && git push origin x.y.z
+    ```
 4. The tag push starts the **Release** workflow:
-   - **check**: the tag is annotated and signed, its commit is on `main`, and the version files match the tag.
-   - **release**: waits for your approval in GitHub (environment `release`), then builds, attests and attaches the release files (fill in the `release` job), and publishes the draft.
+    - **check**: the tag is annotated and signed, its commit is on `main`, and the version files match the tag.
+    - **release**: waits for your approval in GitHub (environment `release`), then builds, attests and attaches the release files (fill in the `release` job), and publishes the draft.
 
 **Why the tag is yours.** A tag is signed when it is created, so a bot cannot make one that you then sign, and GitHub does not sign tags for you. A tag made with `GITHUB_TOKEN` also starts no workflow. The tag rules have no exemption: every tag must be signed and only admins can create one, so a release always needs your hardware signature and your approval.
 
@@ -78,9 +77,9 @@ To force a version, merge a commit whose body has the line `Release-As: x.y.z`.
 ## 5. Collaboration
 
 Right now collaboration means opening pull requests.
+
 - **Anyone** can fork a public repo and open a PR from the fork. Workflows run for a fork's PR with a read-only token and no secrets, and GitHub holds a first-time contributor's runs until you approve them.
 - **An invited collaborator** can push a `<type>/<slug>` branch to this repo and open a PR.
-- `claude/*` branches are local only; GitHub rejects them for everyone.
 - Only the owner merges, and only the owner can create a tag, so only the owner can release. Contributors do not need to sign commits.
 
 ## 6. How `main` is protected (repository rulesets)
