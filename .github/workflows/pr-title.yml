@@ -1,4 +1,4 @@
-# Squash merges use the PR title as the commit on main, and the release pipeline reads it.
+# Squash merges use the PR title as the commit on main, and release-please reads it.
 name: PR conventions
 
 on:
@@ -20,15 +20,15 @@ jobs:
         run: |
           pattern='^(feat|fix|perf|refactor|test|docs|build|ci|chore|style|revert)(\([a-z0-9,-]+\))?!?: .+'
           [[ "$TITLE" =~ $pattern ]] || {
-            echo "::error::PR title must look like 'feat(planner): drag to reschedule'. Got: $TITLE"
+            echo "::error::PR title must look like 'feat(search): add filters'. Got: $TITLE"
             exit 1
           }
       - name: Check branch name
         env:
           BRANCH: ${{ github.head_ref }}
         run: |
-          pattern='^(feat|fix|perf|refactor|test|docs|build|ci|chore|style|revert)/[a-z0-9][a-z0-9._-]*$'
+          pattern='^((feat|fix|perf|refactor|test|docs|build|ci|chore|style|revert)/[a-z0-9][a-z0-9._-]*|release-please--.+)$'
           [[ "$BRANCH" =~ $pattern ]] || {
-            echo "::error::Branch must look like 'feat/pln-3-drag-blocks' (type/slug). Got: $BRANCH"
+            echo "::error::Branch must look like 'feat/search-filters' (type/slug). Got: $BRANCH"
             exit 1
           }

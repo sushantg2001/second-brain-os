@@ -69,8 +69,11 @@ jobs:
           commit="$(git rev-parse "$TAG^{commit}")"
           git merge-base --is-ancestor "$commit" "origin/$DEFAULT_BRANCH" \
             || { echo "::error::$TAG is not on $DEFAULT_BRANCH."; exit 1; }
-      # TODO: check that the repo's version files carry the tag's version, for example
-      #   [ "$(jq -r .version package.json)" = "$TAG" ] || { echo "::error::package.json differs from $TAG"; exit 1; }
+      - name: Version files carry the tag's version
+        run: |
+          for f in package.json manifest.json; do
+            [ "$(jq -r .version "$f")" = "$TAG" ] || { echo "::error::$f differs from $TAG"; exit 1; }
+          done
 
   release:
     name: Release
@@ -88,12 +91,18 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-      # TODO: set up the toolchain and build the release files.
-      # TODO: attest the built files, for example:
-      #   - uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
-      #     with:
-      #       subject-path: dist/app.zip
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version-file: .bun-version
+      - name: Build release files
+        run: make install check-bundle
+      - uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+        with:
+          subject-path: |
+            dist/main.js
+            dist/manifest.json
+            dist/styles.css
       - name: Attach files and publish the draft
         run: |
-          # TODO: list the built files, for example: gh release upload "$TAG" dist/app.zip --clobber
+          gh release upload "$TAG" dist/main.js dist/manifest.json dist/styles.css --clobber
           gh release edit "$TAG" --draft=false --verify-tag

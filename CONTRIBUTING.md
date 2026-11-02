@@ -20,6 +20,10 @@ Right now collaboration means opening pull requests: fork the repo, or push a `<
 
 Nobody but the maintainer releases. release-please keeps a `chore(main): release x.y.z` pull request and a draft release up to date but creates no tag. The maintainer merges that PR, signs the tag (`git tag -s x.y.z`) and pushes it; the release workflow then checks the tag, waits for the maintainer's approval and publishes. See [docs/sdlc.md](docs/sdlc.md).
 
+## License
+
+By contributing you agree that your contribution is licensed under the project's license (see `LICENSE`).
+
 ## Reporting bugs
 
 Use the bug template and include the version and your platform.

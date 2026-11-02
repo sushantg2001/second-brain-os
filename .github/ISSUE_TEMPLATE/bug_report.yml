@@ -15,29 +15,23 @@ body:
       label: Steps to reproduce
       description: List the exact steps that trigger the problem.
       placeholder: |
-        1. Open the day planner
+        1. Do ...
         2. Click ...
         3. See error
     validations:
       required: true
   - type: input
-    id: plugin-version
+    id: version
     attributes:
-      label: Plugin version
+      label: Version
+      description: The release or commit you are running.
       placeholder: 1.0.0
-    validations:
-      required: true
-  - type: input
-    id: obsidian-version
-    attributes:
-      label: Obsidian version
-      placeholder: 1.7.2
     validations:
       required: true
   - type: textarea
     id: context
     attributes:
-      label: Additional context
-      description: Console errors, screenshots, or anything else that helps.
+      label: Environment and context
+      description: Platform, logs, screenshots, or anything else that helps.
     validations:
       required: false
