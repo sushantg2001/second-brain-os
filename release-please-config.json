@@ -1,15 +1,13 @@
 {
-  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
-  "include-component-in-tag": false,
-  "include-v-in-tag": false,
-  "draft": true,
-  "packages": {
-    ".": {
-      "release-type": "node",
-      "changelog-path": "CHANGELOG.md",
-      "extra-files": [
-        { "type": "json", "path": "manifest.json", "jsonpath": "$.version" }
-      ]
-    }
-  }
+	"$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+	"include-component-in-tag": false,
+	"include-v-in-tag": false,
+	"draft": true,
+	"packages": {
+		".": {
+			"release-type": "node",
+			"changelog-path": "CHANGELOG.md",
+			"extra-files": [{ "type": "json", "path": "manifest.json", "jsonpath": "$.version" }]
+		}
+	}
 }
