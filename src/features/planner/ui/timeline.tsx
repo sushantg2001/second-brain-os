@@ -1,10 +1,11 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, type MouseEventHandler, type ReactNode } from "react";
 
-import { addDays, formatDuration, formatTime, Store, type IsoDate } from "../../../shared/kernel";
+import { addDays, formatDuration, Store, type IsoDate } from "../../../shared/kernel";
 import { Icon, useStore } from "../../../shared/react";
 import { Calendar, CalendarContext, type CalendarServices } from "../../calendar";
 import { PlannerContext } from "./services";
 import { TASK_DRAG_TYPE, TimelineDay } from "./timeline-day";
+import { WeekPicker } from "./week-picker";
 
 export interface TimelineRange {
 	/** First day shown. */
@@ -53,6 +54,30 @@ function useLinkedCalendar(
 	}, [state, calendar, active]);
 }
 
+interface ControlProps {
+	readonly label: string;
+	readonly onClick: MouseEventHandler<HTMLButtonElement>;
+	readonly children: ReactNode;
+	readonly className?: string;
+	readonly active?: boolean;
+	readonly expanded?: boolean;
+}
+
+/** An icon or text button in the controls row, styled like the day planner's. */
+function Control(props: ControlProps): ReactNode {
+	return (
+		<button
+			type="button"
+			className={`sbos-control${props.className ? ` ${props.className}` : ""}${props.active ? " is-active" : ""}`}
+			aria-label={props.label}
+			{...(props.expanded === undefined ? {} : { "aria-expanded": props.expanded })}
+			onClick={props.onClick}
+		>
+			{props.children}
+		</button>
+	);
+}
+
 export function Timeline({ state }: { readonly state: TimelineState }): ReactNode {
 	const services = PlannerContext.useService();
 	const { planner, dates } = services;
@@ -61,10 +86,13 @@ export function Timeline({ state }: { readonly state: TimelineState }): ReactNod
 	const now = useStore(services.now);
 	const settings = useStore(planner.settingsStore);
 	const scrollRef = useRef<HTMLDivElement>(null);
+	const rulerRef = useRef<HTMLDivElement>(null);
 	const days = Array.from({ length: range.days }, (_, index) => addDays(range.date, index));
 	const firstPlan = planner.plan(range.date);
-	const withCalendar = range.days === 1 && services.calendar !== undefined;
-	useLinkedCalendar(state, services.calendar, withCalendar);
+	const single = range.days === 1;
+	const linked = single && services.calendar !== undefined;
+	const showMonth = linked && settings.showCalendar;
+	useLinkedCalendar(state, services.calendar, linked);
 	const dayTitle = (date: IsoDate, text: string, className: string): ReactNode =>
 		services.openDay ? (
 			<button
@@ -102,82 +130,110 @@ export function Timeline({ state }: { readonly state: TimelineState }): ReactNod
 		services.newBlock(date, start, start + settings.defaultDuration);
 	};
 
-	const title =
-		range.days === 1
-			? dates.format(range.date, "dddd, MMMM D")
-			: `${dates.format(range.date, "MMM D")} – ${dates.format(addDays(range.date, range.days - 1), "MMM D")}`;
+	const step = single ? 7 : range.days;
+	const period = single
+		? dates.format(range.date, "MMM YYYY")
+		: `${dates.format(range.date, "MMM D")} – ${dates.format(addDays(range.date, range.days - 1), "MMM D")}`;
 	const hours = Array.from(
 		{ length: settings.endHour - settings.startHour },
 		(_, index) => settings.startHour + index,
 	);
+	const pickDay = (date: IsoDate, split: boolean): void => {
+		if (date === range.date) {
+			services.openDay?.(date, split);
+		} else {
+			state.update((current) => ({ ...current, date }));
+		}
+	};
 
 	return (
-		<div className="sbos-timeline">
-			{withCalendar && services.calendar && (
+		<div className={`sbos-timeline${single ? "" : " is-multi"}`}>
+			{showMonth && services.calendar && (
 				<div className="sbos-timeline__calendar">
-					{settings.showCalendar && (
-						<CalendarContext.Provider value={services.calendar}>
-							<Calendar embedded />
-						</CalendarContext.Provider>
-					)}
-					<button
-						type="button"
-						className="sbos-timeline__calendar-toggle"
-						aria-expanded={settings.showCalendar}
-						onClick={() => services.setShowCalendar?.(!settings.showCalendar)}
-					>
-						{settings.showCalendar ? "Hide calendar" : "Show calendar"}
-					</button>
+					<CalendarContext.Provider value={services.calendar}>
+						<Calendar embedded />
+					</CalendarContext.Provider>
 				</div>
 			)}
-			<div className="sbos-timeline__toolbar">
-				<h3 className="sbos-timeline__title">
-					{range.days === 1
-						? dayTitle(range.date, title, "sbos-timeline__title-button")
-						: title}
-				</h3>
-				<div className="sbos-timeline__nav">
-					<button
-						type="button"
-						aria-label={range.days === 1 ? "Previous day" : "Previous days"}
-						onClick={() => state.shift(-range.days)}
-					>
-						<Icon name="chevron-left" />
-					</button>
-					<button
-						type="button"
-						onClick={() => state.update((current) => ({ ...current, date: now.date }))}
-					>
-						Today
-					</button>
-					<button
-						type="button"
-						aria-label={range.days === 1 ? "Next day" : "Next days"}
-						onClick={() => state.shift(range.days)}
-					>
-						<Icon name="chevron-right" />
-					</button>
-					<button type="button" aria-label="Add time block" onClick={addBlock}>
-						<Icon name="plus" />
-					</button>
+			<div className="sbos-timeline__controls">
+				<div className="sbos-timeline__header">
+					<div className="sbos-timeline__buttons">
+						<Control
+							label={single ? "Previous week" : "Previous days"}
+							onClick={() => state.shift(-step)}
+						>
+							<Icon name="chevron-left" />
+						</Control>
+						<Control
+							label="Today"
+							className="sbos-timeline__today"
+							onClick={() =>
+								state.update((current) => ({ ...current, date: now.date }))
+							}
+						>
+							Today
+						</Control>
+						<Control
+							label={single ? "Next week" : "Next days"}
+							onClick={() => state.shift(step)}
+						>
+							<Icon name="chevron-right" />
+						</Control>
+					</div>
+					<div className="sbos-timeline__period">{period}</div>
+					<div className="sbos-timeline__buttons is-right">
+						{linked && (
+							<Control
+								label={settings.showCalendar ? "Hide calendar" : "Show calendar"}
+								active={settings.showCalendar}
+								expanded={settings.showCalendar}
+								onClick={() => services.setShowCalendar?.(!settings.showCalendar)}
+							>
+								<Icon name="calendar-days" />
+							</Control>
+						)}
+						<Control label="Add time block" onClick={addBlock}>
+							<Icon name="plus" />
+						</Control>
+					</div>
 				</div>
+				{single && !showMonth && (
+					<WeekPicker
+						week={planner.weekOf(range.date)}
+						selected={range.date}
+						today={now.date}
+						dates={dates}
+						onPick={pickDay}
+					/>
+				)}
+				{single && (
+					<div className="sbos-timeline__day-title">
+						<h3 className="sbos-timeline__title">
+							{dayTitle(
+								range.date,
+								dates.format(range.date, "dddd, MMMM D"),
+								"sbos-timeline__title-button",
+							)}
+						</h3>
+						<p className="sbos-timeline__summary">
+							Planned {formatDuration(firstPlan.plannedMinutes)}
+							{services.clocks &&
+								` · Clocked ${formatDuration(services.clocks.minutesOn(range.date))}`}
+						</p>
+					</div>
+				)}
 			</div>
-			{range.days === 1 && (
-				<p className="sbos-timeline__summary">
-					Planned {formatDuration(firstPlan.plannedMinutes)}
-					{services.clocks &&
-						` · Clocked ${formatDuration(services.clocks.minutesOn(range.date))}`}
-				</p>
-			)}
-			{range.days > 1 && (
-				<div className="sbos-timeline__day-headers">
-					<div className="sbos-timeline__gutter" />
+			{!single && (
+				<div className="sbos-timeline__dates">
 					{days.map((date) => (
 						<div
 							key={date}
-							className={`sbos-timeline__day-header${date === now.date ? " is-today" : ""}`}
+							className={`sbos-timeline__date${date === now.date ? " is-today" : ""}`}
 						>
-							{dayTitle(date, dates.format(date, "ddd D"), "sbos-timeline__day-link")}
+							<span className="sbos-timeline__weekday">
+								{dates.format(date, "ddd")}
+							</span>
+							{dayTitle(date, dates.format(date, "D"), "sbos-timeline__date-number")}
 							<span className="sbos-timeline__total">
 								{formatDuration(planner.plan(date).plannedMinutes)}
 							</span>
@@ -185,19 +241,32 @@ export function Timeline({ state }: { readonly state: TimelineState }): ReactNod
 					))}
 				</div>
 			)}
-			<div ref={scrollRef} className="sbos-timeline__scroll">
+			<div className="sbos-timeline__corner" />
+			<Unscheduled date={days.includes(now.date) ? now.date : range.date} />
+			<div ref={rulerRef} className="sbos-timeline__ruler" aria-hidden="true">
+				<div className="sbos-timeline__hours">
+					{hours.map((hour) => (
+						<div
+							key={hour}
+							className="sbos-timeline__label"
+							style={{ flexBasis: `${settings.hourHeight}px` }}
+						>
+							{hour}
+						</div>
+					))}
+				</div>
+				<div className="sbos-timeline__scrollbar-filler" />
+			</div>
+			<div
+				ref={scrollRef}
+				className="sbos-timeline__scroll"
+				onScroll={(event) => {
+					if (rulerRef.current) {
+						rulerRef.current.scrollTop = event.currentTarget.scrollTop;
+					}
+				}}
+			>
 				<div className="sbos-timeline__body">
-					<div className="sbos-timeline__gutter" aria-hidden="true">
-						{hours.map((hour) => (
-							<div
-								key={hour}
-								className="sbos-timeline__label"
-								style={{ height: `${settings.hourHeight}px` }}
-							>
-								{formatTime(hour * 60)}
-							</div>
-						))}
-					</div>
 					{days.map((date) => (
 						<section
 							key={date}
@@ -209,7 +278,6 @@ export function Timeline({ state }: { readonly state: TimelineState }): ReactNod
 					))}
 				</div>
 			</div>
-			<Unscheduled date={days.includes(now.date) ? now.date : range.date} />
 		</div>
 	);
 }
@@ -219,45 +287,50 @@ function Unscheduled({ date }: { readonly date: IsoDate }): ReactNode {
 	const { planner } = services;
 	useStore(services.version);
 	const tasks = planner.plan(date).unscheduled;
-	if (tasks.length === 0) {
-		return null;
-	}
 	return (
-		<section className="sbos-unscheduled" aria-labelledby="sbos-unscheduled-title">
-			<h4 id="sbos-unscheduled-title">Unscheduled</h4>
-			<ul>
-				{tasks.map((task) => (
-					<li
-						key={task.id}
-						draggable
-						onDragStart={(event) => {
-							event.dataTransfer.setData(TASK_DRAG_TYPE, task.id);
-							event.dataTransfer.effectAllowed = "move";
-						}}
-					>
-						<button
-							type="button"
-							className="sbos-unscheduled__title"
-							onClick={() => services.openTask(task)}
+		<section className="sbos-timeline__all-day" aria-labelledby="sbos-unscheduled-title">
+			<h4 id="sbos-unscheduled-title" className="sbos-unscheduled__heading">
+				Unscheduled
+			</h4>
+			{tasks.length === 0 ? (
+				<p className="sbos-unscheduled__empty">No unscheduled tasks</p>
+			) : (
+				<ul className="sbos-unscheduled__list">
+					{tasks.map((task) => (
+						<li
+							key={task.id}
+							className="sbos-unscheduled__item"
+							draggable
+							onDragStart={(event) => {
+								event.dataTransfer.setData(TASK_DRAG_TYPE, task.id);
+								event.dataTransfer.effectAllowed = "move";
+							}}
 						>
-							{task.title}
-						</button>
-						<button
-							type="button"
-							aria-label={`Schedule ${task.title}`}
-							onClick={() =>
-								void planner.schedule(task, date).then((result) => {
-									if (!result.ok) {
-										services.report(result.error);
-									}
-								})
-							}
-						>
-							<Icon name="calendar-plus" />
-						</button>
-					</li>
-				))}
-			</ul>
+							<button
+								type="button"
+								className="sbos-unscheduled__title"
+								onClick={() => services.openTask(task)}
+							>
+								{task.title}
+							</button>
+							<button
+								type="button"
+								className="sbos-unscheduled__schedule"
+								aria-label={`Schedule ${task.title}`}
+								onClick={() =>
+									void planner.schedule(task, date).then((result) => {
+										if (!result.ok) {
+											services.report(result.error);
+										}
+									})
+								}
+							>
+								<Icon name="calendar-plus" />
+							</button>
+						</li>
+					))}
+				</ul>
+			)}
 		</section>
 	);
 }

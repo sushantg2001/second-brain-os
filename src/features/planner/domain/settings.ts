@@ -15,7 +15,7 @@ export interface PlannerSettings {
 	readonly showStatusBar: boolean;
 	/** Days in the multi-day view. */
 	readonly multiDayCount: number;
-	/** Show the month calendar above the day planner timeline. */
+	/** Show the month calendar above the day planner timeline, instead of the week strip. */
 	readonly showCalendar: boolean;
 }
 
@@ -29,5 +29,5 @@ export const DEFAULT_PLANNER_SETTINGS: PlannerSettings = {
 	notifyOnStart: false,
 	showStatusBar: true,
 	multiDayCount: 3,
-	showCalendar: true,
+	showCalendar: false,
 };

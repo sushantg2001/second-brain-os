@@ -15,9 +15,13 @@ export abstract class ReactItemView extends ItemView {
 
 	protected abstract renderContent(): ReactNode;
 
+	/** True for views that fill the tab edge to edge and manage their own spacing. */
+	protected readonly flush: boolean = false;
+
 	override async onOpen(): Promise<void> {
 		this.contentEl.replaceChildren();
 		this.contentEl.classList.add("sbos-view");
+		this.contentEl.classList.toggle("sbos-view--flush", this.flush);
 		this.#root = createRoot(this.contentEl);
 		this.#root.render(
 			<DevelopmentWrapper>

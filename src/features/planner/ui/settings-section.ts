@@ -85,7 +85,9 @@ export function renderPlannerSettings(
 		);
 	new Setting(containerEl)
 		.setName("Show the calendar in the day planner")
-		.setDesc("A month calendar above the timeline, always on the day the timeline shows.")
+		.setDesc(
+			"A month calendar in place of the week strip, always on the day the timeline shows.",
+		)
 		.addToggle((toggle) =>
 			toggle
 				.setValue(current().showCalendar)

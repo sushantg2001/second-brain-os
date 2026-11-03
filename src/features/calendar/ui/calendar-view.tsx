@@ -17,6 +17,8 @@ export class CalendarView extends ReactItemView {
 		super(leaf);
 	}
 
+	protected override readonly flush = true;
+
 	override getViewType(): string {
 		return VIEW_TYPE_CALENDAR;
 	}

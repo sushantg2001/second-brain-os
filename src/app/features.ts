@@ -116,6 +116,14 @@ export const FEATURES: readonly FeatureModule[] = [
 				notifier,
 				badges: dayBadges(plugin, container),
 				tick: container.now,
+				enableGranularity: (granularity) =>
+					void container.settings.section("periodic").update((settings) => ({
+						...settings,
+						notes: {
+							...settings.notes,
+							[granularity]: { ...settings.notes[granularity], enabled: true },
+						},
+					})),
 				openOnStart: false,
 			});
 			registerPlanner(plugin, {

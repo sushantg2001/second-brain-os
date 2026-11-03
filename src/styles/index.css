@@ -73,58 +73,237 @@
 	gap: var(--size-4-2);
 }
 
-/* ---------------------------------------------------------------- calendar */
+/* ---------------------------------------------------------------- shared */
+
+/* An icon or text button that looks like Obsidian's clickable icons, whatever the theme gives
+   to plain buttons. */
+.sbos-control,
+:where(.sbos-calendar) button {
+	height: auto;
+	box-shadow: none;
+}
+
+.sbos-control {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--size-2-1);
+	padding: var(--size-2-2) var(--size-2-3);
+	border: 0;
+	border-radius: var(--radius-s);
+	background: none;
+	color: var(--icon-color, var(--text-muted));
+	font: inherit;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.sbos-control:hover,
+.sbos-control.is-active {
+	background-color: var(--background-modifier-hover);
+	box-shadow: none;
+}
+
+.sbos-control:focus-visible {
+	box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+}
+
+.sbos-visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* A view that fills its tab, with no padding of its own. */
+.sbos-view--flush {
+	display: flex;
+	flex-direction: column;
+	padding: 0;
+	overflow: hidden;
+}
+
+/* ---------------------------------------------------------------- calendar
+   Laid out like the Calendar plugin: a title with the year in the accent color, arrows and a
+   "today" dot, small uppercase weekdays, and dots under days that have notes. */
 
 .sbos-calendar {
-	--sbos-day-size: 2.2em;
-	font-size: var(--font-ui-small);
+	--color-dot: var(--text-muted);
+	--color-arrow: var(--text-muted);
+	--color-text-title: var(--text-normal);
+	--color-text-heading: var(--text-muted);
+	--color-text-day: var(--text-normal);
+	--color-text-today: var(--interactive-accent);
+	--color-text-weeknum: var(--text-muted);
+	padding: 0 8px;
 }
 
-.sbos-calendar__header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: var(--size-4-2);
-	margin-bottom: var(--size-4-2);
+:where(.sbos-calendar) button {
+	padding: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	line-height: inherit;
+	cursor: pointer;
 }
 
-.sbos-calendar__title {
-	margin: 0;
-	font-size: var(--font-ui-medium);
-}
-
-.sbos-calendar__title-button {
+:where(.sbos-calendar) button:hover {
 	background: none;
 	box-shadow: none;
-	padding: 0 var(--size-2-1);
-	font: inherit;
-	color: var(--text-normal);
-}
-
-.sbos-calendar__title-button:hover {
-	color: var(--text-accent);
 }
 
 .sbos-calendar__nav {
 	display: flex;
-	gap: var(--size-2-1);
+	align-items: baseline;
+	width: 100%;
+	margin: 0.6em 0 1em;
+	padding: 0 8px;
 }
 
-.sbos-calendar__nav button {
-	padding: var(--size-2-1) var(--size-2-3);
+.sbos-calendar__title {
+	display: flex;
+	align-items: baseline;
+	gap: 0.3em;
+	margin: 0;
+	color: var(--color-text-title);
+	font-size: 1.4em;
+	font-weight: var(--font-normal);
+}
+
+.sbos-calendar__month {
+	font-weight: 500;
+}
+
+.sbos-calendar__year {
+	color: var(--interactive-accent);
+}
+
+.sbos-calendar__title-button:hover {
+	text-decoration: underline;
+	text-decoration-color: var(--background-modifier-border);
+	text-underline-offset: 0.2em;
+}
+
+.sbos-calendar__title-button:focus-visible {
+	border-radius: var(--radius-s);
+	box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+}
+
+/* The quarter, as a small tag after the year. It is only there when quarterly notes are on. */
+.sbos-calendar__quarter {
+	align-self: center;
+	padding: 1px 6px;
+	border: var(--border-width) solid var(--background-modifier-border);
+	border-radius: var(--radius-l);
+	color: var(--text-muted);
+	font-size: 0.45em;
+	font-weight: var(--font-semibold);
+	letter-spacing: 0.5px;
+}
+
+button.sbos-calendar__quarter {
+	padding: 1px 6px;
+}
+
+.sbos-calendar__quarter:hover {
+	border-color: var(--interactive-accent);
+	color: var(--interactive-accent);
+	text-decoration: none;
+}
+
+.sbos-calendar__quarter.has-note {
+	border-color: var(--interactive-accent);
+	color: var(--interactive-accent);
+}
+
+.sbos-calendar__right-nav {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-left: auto;
+}
+
+.sbos-calendar__arrow {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	color: var(--color-arrow);
+}
+
+.sbos-calendar__arrow.is-right {
+	transform: rotate(180deg);
+}
+
+.sbos-calendar__arrow svg {
+	width: 16px;
+	height: 16px;
+	color: var(--color-arrow);
+}
+
+.sbos-calendar__reset {
+	display: flex;
+	align-items: center;
+	padding: 0.5em;
+	color: var(--color-arrow);
+	opacity: 0.4;
+	cursor: default;
+}
+
+.sbos-calendar__reset.is-active {
+	opacity: 1;
+	cursor: pointer;
+}
+
+button.sbos-calendar__reset {
+	padding: 0.5em;
+}
+
+.sbos-calendar__jump {
+	display: flex;
+	align-items: center;
+	margin-left: 0.25em;
+	padding: 0.25em;
+	border-radius: var(--radius-s);
+	color: var(--color-arrow);
+}
+
+button.sbos-calendar__jump {
+	padding: 0.25em;
+}
+
+button.sbos-calendar__jump:hover {
+	background-color: var(--background-modifier-hover);
+}
+
+.sbos-calendar__jump .svg-icon {
+	width: 16px;
+	height: 16px;
 }
 
 .sbos-calendar__grid {
 	width: 100%;
 	border-collapse: collapse;
-	table-layout: fixed;
+}
+
+.sbos-calendar__grid abbr {
+	text-decoration: none;
 }
 
 .sbos-calendar__grid th {
-	color: var(--text-muted);
-	font-weight: var(--font-normal);
-	font-size: var(--font-ui-smaller);
-	padding-bottom: var(--size-2-2);
+	padding: 4px;
+	background-color: transparent;
+	color: var(--color-text-heading);
+	font-size: 0.6em;
+	letter-spacing: 1px;
+	text-align: center;
+	text-transform: uppercase;
 }
 
 .sbos-calendar__grid td {
@@ -132,80 +311,263 @@
 	text-align: center;
 }
 
-.sbos-calendar__day,
-.sbos-calendar__week-button {
+.sbos-calendar__day {
+	position: relative;
+	display: block;
 	width: 100%;
-	min-height: var(--sbos-day-size);
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	gap: 1px;
-	padding: 2px 0;
-	background: none;
-	box-shadow: none;
-	border-radius: var(--radius-s);
-	color: var(--text-normal);
-	font: inherit;
+	height: 100%;
+	padding: 4px;
+	border-radius: 4px;
+	background-color: transparent;
+	color: var(--color-text-day);
+	font-size: 0.8em;
+	text-align: center;
+	vertical-align: baseline;
+	transition:
+		background-color 0.1s ease-in,
+		color 0.1s ease-in;
 }
 
-.sbos-calendar__day:hover,
-.sbos-calendar__week-button:hover {
-	background-color: var(--background-modifier-hover);
+button.sbos-calendar__day {
+	padding: 4px;
+}
+
+button.sbos-calendar__day:hover {
+	background-color: var(--interactive-hover);
+}
+
+button.sbos-calendar__day.is-active:hover {
+	background-color: var(--interactive-accent-hover);
 }
 
 .sbos-calendar__day:focus-visible,
 .sbos-calendar__week-button:focus-visible {
+	outline: 0;
 	box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
 }
 
 .sbos-calendar__day.is-other-month {
-	color: var(--text-faint);
+	opacity: 0.25;
 }
 
 .sbos-calendar__day.is-today {
-	color: var(--text-accent);
-	font-weight: var(--font-bold);
+	color: var(--color-text-today);
 }
 
-.sbos-calendar__day.is-active {
+.sbos-calendar__day:active,
+.sbos-calendar__day.is-active,
+.sbos-calendar__day.is-active.is-today {
 	background-color: var(--interactive-accent);
 	color: var(--text-on-accent);
 }
 
-.sbos-calendar__week,
-.sbos-calendar__week-button {
-	color: var(--text-muted);
-	font-size: var(--font-ui-smaller);
+/* Week numbers, with a rule between them and the days. */
+.sbos-calendar__week {
+	border-right: var(--border-width) solid var(--background-modifier-border);
+	font-weight: var(--font-normal);
 }
 
-.sbos-calendar__week-button.has-note {
-	color: var(--text-accent);
+.sbos-calendar__week-button {
+	display: block;
+	width: 100%;
+	height: 100%;
+	padding: 4px;
+	border-radius: 4px;
+	color: var(--color-text-weeknum);
+	font-size: 0.65em;
+	text-align: center;
+	transition:
+		background-color 0.1s ease-in,
+		color 0.1s ease-in;
+}
+
+button.sbos-calendar__week-button {
+	padding: 4px;
+}
+
+button.sbos-calendar__week-button:hover {
+	background-color: var(--interactive-hover);
+}
+
+.sbos-calendar__week-button.is-active,
+button.sbos-calendar__week-button.is-active:hover {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
 }
 
 .sbos-calendar__marks {
 	display: flex;
-	gap: 2px;
-	align-items: center;
+	flex-wrap: wrap;
+	justify-content: center;
 	min-height: 6px;
+	line-height: 6px;
 }
 
 .sbos-calendar__dot {
-	width: 4px;
-	height: 4px;
-	border-radius: 50%;
-	background-color: currentColor;
-	opacity: 0.7;
+	display: inline-block;
+	width: 6px;
+	height: 6px;
+	margin: 0 1px;
+	color: var(--color-dot);
 }
 
-.sbos-calendar__badge {
-	font-size: 0.7em;
-	line-height: 1;
-	color: var(--text-muted);
+.sbos-calendar__dot.is-badge {
+	color: var(--interactive-accent);
 }
 
-.sbos-calendar__day.is-active .sbos-calendar__badge {
+.sbos-calendar__day.is-active .sbos-calendar__dot,
+.sbos-calendar__week-button.is-active .sbos-calendar__dot {
 	color: var(--text-on-accent);
+}
+
+/* Day, week, month, quarter and year tabs, as the LifeOS calendar has them. */
+.sbos-calendar__tabs {
+	display: flex;
+	justify-content: center;
+	gap: 2px;
+	margin: var(--size-4-2) 0 0;
+}
+
+.sbos-calendar .sbos-calendar__tab {
+	padding: 2px 8px;
+	border-radius: var(--radius-s);
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	font-weight: var(--font-medium);
+}
+
+.sbos-calendar .sbos-calendar__tab:hover {
+	background-color: var(--background-modifier-hover);
+}
+
+.sbos-calendar .sbos-calendar__tab[aria-selected="true"] {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+.sbos-calendar .sbos-calendar__tab.is-off:not([aria-selected="true"]) {
+	color: var(--text-faint);
+}
+
+.sbos-calendar .sbos-calendar__tab:focus-visible {
+	box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+}
+
+tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
+	background-color: var(--interactive-hover);
+}
+
+/* Months, quarters and years. */
+.sbos-period-grid {
+	display: grid;
+	gap: var(--size-4-1);
+	padding: var(--size-4-1) 0 var(--size-4-2);
+}
+
+.sbos-period-grid.is-month,
+.sbos-period-grid.is-year {
+	grid-template-columns: repeat(3, 1fr);
+}
+
+.sbos-period-grid.is-quarter {
+	grid-template-columns: repeat(2, 1fr);
+}
+
+.sbos-calendar .sbos-period-grid__cell {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 2px;
+	min-height: 3.4em;
+	padding: var(--size-4-2) var(--size-4-1);
+	border-radius: var(--radius-m);
+	background-color: transparent;
+	color: var(--color-text-day);
+	font-size: 0.85em;
+	transition:
+		background-color 0.1s ease-in,
+		color 0.1s ease-in;
+}
+
+.sbos-calendar .sbos-period-grid__cell:hover {
+	background-color: var(--interactive-hover);
+}
+
+.sbos-calendar .sbos-period-grid__cell.is-other-month {
+	opacity: 0.35;
+}
+
+.sbos-calendar .sbos-period-grid__cell.is-today {
+	color: var(--color-text-today);
+	font-weight: var(--font-semibold);
+}
+
+.sbos-calendar .sbos-period-grid__cell.is-active,
+.sbos-calendar .sbos-period-grid__cell.is-active.is-today {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+.sbos-calendar .sbos-period-grid__cell.is-active:hover {
+	background-color: var(--interactive-accent-hover);
+}
+
+.sbos-calendar .sbos-period-grid__cell:focus-visible {
+	box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+}
+
+.sbos-period-grid__hint {
+	color: var(--text-faint);
+	font-size: 0.75em;
+	font-weight: var(--font-normal);
+}
+
+.sbos-period-grid__cell.is-active .sbos-period-grid__hint {
+	color: var(--text-on-accent);
+	opacity: 0.8;
+}
+
+.sbos-period-grid__cell.is-active .sbos-calendar__dot {
+	color: var(--text-on-accent);
+}
+
+/* Shown on a tab whose notes are off. */
+.sbos-calendar__off {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--size-4-2);
+	margin: var(--size-4-2) var(--size-4-2) var(--size-4-4);
+	padding: var(--size-4-4);
+	border: var(--border-width) dashed var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+	text-align: center;
+}
+
+.sbos-calendar__off p {
+	margin: 0;
+}
+
+.sbos-calendar .sbos-calendar__off button {
+	height: var(--input-height, 30px);
+	padding: var(--size-4-1) var(--size-4-3);
+	border-radius: var(--radius-s);
+}
+
+.sbos-calendar .sbos-calendar__off button.mod-cta {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+.sbos-calendar .sbos-calendar__off button.mod-cta:hover {
+	background: var(--interactive-accent-hover);
+}
+
+.sbos-calendar__off-hint {
+	font-size: var(--font-ui-smaller);
 }
 
 /* ---------------------------------------------------------------- jump to date */
@@ -227,21 +589,146 @@
 	gap: var(--size-4-2);
 }
 
-/* ---------------------------------------------------------------- day planner */
+/* ---------------------------------------------------------------- day planner
+   Laid out like the Day Planner plugin: controls and a week strip on top, an all-day style row
+   for unscheduled tasks, an hour ruler beside the timeline, and bordered time blocks. */
 
 .sbos-timeline {
-	display: flex;
-	flex-direction: column;
-	height: 100%;
+	--sbos-border: var(--border-width) solid var(--background-modifier-border);
+	--sbos-scrollbar-width: 12px;
+	--sbos-flex-basis: 180px;
+	--sbos-block-shadow: 1px 1px 2px 0 #0000001f;
+	--sbos-block-border: var(--color-base-40, var(--background-modifier-border));
+	--sbos-shadow-right: 2px 0 2px #00000010;
+	--sbos-block-font-size: var(--font-ui-small);
+	flex: 1 1 0;
+	min-height: 0;
+	display: grid;
+	grid-template-columns: auto 1fr;
+	grid-template-rows: auto auto auto 1fr;
+	grid-template-areas:
+		"calendar calendar"
+		"controls controls"
+		"corner all-day"
+		"ruler timeline";
 	font-size: var(--font-ui-small);
 }
 
-.sbos-timeline__toolbar {
+.sbos-timeline.is-multi {
+	grid-template-rows: auto auto auto auto 1fr;
+	grid-template-areas:
+		"calendar calendar"
+		"controls controls"
+		"corner dates"
+		"corner all-day"
+		"ruler timeline";
+}
+
+.sbos-timeline__calendar {
+	grid-area: calendar;
+	padding-bottom: var(--size-4-2);
+	border-bottom: var(--sbos-border);
+}
+
+.sbos-timeline__controls {
+	grid-area: controls;
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-4-2);
+	min-width: 0;
+	padding: var(--size-4-2) 0 var(--size-4-2) var(--size-4-3);
+	overflow: hidden;
+}
+
+.sbos-timeline__header {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+	align-items: center;
+	gap: var(--size-2-1);
+	padding-right: var(--size-4-3);
+}
+
+.sbos-timeline__buttons {
 	display: flex;
 	align-items: center;
+	gap: var(--size-2-1);
+}
+
+.sbos-timeline__buttons.is-right {
+	justify-self: end;
+}
+
+.sbos-timeline__today {
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+	font-weight: var(--font-medium);
+}
+
+.sbos-timeline__period {
+	justify-self: center;
+	color: var(--text-muted);
+	font-family: var(--file-header-font);
+	font-size: var(--file-header-font-size);
+	font-weight: var(--font-medium);
+	white-space: nowrap;
+}
+
+/* The week strip. */
+.sbos-week-picker {
+	display: flex;
+	justify-content: space-between;
+	gap: var(--size-2-1);
+	padding-right: var(--size-4-3);
+}
+
+.sbos-week-picker__column {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--size-2-1);
+}
+
+.sbos-week-picker__weekday {
+	color: var(--text-faint);
+	font-size: 0.8em;
+	font-weight: var(--font-medium);
+	text-transform: uppercase;
+}
+
+.sbos-week-picker__day {
+	width: 100%;
+	padding: var(--size-2-1) 0;
+}
+
+.sbos-week-picker__day.is-active {
+	background-color: var(--interactive-accent);
+}
+
+.sbos-week-picker__number {
+	color: var(--text-normal);
+	font-size: var(--font-ui-small);
+	font-weight: var(--font-medium);
+}
+
+.sbos-week-picker__number.is-outside-month {
+	color: var(--text-faint);
+}
+
+.sbos-week-picker__number.is-today {
+	color: var(--interactive-accent);
+}
+
+.sbos-week-picker__number.is-selected {
+	color: var(--text-on-accent);
+}
+
+.sbos-timeline__day-title {
+	display: flex;
+	align-items: baseline;
 	justify-content: space-between;
 	gap: var(--size-4-2);
-	margin-bottom: var(--size-4-2);
+	padding-right: var(--size-4-3);
 }
 
 .sbos-timeline__title {
@@ -249,62 +736,213 @@
 	font-size: var(--font-ui-medium);
 }
 
-.sbos-timeline__nav {
+.sbos-timeline .sbos-timeline__title-button {
+	color: var(--text-normal);
+	font-weight: inherit;
+}
+
+.sbos-timeline .sbos-timeline__title-button:hover {
+	color: var(--interactive-accent);
+	text-decoration: none;
+}
+
+.sbos-timeline__summary {
+	margin: 0;
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	white-space: nowrap;
+}
+
+/* The date row of the multi-day view. */
+.sbos-timeline__dates {
+	grid-area: dates;
 	display: flex;
+	overflow-y: hidden;
+	scrollbar-gutter: stable;
+	background-color: var(--background-primary);
+	border-top: var(--sbos-border);
+}
+
+.sbos-timeline__date {
+	display: flex;
+	flex: 1 0 var(--sbos-flex-basis);
+	flex-direction: column;
+	align-items: center;
 	gap: var(--size-2-1);
-}
-
-.sbos-timeline__nav button {
-	padding: var(--size-2-1) var(--size-2-3);
-}
-
-.sbos-timeline__day-headers {
-	display: flex;
-	gap: var(--size-2-1);
-	border-bottom: var(--border-width) solid var(--background-modifier-border);
-	padding-bottom: var(--size-2-2);
-}
-
-.sbos-timeline__day-header {
-	flex: 1;
-	display: flex;
-	justify-content: space-between;
+	padding: var(--size-2-2) 0;
+	border-right: 1px dashed var(--background-modifier-border);
 	color: var(--text-muted);
 }
 
-.sbos-timeline__day-header.is-today {
-	color: var(--text-accent);
-	font-weight: var(--font-semibold);
+.sbos-timeline__date:last-child {
+	border-right: 0;
+}
+
+.sbos-timeline__weekday {
+	color: var(--text-faint);
+	font-size: 0.8em;
+	font-weight: var(--font-medium);
+	text-transform: uppercase;
+}
+
+.sbos-timeline .sbos-timeline__date-number {
+	color: var(--text-normal);
+	font-size: var(--font-ui-small);
+	font-weight: var(--font-medium);
+}
+
+.sbos-timeline .sbos-timeline__date.is-today .sbos-timeline__date-number {
+	color: var(--interactive-accent);
 }
 
 .sbos-timeline__total {
 	color: var(--text-faint);
+	font-size: var(--font-ui-smaller);
+}
+
+.sbos-timeline__corner {
+	grid-area: corner;
+	background-color: var(--background-primary);
+	border-block: var(--sbos-border);
+	border-inline-end: var(--sbos-border);
+}
+
+/* Unscheduled tasks sit where the day planner shows all-day events. */
+.sbos-timeline__all-day {
+	grid-area: all-day;
+	max-height: 16vh;
+	padding: var(--size-2-1) 3px 0;
+	overflow: auto;
+	background-color: var(--background-primary);
+	border-block: var(--sbos-border);
+}
+
+.sbos-unscheduled__heading {
+	margin: 0 var(--size-2-2) var(--size-2-1);
+	color: var(--text-faint);
+	font-size: var(--font-ui-smaller);
+	font-weight: var(--font-medium);
+	text-transform: uppercase;
+}
+
+.sbos-unscheduled__empty {
+	margin: 0;
+	padding-block: var(--size-4-2);
+	color: var(--text-faint);
+	font-size: var(--font-ui-small);
+	text-align: center;
+}
+
+.sbos-unscheduled__list {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	margin: 0;
+	padding: 0 0 2px;
+	list-style: none;
+}
+
+.sbos-unscheduled__item {
+	display: flex;
+	align-items: center;
+	gap: var(--size-2-2);
+	padding: var(--size-2-1) var(--size-4-1);
+	border: 1px solid var(--sbos-block-border);
+	border-radius: var(--radius-s);
+	background-color: var(--background-primary);
+	box-shadow: var(--sbos-block-shadow);
+	cursor: grab;
+}
+
+.sbos-unscheduled__title {
+	flex: 1;
+	min-width: 0;
+	height: auto;
+	padding: 0 var(--size-2-1);
+	justify-content: flex-start;
+	background: none;
+	box-shadow: none;
+	color: var(--text-normal);
+	font: inherit;
+	font-weight: var(--font-semibold);
+	text-align: left;
+	white-space: normal;
+}
+
+.sbos-unscheduled__schedule {
+	height: auto;
+	padding: var(--size-2-1) var(--size-2-2);
+	background: none;
+	box-shadow: none;
+	color: var(--text-faint);
+}
+
+.sbos-unscheduled__schedule:hover {
+	background-color: var(--background-modifier-hover);
+	color: var(--text-muted);
+}
+
+/* The hour ruler, kept level with the scrolled timeline. */
+.sbos-timeline__ruler {
+	grid-area: ruler;
+	overflow-y: hidden;
+	box-shadow: var(--sbos-shadow-right);
+}
+
+.sbos-timeline__hours {
+	position: sticky;
+	left: 0;
+	z-index: 5;
+	display: flex;
+	flex-direction: column;
+	height: fit-content;
+	background-color: var(--background-primary);
+	border-right: var(--sbos-border);
+}
+
+.sbos-timeline__label {
+	display: flex;
+	flex: 1 0 0;
+	flex-direction: row-reverse;
+	padding-inline: var(--size-4-2);
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	font-weight: var(--font-semibold);
+}
+
+.sbos-timeline__label:not(:last-child) {
+	border-bottom: var(--sbos-border);
+}
+
+.sbos-timeline__scrollbar-filler {
+	height: var(--sbos-scrollbar-width);
+	background-color: var(--background-primary);
 }
 
 .sbos-timeline__scroll {
-	flex: 1;
-	overflow-y: auto;
+	grid-area: timeline;
+	display: flex;
 	min-height: 0;
+	overflow: auto;
+	scrollbar-gutter: stable;
+	background-color: var(--background-primary);
 }
 
 .sbos-timeline__body {
 	display: flex;
-	gap: var(--size-2-1);
-}
-
-.sbos-timeline__gutter {
-	flex: 0 0 3em;
-}
-
-.sbos-timeline__label {
-	color: var(--text-faint);
-	font-size: var(--font-ui-smaller);
-	transform: translateY(-0.6em);
+	flex: 1 1 0;
+	height: fit-content;
 }
 
 .sbos-timeline__day {
-	flex: 1;
+	position: relative;
+	flex: 1 0 var(--sbos-flex-basis);
 	min-width: 0;
+	background-color: var(--background-primary);
+}
+
+.sbos-timeline__day:not(:last-child) {
+	border-right: 1px dashed var(--background-modifier-border);
 }
 
 .sbos-timeline__column {
@@ -317,63 +955,96 @@
 	position: absolute;
 	left: 0;
 	right: 0;
-	border-top: var(--border-width) solid var(--background-modifier-border);
+	border-bottom: var(--sbos-border);
 	pointer-events: none;
 }
 
+.sbos-timeline__half {
+	height: 50%;
+	border-bottom: 1px dashed var(--background-modifier-border);
+}
+
+/* The current time. */
 .sbos-timeline__now {
 	position: absolute;
 	left: 0;
 	right: 0;
-	border-top: 2px solid var(--color-red);
+	height: 2px;
+	background-color: var(--interactive-accent);
 	pointer-events: none;
-	z-index: 2;
+	z-index: 4;
 }
 
+/* Time blocks: a bordered card with a bold summary and the time range under it. Past blocks
+   are shaded and the running one gets an accent border. */
 .sbos-block {
 	position: absolute;
 	box-sizing: border-box;
 	display: flex;
 	align-items: flex-start;
 	gap: var(--size-2-2);
-	padding: var(--size-2-1) var(--size-2-2);
-	border: var(--border-width) solid var(--background-modifier-border);
-	border-left: 3px solid var(--interactive-accent);
+	margin: 0 1px 2px;
+	padding: var(--size-2-1) var(--size-4-1);
+	border: 1px solid var(--sbos-block-border);
 	border-radius: var(--radius-s);
-	background-color: var(--background-secondary);
+	background-color: var(--background-primary);
+	box-shadow: var(--sbos-block-shadow);
+	color: var(--text-muted);
+	font-size: var(--sbos-block-font-size);
 	overflow: hidden;
 	cursor: grab;
 	z-index: 1;
 }
 
+.sbos-block.is-past {
+	background-color: var(--background-secondary);
+}
+
+.sbos-block.is-present {
+	border-color: var(--interactive-accent);
+}
+
 .sbos-block.is-scheduled {
-	border-left-style: dashed;
+	border-style: dashed;
 }
 
 .sbos-block.is-done {
-	opacity: 0.6;
+	color: var(--text-faint);
 }
 
-.sbos-block.is-done .sbos-block__title {
+.sbos-block.is-done .sbos-block__summary {
+	color: var(--text-faint);
 	text-decoration: line-through;
 }
 
 .sbos-block.is-dragging {
 	cursor: grabbing;
-	box-shadow: var(--shadow-s);
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 	z-index: 3;
 }
 
 .sbos-block.is-ghost {
 	left: 0;
 	right: 0;
+	border-color: var(--interactive-accent);
 	border-style: dashed;
+	background-color: var(--background-modifier-hover);
 	color: var(--text-muted);
 	pointer-events: none;
 }
 
+.sbos-block .task-list-item-checkbox {
+	--checkbox-size: var(--sbos-block-font-size);
+	flex: 0 0 auto;
+	margin-top: var(--size-2-1);
+}
+
 .sbos-block__title {
 	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: flex-start;
 	min-width: 0;
 	height: auto;
 	padding: 0;
@@ -381,6 +1052,7 @@
 	box-shadow: none;
 	text-align: left;
 	white-space: normal;
+	overflow-wrap: anywhere;
 	color: var(--text-normal);
 	font: inherit;
 }
@@ -389,8 +1061,17 @@
 	outline: 2px solid var(--background-modifier-border-focus);
 }
 
+.sbos-block__summary {
+	font-weight: var(--font-semibold);
+}
+
+.sbos-block.is-short .sbos-block__time {
+	display: none;
+}
+
 .sbos-block__time {
 	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
 	font-variant-numeric: tabular-nums;
 }
 
@@ -403,39 +1084,21 @@
 	cursor: ns-resize;
 }
 
-.sbos-unscheduled {
-	border-top: var(--border-width) solid var(--background-modifier-border);
-	margin-top: var(--size-4-2);
-	padding-top: var(--size-4-2);
+.sbos-block__resize::after {
+	content: "";
+	position: absolute;
+	left: 50%;
+	bottom: 2px;
+	width: 16px;
+	height: 2px;
+	border-radius: 1px;
+	background-color: var(--text-faint);
+	opacity: 0;
+	transform: translateX(-50%);
 }
 
-.sbos-unscheduled h4 {
-	margin: 0 0 var(--size-2-2);
-	font-size: var(--font-ui-small);
-	color: var(--text-muted);
-}
-
-.sbos-unscheduled ul {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-	display: grid;
-	gap: var(--size-2-1);
-}
-
-.sbos-unscheduled li {
-	display: flex;
-	align-items: center;
-	gap: var(--size-2-2);
-	cursor: grab;
-}
-
-.sbos-unscheduled__title {
-	flex: 1;
-	justify-content: flex-start;
-	background: none;
-	box-shadow: none;
-	text-align: left;
+.sbos-block:hover .sbos-block__resize::after {
+	opacity: 0.6;
 }
 
 .sbos-new-block {
@@ -485,11 +1148,6 @@
 
 .sbos-clocked.is-running {
 	background-color: var(--color-red);
-}
-
-.sbos-timeline__summary {
-	margin: 0 0 var(--size-2-2);
-	color: var(--text-muted);
 }
 
 /* ---------------------------------------------------------------- PPV */
@@ -732,29 +1390,4 @@
 
 .sbos-preview__after {
 	color: var(--text-success);
-}
-
-/* ---------------------------------------------------------------- calendar inside the day planner */
-
-.sbos-timeline__calendar {
-	margin-bottom: var(--size-4-3);
-	padding-bottom: var(--size-4-2);
-	border-bottom: var(--border-width) solid var(--background-modifier-border);
-}
-
-.sbos-timeline__calendar-toggle {
-	display: block;
-	margin-left: auto;
-	padding: 0;
-	height: auto;
-	background: none;
-	box-shadow: none;
-	color: var(--text-muted);
-	font-size: var(--font-ui-smaller);
-}
-
-.sbos-timeline__title-button,
-.sbos-timeline__day-link {
-	color: inherit;
-	font-weight: inherit;
 }

@@ -23,10 +23,12 @@ export async function renderCalendar(
 		settings?: SettingsPatch;
 		today?: string;
 		activePath?: string;
+		embedded?: boolean;
 	} = {},
 ) {
 	const harness = await createPeriodicHarness(options);
 	const calls: ActivateCall[] = [];
+	const enabled: Granularity[] = [];
 	let jumps = 0;
 	const badges = new Store<ReadonlyMap<IsoDate, readonly DayBadge[]>>(new Map());
 	const services: CalendarServices = {
@@ -36,14 +38,15 @@ export async function renderCalendar(
 		activePath: new Store<string | null>(options.activePath ?? null),
 		badges,
 		activate: (granularity, date, split) => calls.push({ granularity, date, split }),
+		enableGranularity: (granularity) => enabled.push(granularity),
 		openJumpToDate: () => {
 			jumps++;
 		},
 	};
 	const view = render(
 		<CalendarContext.Provider value={services}>
-			<Calendar />
+			<Calendar embedded={options.embedded ?? false} />
 		</CalendarContext.Provider>,
 	);
-	return { ...harness, ...view, services, calls, badges, jumps: () => jumps };
+	return { ...harness, ...view, services, calls, enabled, badges, jumps: () => jumps };
 }

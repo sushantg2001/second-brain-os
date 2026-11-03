@@ -5,8 +5,8 @@
 
 One Obsidian plugin for a whole personal knowledge system:
 
-- **Day planner**: a timeline of time-blocked tasks with the month calendar above it, drag to plan your day, and clocks to track time as Dataview/Datacore inline fields.
-- **Calendar and periodic notes**: daily, weekly, monthly, quarterly and yearly notes, with a month calendar to move between them.
+- **Day planner**: a timeline of time-blocked tasks with a week strip (or the month calendar) above it, drag to plan your day, and clocks to track time as Dataview/Datacore inline fields.
+- **Calendar and periodic notes**: daily, weekly, monthly, quarterly and yearly notes, with Day, Week, Month, Quarter and Year tabs to move between them. A tab for notes that are off turns them on in one click.
 - **Pillars, Pipelines & Vaults (PPV)**: pillars, goals and projects as linked notes, with progress rollups, reviews and a lint that keeps the structure healthy.
 
 Everything is plain Markdown, so your notes stay readable without the plugin. Clocks, reviews and a vault check tie the three together: time you track rolls up into projects and pillars, and periodic reviews summarise it.
@@ -53,7 +53,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow.
 
 ## Credits
 
-Builds on ideas from [Day Planner](https://github.com/ivan-lednev/obsidian-day-planner) by Ivan Lednev, [Calendar](https://github.com/liamcain/obsidian-calendar-plugin) and [Periodic Notes](https://github.com/liamcain/obsidian-periodic-notes) by Liam Cain, [LifeOS](https://github.com/quanru/obsidian-lifeos) by quanru, and August Bradley's Pillars, Pipelines & Vaults method.
+Builds on ideas from [Day Planner](https://github.com/ivan-lednev/obsidian-day-planner) by Ivan Lednev, [Calendar](https://github.com/liamcain/obsidian-calendar-plugin) and [Periodic Notes](https://github.com/liamcain/obsidian-periodic-notes) by Liam Cain, [LifeOS](https://github.com/quanru/obsidian-lifeos) by quanru, and August Bradley's Pillars, Pipelines & Vaults method. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for the licenses of the interface styles adapted from them.
 
 ## License
 
