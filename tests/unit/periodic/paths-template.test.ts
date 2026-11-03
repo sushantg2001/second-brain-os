@@ -3,6 +3,7 @@ import { describe, expect, it } from "bun:test";
 import {
 	basename,
 	formatOf,
+	formatSegments,
 	joinPath,
 	normalizeVaultPath,
 	notePath,
@@ -31,6 +32,17 @@ describe("vault paths", () => {
 		expect(basename("a/b/c.md")).toBe("c");
 		expect(withMarkdownExtension("Templates/Daily")).toBe("Templates/Daily.md");
 		expect(withMarkdownExtension("Templates/Daily.MD")).toBe("Templates/Daily.MD");
+	});
+
+	it("splits formats at folder separators outside escaped text", () => {
+		expect(formatSegments("YYYY-MM-DD")).toEqual(["YYYY-MM-DD"]);
+		expect(formatSegments("YYYY/MMMM/WW/GGGG-[W]WW")).toEqual([
+			"YYYY",
+			"MMMM",
+			"WW",
+			"GGGG-[W]WW",
+		]);
+		expect(formatSegments("YYYY/[Q1/Q2]")).toEqual(["YYYY", "[Q1/Q2]"]);
 	});
 });
 

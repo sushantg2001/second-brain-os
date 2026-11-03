@@ -13,7 +13,12 @@ import {
 	type Workspace,
 } from "../../../shared/kernel";
 import { GRANULARITIES, type Granularity } from "../domain/granularity";
-import { normalizeVaultPath, notePath, parentFolder, withMarkdownExtension } from "../domain/paths";
+import {
+	formatSegments,
+	normalizeVaultPath,
+	notePath,
+	withMarkdownExtension,
+} from "../domain/paths";
 import { adjacentDate, periodStart } from "../domain/period";
 import { formatOf, resolveWeekStart, type PeriodicSettings } from "../domain/settings";
 import { renderTemplate } from "../domain/template";
@@ -112,12 +117,17 @@ export class PeriodicNotes {
 			}
 			relative = relative.slice(folder.length + 1);
 		}
-		const format = formatOf(this.settings, granularity);
-		// Without a "/" in the format, the note must sit directly in the folder.
-		if (!format.includes("/") && parentFolder(normalized) !== folder) {
+		// Folder segments are decoration: only the file name carries the date. Parsing the whole
+		// path lets a month name in a folder override ISO week fields in the file name.
+		const names = relative.split("/");
+		const formats = formatSegments(formatOf(this.settings, granularity));
+		if (names.length !== formats.length) {
 			return null;
 		}
-		const date = this.deps.dates.parse(relative, format);
+		const date = this.deps.dates.parse(
+			names[names.length - 1] ?? "",
+			formats[formats.length - 1] ?? "",
+		);
 		return date === null ? null : this.periodOf(granularity, date);
 	}
 

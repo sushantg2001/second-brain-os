@@ -31,3 +31,25 @@ export function basename(path: string): string {
 	const name = normalizeVaultPath(path).split("/").pop() ?? "";
 	return name.replace(/\.md$/i, "");
 }
+
+/** Splits a moment format at its "/" folder separators, ignoring any inside [escaped text]. */
+export function formatSegments(format: string): string[] {
+	const segments: string[] = [];
+	let current = "";
+	let escaped = false;
+	for (const char of format) {
+		if (char === "[") {
+			escaped = true;
+		} else if (char === "]") {
+			escaped = false;
+		}
+		if (char === "/" && !escaped) {
+			segments.push(current);
+			current = "";
+		} else {
+			current += char;
+		}
+	}
+	segments.push(current);
+	return segments;
+}

@@ -7,6 +7,7 @@ export {
 export { GRANULARITIES, LABELS, type Granularity } from "./domain/granularity";
 export {
 	basename,
+	formatSegments,
 	joinPath,
 	normalizeVaultPath,
 	notePath,
