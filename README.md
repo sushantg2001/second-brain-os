@@ -53,7 +53,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow.
 
 ## Credits
 
-Builds on ideas from [Day Planner](https://github.com/ivan-lednev/obsidian-day-planner) by Ivan Lednev, [Calendar](https://github.com/liamcain/obsidian-calendar-plugin) and [Periodic Notes](https://github.com/liamcain/obsidian-periodic-notes) by Liam Cain, [LifeOS](https://github.com/quanru/obsidian-lifeos) by quanru, and August Bradley's Pillars, Pipelines & Vaults method. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for the licenses of the interface styles adapted from them.
+Builds on ideas from [Day Planner](https://github.com/ivan-lednev/obsidian-day-planner) by Ivan Lednev, [Calendar](https://github.com/liamcain/obsidian-calendar-plugin) and [Periodic Notes](https://github.com/liamcain/obsidian-periodic-notes) by Liam Cain, [LifeOS](https://github.com/quanru/obsidian-lifeos) by quanru, and August Bradley's Pillars, Pipelines & Vaults method.
 
 ## License
 
