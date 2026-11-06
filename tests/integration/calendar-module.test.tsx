@@ -91,6 +91,24 @@ describe("calendar module", () => {
 		expect(day).toHaveClass("is-active");
 	});
 
+	it("turns quarterly notes on from the calendar and opens the quarter's note", async () => {
+		const harness = await loadPlugin({ today: "2026-10-29" });
+		const calendar = await calendarIn(harness);
+		const settings = harness.container.settings.section("periodic");
+		expect(settings.store.get().notes.quarter.enabled).toBe(false);
+		await userEvent.click(calendar.getByRole("tab", { name: "Quarter" }));
+		await userEvent.click(calendar.getByRole("button", { name: "Turn on quarterly notes" }));
+		await act(() => sleep(0));
+		expect(settings.store.get().notes.quarter.enabled).toBe(true);
+		await act(async () => {
+			fireEvent.click(calendar.getByRole("button", { name: "Q4 2026" }));
+			await sleep(0);
+		});
+		expect(harness.app.workspace.getActiveFile()?.path).toBe("2026-Q4.md");
+		await userEvent.click(calendar.getByRole("tab", { name: "Day" }));
+		expect(calendar.getByRole("button", { name: "Open Q4 2026 note" })).toHaveClass("has-note");
+	});
+
 	it("opens the calendar on demand after it was closed", async () => {
 		const harness = await loadPlugin();
 		harness.app.workspace.detachLeavesOfType("sbos-calendar");

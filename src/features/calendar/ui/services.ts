@@ -20,6 +20,8 @@ export interface CalendarServices {
 	/** Ticks with the clock, so "today" moves at midnight. */
 	readonly tick?: ReadableStore<unknown>;
 	readonly activate: (granularity: Granularity, date: IsoDate, split: boolean) => void;
+	/** Turns a kind of periodic note on, from the calendar's "notes are off" panel. */
+	readonly enableGranularity?: (granularity: Granularity) => void;
 	readonly openJumpToDate: () => void;
 }
 

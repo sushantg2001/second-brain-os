@@ -12,7 +12,8 @@ describe("Calendar", () => {
 			.getAllByRole("columnheader")
 			.map((header) => header.textContent);
 		expect(headers).toEqual(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]);
-		expect(within(grid).getAllByRole("row")).toHaveLength(6);
+		// A header row and six weeks, so the calendar keeps its height from month to month.
+		expect(within(grid).getAllByRole("row")).toHaveLength(7);
 	});
 
 	it("marks today, days with notes and the active note", async () => {

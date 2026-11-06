@@ -46,6 +46,49 @@ describe("day planner", () => {
 		expect(container.planner.plannedByDate.get().get("2026-10-29")).toBe(90);
 	});
 
+	it("lists the days of the week from the configured first day", async () => {
+		const { container } = await setup();
+		const week = () => container.planner.weekOf("2026-10-29");
+		await container.settings
+			.section("periodic")
+			.update((settings) => ({ ...settings, weekStart: "monday" }));
+		expect(week()[0]).toBe("2026-10-26");
+		expect(week()[6]).toBe("2026-11-01");
+		await container.settings
+			.section("periodic")
+			.update((settings) => ({ ...settings, weekStart: "sunday" }));
+		expect(week()[0]).toBe("2026-10-25");
+		expect(week()).toHaveLength(7);
+	});
+
+	it("marks blocks as past, running or still to come, and trims short ones", async () => {
+		const { ui } = await setup({
+			"2026-10-29.md": [
+				"## Day planner",
+				"- [ ] 08:00 - 08:30 Early",
+				"- [ ] 09:00 - 10:00 Write spec",
+				"- [ ] 10:30 - 12:30 Workshop",
+			].join("\n"),
+		});
+		const block = (name: string) =>
+			ui.getByRole("button", { name }).parentElement as HTMLElement;
+		expect(block("08:00 to 08:30, Early")).toHaveClass("is-past", "is-short");
+		expect(block("09:00 to 10:00, Write spec")).toHaveClass("is-present");
+		expect(block("09:00 to 10:00, Write spec")).not.toHaveClass("is-short");
+		expect(block("10:30 to 12:30, Workshop")).toHaveClass("is-future");
+		expect(ui.getByRole("button", { name: "09:00 to 10:00, Write spec" })).toHaveTextContent(
+			"09:00 – 10:00",
+		);
+	});
+
+	it("says so when nothing is waiting to be scheduled", async () => {
+		const { ui } = await setup({
+			"2026-10-29.md": "## Day planner\n- [ ] 09:00 - 10:00 Write spec",
+		});
+		const region = ui.getByRole("region", { name: "Unscheduled" });
+		expect(within(region).getByText("No unscheduled tasks")).toBeInTheDocument();
+	});
+
 	it("moves and resizes blocks with the keyboard", async () => {
 		const { ui, content, settle } = await setup();
 		const block = ui.getByRole("button", { name: "09:00 to 10:00, Write spec" });
@@ -210,14 +253,35 @@ describe("day planner", () => {
 		expect(content()).toContain("- [ ] 09:00 - 10:00 Write the spec");
 	});
 
-	it("navigates days and opens a multi-day view", async () => {
-		const { ui, plugin, app } = await setup();
-		await userEvent.click(ui.getByRole("button", { name: "Next day" }));
+	it("picks days from the week strip and moves by weeks", async () => {
+		const { ui } = await setup();
+		const strip = ui.getAllByRole("button", { name: /^\w+day, October \d+$/ });
+		expect(strip).toHaveLength(7);
+		expect(ui.getByRole("button", { name: "Thursday, October 29" })).toHaveAttribute(
+			"aria-pressed",
+			"true",
+		);
+		await userEvent.click(ui.getByRole("button", { name: "Friday, October 30" }));
 		expect(ui.getByRole("heading", { name: "Friday, October 30" })).toBeInTheDocument();
+		await userEvent.click(ui.getByRole("button", { name: "Next week" }));
+		expect(ui.getByRole("heading", { name: "Friday, November 6" })).toBeInTheDocument();
 		await userEvent.click(ui.getByRole("button", { name: "Today" }));
-		await userEvent.click(ui.getByRole("button", { name: "Previous day" }));
-		expect(ui.getByRole("heading", { name: "Wednesday, October 28" })).toBeInTheDocument();
+		expect(ui.getByRole("heading", { name: "Thursday, October 29" })).toBeInTheDocument();
+		await userEvent.click(ui.getByRole("button", { name: "Previous week" }));
+		expect(ui.getByRole("heading", { name: "Thursday, October 22" })).toBeInTheDocument();
+		await userEvent.click(ui.getByRole("button", { name: "Wednesday, October 21" }));
+		expect(ui.getByRole("heading", { name: "Wednesday, October 21" })).toBeInTheDocument();
+	});
 
+	it("opens the daily note when the selected day is picked again", async () => {
+		const { ui, app } = await setup();
+		await userEvent.click(ui.getByRole("button", { name: "Thursday, October 29" }));
+		await act(() => sleep(10));
+		expect(app.workspace.getActiveFile()?.path).toBe("2026-10-29.md");
+	});
+
+	it("opens a multi-day view with a header per day", async () => {
+		const { plugin, app } = await setup();
 		plugin.runCommand("open-multi-day-planner");
 		await act(() => sleep(0));
 		const views = app.workspace
@@ -229,9 +293,18 @@ describe("day planner", () => {
 		await act(() => sleep(0));
 		const multiUi = within(multi?.contentEl ?? document.body);
 		expect(multiUi.getAllByRole("region", { name: /^Timeline for/ })).toHaveLength(3);
-		expect(multiUi.getByText("Thu 29")).toBeInTheDocument();
+		expect(multiUi.queryByRole("button", { name: "Previous week" })).toBeNull();
+		expect(
+			multiUi.getByRole("button", { name: "Open daily note for Thursday, October 29" }),
+		).toBeInTheDocument();
 		await userEvent.click(multiUi.getByRole("button", { name: "Next days" }));
-		expect(multiUi.getByText("Sun 1")).toBeInTheDocument();
+		expect(
+			multiUi.getByRole("button", { name: "Open daily note for Sunday, November 1" }),
+		).toBeInTheDocument();
+		await userEvent.click(multiUi.getByRole("button", { name: "Previous days" }));
+		expect(
+			multiUi.getByRole("button", { name: "Open daily note for Thursday, October 29" }),
+		).toBeInTheDocument();
 	});
 });
 

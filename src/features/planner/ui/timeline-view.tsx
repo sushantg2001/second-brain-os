@@ -21,6 +21,8 @@ export class TimelineView extends ReactItemView {
 		this.state = new TimelineState({ date: services.now.get().date, days });
 	}
 
+	protected override readonly flush = true;
+
 	override getViewType(): string {
 		return VIEW_TYPE_TIMELINE;
 	}

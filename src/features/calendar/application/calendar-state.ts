@@ -8,6 +8,7 @@ import {
 	type IsoDate,
 	type ReadableStore,
 } from "../../../shared/kernel";
+import type { Granularity } from "../../periodic";
 
 export interface CalendarSnapshot {
 	/** First day of the displayed month. */
@@ -28,9 +29,19 @@ function snapshotFor(date: IsoDate): CalendarSnapshot {
 /** Which month the calendar shows and which day has focus. Shared by the view and commands. */
 export class CalendarState {
 	readonly #store: Store<CalendarSnapshot>;
+	readonly #mode = new Store<Granularity>("day");
 
 	constructor(today: IsoDate) {
 		this.#store = new Store(snapshotFor(today));
+	}
+
+	/** Which kind of note the calendar picks: days, weeks, months, quarters or years. */
+	get mode(): ReadableStore<Granularity> {
+		return this.#mode;
+	}
+
+	setMode(mode: Granularity): void {
+		this.#mode.set(mode);
 	}
 
 	get snapshot(): ReadableStore<CalendarSnapshot> {

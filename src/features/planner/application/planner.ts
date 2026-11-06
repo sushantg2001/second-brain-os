@@ -1,4 +1,5 @@
 import {
+	addDays,
 	err,
 	ok,
 	Store,
@@ -53,6 +54,12 @@ export class Planner {
 
 	today(): IsoDate {
 		return this.deps.clock.today();
+	}
+
+	/** The seven days of the week that holds `date`, starting on the configured first day. */
+	weekOf(date: IsoDate): IsoDate[] {
+		const start = this.deps.periodic.periodOf("week", date);
+		return Array.from({ length: 7 }, (_, offset) => addDays(start, offset));
 	}
 
 	plan(date: IsoDate): DayPlan {

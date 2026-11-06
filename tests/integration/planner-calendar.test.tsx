@@ -7,6 +7,10 @@ import { loadPlugin, sleep } from "../fakes/plugin-harness";
 
 async function setup(files: Record<string, string> = {}, today = "2026-10-29") {
 	const harness = await loadPlugin({ files, today, minutes: 9 * 60 });
+	// The calendar is off by default; these tests are about it.
+	await harness.container.settings
+		.section("planner")
+		.update((settings) => ({ ...settings, showCalendar: true }));
 	await act(() => sleep(10));
 	const view = harness.app.workspace.getLeavesOfType("sbos-timeline")[0]
 		?.view as unknown as TimelineView;
@@ -43,9 +47,9 @@ describe("calendar inside the day planner", () => {
 
 	it("moves the calendar when the timeline moves", async () => {
 		const { ui } = await setup({}, "2026-10-31");
-		await userEvent.click(ui.getByRole("button", { name: "Next day" }));
+		await userEvent.click(ui.getByRole("button", { name: "Next week" }));
 		expect(ui.getByRole("grid", { name: "November 2026" })).toBeInTheDocument();
-		expect(ui.getByRole("button", { name: "Sunday, November 1, 2026" })).toHaveAttribute(
+		expect(ui.getByRole("button", { name: "Saturday, November 7, 2026" })).toHaveAttribute(
 			"tabindex",
 			"0",
 		);

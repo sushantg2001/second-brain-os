@@ -22,6 +22,7 @@ export interface CalendarModuleDeps {
 	readonly notifier: Notifier;
 	readonly badges?: ReadableStore<ReadonlyMap<IsoDate, readonly DayBadge[]>>;
 	readonly tick?: ReadableStore<unknown>;
+	readonly enableGranularity?: (granularity: Granularity) => void;
 	/** Open the calendar in the sidebar on start. Off when the day planner shows it instead. */
 	readonly openOnStart?: boolean;
 }
@@ -72,6 +73,7 @@ export function registerCalendar(plugin: Plugin, deps: CalendarModuleDeps): Cale
 		activePath,
 		...(deps.badges ? { badges: deps.badges } : {}),
 		...(deps.tick ? { tick: deps.tick } : {}),
+		...(deps.enableGranularity ? { enableGranularity: deps.enableGranularity } : {}),
 		activate: (granularity, date, split) => void activate(granularity, date, split),
 		openJumpToDate: () => new JumpToDateModal(app, services).open(),
 	};

@@ -26,7 +26,27 @@ interface Drag {
 
 /** Drag distance in pixels before a press counts as a drag instead of a click. */
 const DRAG_THRESHOLD = 4;
+/** Blocks shorter than this (in pixels) show only their summary, not the time range. */
+const SHORT_BLOCK = 44;
 export const TASK_DRAG_TYPE = "application/x-sbos-task";
+
+type Relation = "past" | "present" | "future";
+
+/** Whether a block on `date` is over, running, or still to come. */
+function relationToNow(
+	date: IsoDate,
+	now: { readonly date: IsoDate; readonly minutes: Minutes },
+	start: Minutes,
+	end: Minutes,
+): Relation {
+	if (date !== now.date) {
+		return date < now.date ? "past" : "future";
+	}
+	if (now.minutes >= end) {
+		return "past";
+	}
+	return now.minutes >= start ? "present" : "future";
+}
 
 export function TimelineDay({ date }: { readonly date: IsoDate }): ReactNode {
 	const services = PlannerContext.useService();
@@ -180,7 +200,9 @@ export function TimelineDay({ date }: { readonly date: IsoDate }): ReactNode {
 					className="sbos-timeline__hour"
 					style={{ top: `${top(hour * 60)}px`, height: `${settings.hourHeight}px` }}
 					aria-hidden="true"
-				/>
+				>
+					<div className="sbos-timeline__half" />
+				</div>
 			))}
 			{plan.blocks.map((block) => {
 				const live = drag?.block?.id === block.id && drag.moved ? drag : null;
@@ -188,13 +210,16 @@ export function TimelineDay({ date }: { readonly date: IsoDate }): ReactNode {
 				const end = live ? live.end : block.end;
 				const closed = isClosed(block.state);
 				const label = `${formatTime(start)} to ${formatTime(end)}, ${block.title}${closed ? ", done" : ""}`;
+				const when = relationToNow(date, now, start, end);
+				const height = Math.max(top(end) - top(start), 18);
+				const running = services.clocks?.isRunning(block) ?? false;
 				return (
 					<div
 						key={block.id}
-						className={`sbos-block${closed ? " is-done" : ""}${live ? " is-dragging" : ""}${block.source === "scheduled" ? " is-scheduled" : ""}`}
+						className={`sbos-block is-${when}${height < SHORT_BLOCK ? " is-short" : ""}${closed ? " is-done" : ""}${live ? " is-dragging" : ""}${block.source === "scheduled" ? " is-scheduled" : ""}`}
 						style={{
 							top: `${top(start)}px`,
-							height: `${Math.max(top(end) - top(start), 18)}px`,
+							height: `${height}px`,
 							left: `${(block.column / block.columns) * 100}%`,
 							width: `${100 / block.columns}%`,
 						}}
@@ -208,21 +233,11 @@ export function TimelineDay({ date }: { readonly date: IsoDate }): ReactNode {
 							onPointerDown={(event) => event.stopPropagation()}
 							onChange={() => run(planner.toggleDone(block))}
 						/>
-						{services.clocks && !closed && (
-							<button
-								type="button"
-								className={`sbos-block__clock${services.clocks.isRunning(block) ? " is-running" : ""}`}
-								aria-label={`${services.clocks.isRunning(block) ? "Stop" : "Start"} clock on ${block.title}`}
-								onPointerDown={(event) => event.stopPropagation()}
-								onClick={() => services.clocks?.toggle(block)}
-							>
-								<Icon name={services.clocks.isRunning(block) ? "square" : "play"} />
-							</button>
-						)}
 						<button
 							type="button"
 							className="sbos-block__title"
 							aria-label={label}
+							title={`${formatTime(start)} – ${formatTime(end)}`}
 							aria-keyshortcuts="ArrowUp ArrowDown Shift+ArrowUp Shift+ArrowDown Delete"
 							onClick={() => {
 								if (suppressClick.current) {
@@ -233,11 +248,22 @@ export function TimelineDay({ date }: { readonly date: IsoDate }): ReactNode {
 							}}
 							onKeyDown={(event) => onBlockKeyDown(block, event)}
 						>
+							<span className="sbos-block__summary">{block.title}</span>
 							<span className="sbos-block__time">
-								{formatTime(start)}–{formatTime(end)}
-							</span>{" "}
-							{block.title}
+								{formatTime(start)} – {formatTime(end)}
+							</span>
 						</button>
+						{services.clocks && !closed && (
+							<button
+								type="button"
+								className={`sbos-block__clock${running ? " is-running" : ""}`}
+								aria-label={`${running ? "Stop" : "Start"} clock on ${block.title}`}
+								onPointerDown={(event) => event.stopPropagation()}
+								onClick={() => services.clocks?.toggle(block)}
+							>
+								<Icon name={running ? "square" : "play"} />
+							</button>
+						)}
 						<div
 							className="sbos-block__resize"
 							aria-hidden="true"
