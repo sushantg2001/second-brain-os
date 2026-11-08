@@ -10,7 +10,7 @@ import {
 import { formatDuration, formatTime, type IsoDate, type Minutes } from "../../../shared/kernel";
 import { Icon, useStore } from "../../../shared/react";
 import { isClosed } from "../../tasks";
-import { childrenOf, type PlannedBlock } from "../domain/day-plan";
+import { childrenOf, descendantsOf, type PlannedBlock } from "../domain/day-plan";
 import { PlannerContext } from "./services";
 
 type DragKind = "move" | "resize" | "create";
@@ -139,7 +139,15 @@ export function TimelineDay({ date }: { readonly date: IsoDate }): ReactNode {
 		if (current.block && current.moved) {
 			suppressClick.current = true;
 			if (current.start !== current.block.start || current.end !== current.block.end) {
-				run(planner.moveBlock(current.block, current.start, current.end));
+				run(
+					current.kind === "move"
+						? planner.moveBlockWithChildren(
+								current.block,
+								descendantsOf(plan, current.block),
+								current.start,
+							)
+						: planner.moveBlock(current.block, current.start, current.end),
+				);
 			}
 		}
 	};
@@ -155,7 +163,11 @@ export function TimelineDay({ date }: { readonly date: IsoDate }): ReactNode {
 							block.start,
 							Math.max(block.start + step, block.end + delta),
 						)
-					: planner.moveBlock(block, block.start + delta, block.end + delta),
+					: planner.moveBlockWithChildren(
+							block,
+							descendantsOf(plan, block),
+							block.start + delta,
+						),
 			);
 		} else if (event.key === "Delete" || event.key === "Backspace") {
 			run(planner.unschedule(block));

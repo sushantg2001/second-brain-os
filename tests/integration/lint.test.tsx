@@ -86,6 +86,23 @@ describe("vault check", () => {
 		expect(ui.getByText("3 problems found.")).toBeInTheDocument();
 	});
 
+	it("closes a clock written without a bullet, to the second", async () => {
+		const harness = await setup({
+			"2026-10-29.md": "- [ ] Long\n\t[clock::2026-10-27T09:00:30--]",
+		});
+		const { ui } = await openCheck(harness);
+		const group = ui.getByRole("region", { name: "Clock running for more than 12 hours (1)" });
+		await userEvent.click(within(group).getByRole("button", { name: "Fix…" }));
+		expect(screen.getByLabelText("Preview").textContent).toBe(
+			"- \t[clock::2026-10-27T09:00:30--]+ \t[clock::2026-10-27T09:00:30--2026-10-29T12:00:00]",
+		);
+		await userEvent.click(screen.getByRole("button", { name: "Apply" }));
+		await act(() => sleep(10));
+		expect(harness.app.vault.contentOf("2026-10-29.md")).toBe(
+			"- [ ] Long\n\t[clock::2026-10-27T09:00:30--2026-10-29T12:00:00]",
+		);
+	});
+
 	it("previews and applies a parent fix", async () => {
 		const harness = await setup();
 		const { ui } = await openCheck(harness);

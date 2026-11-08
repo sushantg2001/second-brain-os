@@ -13,6 +13,18 @@ export function withBlock(raw: string, start: Minutes, end: Minutes | null): str
 	});
 }
 
+/**
+ * Moves the time block on a task line by `delta` minutes. A block with only a start stays that
+ * way, so moving a block never adds an end time to it.
+ */
+export function shiftBlockLine(
+	raw: string,
+	block: { readonly start: Minutes; readonly end: Minutes; readonly explicitEnd: boolean },
+	delta: Minutes,
+): string | null {
+	return withBlock(raw, block.start + delta, block.explicitEnd ? block.end + delta : null);
+}
+
 /** Removes the time block from a task line. */
 export function withoutBlock(raw: string): string | null {
 	const line = parseListLine(raw);

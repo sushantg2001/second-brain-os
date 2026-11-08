@@ -11,6 +11,7 @@ import {
 	nextBlock,
 	nextFreeSlot,
 	normalizeRange,
+	shiftBlockLine,
 	withBlock,
 	withoutBlock,
 } from "../../../src/features/planner";
@@ -357,5 +358,41 @@ describe("nested blocks", () => {
 		expect(nextBlock(plan, 30)?.title).toBe("Sub 2");
 		const done = planOf(["- [ ] 0:00 - 2:00 Main", "\t- [x] 0:00 - 1:00 Sub"].join("\n"));
 		expect(currentBlock(done, 30)?.title).toBe("Main");
+	});
+});
+
+describe("shiftBlockLine", () => {
+	const block = (text: string) => {
+		const [task] = buildDayPlan("2026-10-29", "d.md", parseTasks("d.md", text), 30).blocks;
+		if (!task) {
+			throw new Error("no block");
+		}
+		return task;
+	};
+
+	it("moves both ends of a block and keeps the rest of the line", () => {
+		const raw = "\t- [x] 1:00 - 2:00 Sub  [completion:: 2026-10-29]";
+		expect(shiftBlockLine(raw, block(raw), 60)).toBe(
+			"\t- [x] 02:00 - 03:00 Sub  [completion:: 2026-10-29]",
+		);
+		expect(shiftBlockLine(raw, block(raw), -30)).toBe(
+			"\t- [x] 00:30 - 01:30 Sub  [completion:: 2026-10-29]",
+		);
+	});
+
+	it("does not add an end to a block that only has a start", () => {
+		const raw = "- [ ] 10:30 Standup";
+		expect(shiftBlockLine(raw, block(raw), 30)).toBe("- [ ] 11:00 Standup");
+	});
+
+	it("writes a block whose end was before its start as a start only", () => {
+		const raw = "- [ ] 10:00 - 09:00 Backwards";
+		expect(shiftBlockLine(raw, block(raw), 60)).toBe("- [ ] 11:00 Backwards");
+	});
+
+	it("leaves lines that are not tasks alone", () => {
+		const base = block("- [ ] 10:00 - 11:00 A");
+		expect(shiftBlockLine("- 10:00 - 11:00 bullet", base, 30)).toBeNull();
+		expect(shiftBlockLine("text", base, 30)).toBeNull();
 	});
 });

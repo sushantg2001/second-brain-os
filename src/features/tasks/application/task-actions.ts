@@ -37,6 +37,38 @@ export class TaskActions {
 		return failure ? err(failure) : ok(undefined);
 	}
 
+	/**
+	 * Rewrites several lines of one note in a single write. Either every line is rewritten or, if
+	 * any of them changed since it was read, none is.
+	 */
+	async editLines(
+		path: string,
+		edits: readonly {
+			readonly ref: LineRef;
+			readonly edit: (raw: string) => string | readonly string[] | null;
+		}[],
+	): Promise<Result<void, Error>> {
+		let failure: Error | null = null;
+		await this.notes.process(path, (content) => {
+			let next = content;
+			for (const { ref, edit } of edits) {
+				const replacement = edit(ref.raw);
+				if (replacement === null) {
+					failure = new Error("That line is not a task.");
+					return content;
+				}
+				const replaced = replaceLine(next, ref, replacement);
+				if (!replaced.ok) {
+					failure = replaced.error;
+					return content;
+				}
+				next = replaced.value;
+			}
+			return next;
+		});
+		return failure ? err(failure) : ok(undefined);
+	}
+
 	toggleDone(ref: TaskRef): Promise<Result<void, Error>> {
 		return this.editLine(ref, (raw) => {
 			const viaTasks = this.toggler?.toggle(raw, ref.path);

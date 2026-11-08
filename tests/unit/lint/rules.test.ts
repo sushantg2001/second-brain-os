@@ -154,6 +154,57 @@ describe("task rules", () => {
 	});
 });
 
+describe("task rules with nested tasks", () => {
+	const DAY = "2026-10-29.md";
+	const overlaps = (note: string) => {
+		const tasks = parseTasks(DAY, note);
+		const plan = buildDayPlan("2026-10-29", DAY, tasks, 30);
+		return lint(input({ plans: [{ path: DAY, plan }] })).map((item) => item.rule);
+	};
+
+	it("does not report blocks that sit inside the block of their parent task", () => {
+		expect(
+			overlaps(
+				[
+					"- [ ] 09:00 - 11:00 Main",
+					"\t- [ ] 09:00 - 10:00 Sub",
+					"\t- [ ] 10:00 - 11:00 Sub 2",
+				].join("\n"),
+			),
+		).toEqual([]);
+	});
+
+	it("reports sub blocks that overlap each other, or stick out of the parent", () => {
+		expect(
+			overlaps(
+				[
+					"- [ ] 09:00 - 11:00 Main",
+					"\t- [ ] 09:00 - 10:30 A",
+					"\t- [ ] 10:00 - 11:00 B",
+				].join("\n"),
+			),
+		).toEqual(["overlapping-blocks"]);
+		expect(
+			overlaps(["- [ ] 09:00 - 11:00 Main", "\t- [ ] 10:30 - 11:30 Late"].join("\n")),
+		).toEqual(["overlapping-blocks"]);
+	});
+
+	it("reports a clock running too long once, on the task it is written under", () => {
+		const tasks = parseTasks(
+			"a.md",
+			["- [ ] Main", "\t- [ ] Sub", "\t\t[clock::2026-10-28T09:00:00--]"].join("\n"),
+		);
+		const findings = lint(input({ tasks }));
+		expect(findings.map((item) => [item.rule, item.line])).toEqual([["stale-clock", 2]]);
+		expect(findings[0]?.fix).toEqual({
+			kind: "close-clock",
+			path: "a.md",
+			line: 2,
+			raw: "\t\t[clock::2026-10-28T09:00:00--]",
+		});
+	});
+});
+
 describe("lint settings", () => {
 	it("turns rules off and overrides severity", () => {
 		const findings: { rule: RuleId; severity: Severity }[] = [
