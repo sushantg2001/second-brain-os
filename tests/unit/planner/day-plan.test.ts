@@ -3,7 +3,9 @@ import fc from "fast-check";
 
 import {
 	buildDayPlan,
+	childrenOf,
 	currentBlock,
+	descendantsOf,
 	layoutColumns,
 	newBlockLine,
 	nextBlock,
@@ -157,5 +159,203 @@ describe("block edits", () => {
 		expect(normalizeRange(-30, 10, 15)).toEqual({ start: 0, end: 45 });
 		expect(normalizeRange(1430, 1500, 15)).toEqual({ start: 1425, end: 1440 });
 		expect(normalizeRange(600, 600, 15)).toEqual({ start: 600, end: 615 });
+	});
+});
+
+describe("nested blocks", () => {
+	const DATE = "2026-10-29";
+	const planOf = (note: string, extra: Record<string, string> = {}, duration = 30) =>
+		buildDayPlan(
+			DATE,
+			"d.md",
+			[
+				...parseTasks("d.md", note),
+				...Object.entries(extra).flatMap(([path, text]) => parseTasks(path, text)),
+			],
+			duration,
+		);
+	const shape = (plan: ReturnType<typeof planOf>) =>
+		plan.blocks.map((block) => [block.title, block.parentId, block.depth]);
+
+	const MAIN = [
+		"- [ ] 00:00 - 2:00 Main",
+		"\t- [ ] 00:00 - 1:00 Sub",
+		"\t- [ ] 1:00 - 2:00 Sub 2",
+	].join("\n");
+
+	it("draws sub blocks inside the block of the task they are under", () => {
+		const plan = planOf(MAIN);
+		expect(shape(plan)).toEqual([
+			["Main", null, 0],
+			["Sub", "d.md:0", 1],
+			["Sub 2", "d.md:0", 1],
+		]);
+		expect(plan.blocks.map((block) => [block.column, block.columns])).toEqual([
+			[0, 1],
+			[0, 1],
+			[0, 1],
+		]);
+		expect(plan.plannedMinutes).toBe(120);
+		expect(childrenOf(plan, { id: "d.md:0" }).map((block) => block.title)).toEqual([
+			"Sub",
+			"Sub 2",
+		]);
+	});
+
+	it("lays out overlapping sub blocks side by side inside the parent", () => {
+		const plan = planOf(
+			["- [ ] 0:00 - 2:00 Main", "\t- [ ] 0:00 - 1:30 A", "\t- [ ] 1:00 - 2:00 B"].join("\n"),
+		);
+		expect(plan.blocks.map((block) => [block.title, block.column, block.columns])).toEqual([
+			["Main", 0, 1],
+			["A", 0, 2],
+			["B", 1, 2],
+		]);
+	});
+
+	it("keeps a sub block that sticks out of its parent as a separate block", () => {
+		const plan = planOf(["- [ ] 0:00 - 2:00 Main", "\t- [ ] 1:30 - 2:30 Late"].join("\n"));
+		expect(shape(plan)).toEqual([
+			["Main", null, 0],
+			["Late", null, 0],
+		]);
+		expect(plan.blocks.map((block) => block.columns)).toEqual([2, 2]);
+		expect(plan.plannedMinutes).toBe(120 + 60);
+	});
+
+	it("nests a sub block with exactly the parent's time", () => {
+		const plan = planOf(["- [ ] 1:00 - 2:00 Main", "\t- [ ] 1:00 - 2:00 Same"].join("\n"));
+		expect(plan.blocks.find((block) => block.title === "Same")?.parentId).toBe("d.md:0");
+		expect(plan.plannedMinutes).toBe(60);
+	});
+
+	it("nests three levels", () => {
+		const plan = planOf(
+			[
+				"- [ ] 0:00 - 4:00 Top",
+				"\t- [ ] 0:00 - 2:00 Mid",
+				"\t\t- [ ] 0:00 - 1:00 Leaf",
+				"\t- [ ] 3:00 - 4:00 Other",
+			].join("\n"),
+		);
+		expect(shape(plan)).toEqual([
+			["Top", null, 0],
+			["Mid", "d.md:0", 1],
+			["Leaf", "d.md:1", 2],
+			["Other", "d.md:0", 1],
+		]);
+		expect(descendantsOf(plan, { id: "d.md:0" }).map((block) => block.title)).toEqual([
+			"Mid",
+			"Leaf",
+			"Other",
+		]);
+		expect(descendantsOf(plan, { id: "d.md:1" }).map((block) => block.title)).toEqual(["Leaf"]);
+		expect(descendantsOf(plan, { id: "d.md:3" })).toEqual([]);
+	});
+
+	it("skips a task without a time when looking for the parent block", () => {
+		const plan = planOf(
+			["- [ ] 0:00 - 4:00 Top", "\t- [ ] Middle", "\t\t- [ ] 1:00 - 2:00 Leaf"].join("\n"),
+		);
+		expect(plan.blocks.find((block) => block.title === "Leaf")).toMatchObject({
+			parentId: "d.md:0",
+			depth: 1,
+		});
+		expect(plan.unscheduled.map((task) => task.title)).toEqual(["Middle"]);
+	});
+
+	it("finds a farther ancestor when the closest one does not contain the block", () => {
+		const plan = planOf(
+			["- [ ] 0:00 - 4:00 Top", "\t- [ ] 0:00 - 2:00 Mid", "\t\t- [ ] 3:00 - 4:00 Leaf"].join(
+				"\n",
+			),
+		);
+		expect(plan.blocks.find((block) => block.title === "Leaf")?.parentId).toBe("d.md:0");
+	});
+
+	it("leaves sub blocks on their own when the parent has no time", () => {
+		const plan = planOf(
+			["- [ ] Parent", "\t- [ ] 1:00 - 2:00 A", "\t- [ ] 3:00 - 4:00 B"].join("\n"),
+		);
+		expect(shape(plan)).toEqual([
+			["A", null, 0],
+			["B", null, 0],
+		]);
+		expect(plan.unscheduled.map((task) => task.title)).toEqual(["Parent"]);
+	});
+
+	it("counts a sub task with only a start by the default duration", () => {
+		const fits = planOf(["- [ ] 0:00 - 2:00 Main", "\t- [ ] 1:00 Start only"].join("\n"));
+		expect(fits.blocks.find((block) => block.title === "Start only")).toMatchObject({
+			parentId: "d.md:0",
+			end: 90,
+			explicitEnd: false,
+		});
+		const sticksOut = planOf(["- [ ] 0:00 - 2:00 Main", "\t- [ ] 1:45 Start only"].join("\n"));
+		expect(sticksOut.blocks.find((block) => block.title === "Start only")?.parentId).toBeNull();
+	});
+
+	it("lists an open sub task without a time as unscheduled, not as a block", () => {
+		const plan = planOf(["- [ ] 0:00 - 2:00 Main", "\t- [ ] Think"].join("\n"));
+		expect(plan.blocks).toHaveLength(1);
+		expect(plan.unscheduled.map((task) => task.title)).toEqual(["Think"]);
+	});
+
+	it("nests done blocks too", () => {
+		const plan = planOf(["- [x] 0:00 - 2:00 Main", "\t- [x] 0:00 - 1:00 Sub"].join("\n"));
+		expect(plan.blocks.map((block) => [block.title, block.state, block.depth])).toEqual([
+			["Main", "done", 0],
+			["Sub", "done", 1],
+		]);
+	});
+
+	it("does not nest across notes", () => {
+		const plan = planOf("- [ ] 0:00 - 2:00 Main", {
+			"e.md": "- [ ] Child ⏳ 2026-10-29\n\t- [ ] 1:00 - 2:00 Inner ⏳ 2026-10-29",
+		});
+		expect(plan.blocks.find((block) => block.title === "Inner")).toMatchObject({
+			parentId: null,
+			source: "scheduled",
+		});
+	});
+
+	it("nests up to the end of the day and with 12-hour times", () => {
+		const late = planOf(["- [ ] 22:00 - 24:00 Night", "\t- [ ] 23:00 - 24:00 Late"].join("\n"));
+		expect(late.blocks.find((block) => block.title === "Late")).toMatchObject({
+			parentId: "d.md:0",
+			end: 1440,
+		});
+		const morning = planOf(
+			["- [ ] 9:00 am - 12:00 pm Morning", "\t- [ ] 10:00 am - 11:00 am Call"].join("\n"),
+		);
+		expect(morning.blocks.find((block) => block.title === "Call")?.parentId).toBe("d.md:0");
+	});
+
+	it("uses the default duration for a parent whose end is before its start", () => {
+		const plan = planOf(
+			["- [ ] 10:00 - 09:00 Backwards", "\t- [ ] 10:00 - 10:20 Inside"].join("\n"),
+		);
+		expect(plan.blocks.map((block) => [block.title, block.end, block.depth])).toEqual([
+			["Backwards", 630, 0],
+			["Inside", 620, 1],
+		]);
+	});
+
+	it("orders blocks that start together by end, then line", () => {
+		const plan = planOf(
+			["- [ ] 1:00 - 3:00 Long", "- [ ] 1:00 - 2:00 Short", "- [ ] 1:00 - 2:00 Twin"].join(
+				"\n",
+			),
+		);
+		expect(plan.blocks.map((block) => block.title)).toEqual(["Short", "Twin", "Long"]);
+	});
+
+	it("reports the innermost open block as current", () => {
+		const plan = planOf(MAIN);
+		expect(currentBlock(plan, 30)?.title).toBe("Sub");
+		expect(currentBlock(plan, 90)?.title).toBe("Sub 2");
+		expect(nextBlock(plan, 30)?.title).toBe("Sub 2");
+		const done = planOf(["- [ ] 0:00 - 2:00 Main", "\t- [x] 0:00 - 1:00 Sub"].join("\n"));
+		expect(currentBlock(done, 30)?.title).toBe("Main");
 	});
 });

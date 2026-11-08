@@ -2,6 +2,7 @@ import {
 	err,
 	ok,
 	select,
+	type Clock,
 	type IsoDate,
 	type Minutes,
 	type NoteStore,
@@ -19,11 +20,19 @@ import {
 	type TaskIndex,
 	type TaskRef,
 } from "../../tasks";
-import { datesOf, entryMinutes, minutesOnDate, rangeOnDate } from "../domain/clock-entry";
 import {
-	childIndent,
+	datesOf,
+	entryMinutes,
+	minutesOnDate,
+	momentNow,
+	rangeOnDate,
+} from "../domain/clock-entry";
+import {
+	clockIndent,
+	clockInsertLine,
 	closeClockLine,
 	clocksOf,
+	clocksWithin,
 	openClockLine,
 	type ClockLine,
 } from "../domain/task-clocks";
@@ -34,17 +43,47 @@ export interface RunningClock {
 }
 
 export interface ClockedRange {
+	/** Unique among the ranges of one day, for rendering. */
+	readonly key: string;
 	readonly taskId: string;
 	readonly title: string;
 	readonly start: Minutes;
 	readonly end: Minutes;
 	readonly running: boolean;
+	/** 0 for a task that is not nested under another task; 1 for a sub task of that, and so on. */
+	readonly depth: number;
 }
 
 export interface ClocksDeps {
 	readonly tasks: TaskIndex;
 	readonly notes: NoteStore;
 	readonly now: ReadableStore<NowSnapshot>;
+	readonly clock: Clock;
+}
+
+interface Span {
+	start: Minutes;
+	end: Minutes;
+	running: boolean;
+}
+
+/** Joins spans that overlap or touch into one. */
+function mergeSpans(spans: readonly Span[]): Span[] {
+	const merged: Span[] = [];
+	for (const span of [...spans].sort((a, b) => a.start - b.start)) {
+		const last = merged.at(-1);
+		if (last && span.start <= last.end) {
+			last.end = Math.max(last.end, span.end);
+			last.running = last.running || span.running;
+		} else {
+			merged.push({ ...span });
+		}
+	}
+	return merged;
+}
+
+function taskKey(task: { path: string; line: number }): string {
+	return `${task.path}:${task.line}`;
 }
 
 export function taskTitle(task: Task): string {
@@ -69,7 +108,7 @@ function findRunning(tasks: Iterable<Task>): RunningClock[] {
 	);
 }
 
-/** Time tracking: clock entries written as list items under tasks. */
+/** Time tracking: clock entries written on the lines under tasks. */
 export class Clocks {
 	readonly #running: ReadableStore<readonly RunningClock[]>;
 
@@ -99,7 +138,7 @@ export class Clocks {
 		if (!stopped.ok) {
 			return stopped;
 		}
-		const now = this.deps.now.get();
+		const now = momentNow(this.deps.clock);
 		let failure: Error | null = null;
 		await this.deps.notes.process(ref.path, (content) => {
 			const lines = content.split(/\r?\n/);
@@ -111,17 +150,16 @@ export class Clocks {
 				failure = at.ok ? new Error("That line is not a task.") : at.error;
 				return content;
 			}
-			const last = task.children.at(-1) ?? task;
-			lines.splice(last.line + 1, 0, openClockLine(childIndent(task, content), now));
+			lines.splice(clockInsertLine(task), 0, openClockLine(clockIndent(task), now));
 			return lines.join(content.includes("\r\n") ? "\r\n" : "\n");
 		});
 		await this.deps.tasks.update(ref.path);
 		return failure ? err(failure) : ok(undefined);
 	}
 
-	/** Stops every running clock at the current minute. */
+	/** Stops every running clock now. */
 	async stop(): Promise<Result<void, Error>> {
-		const now = this.deps.now.get();
+		const now = momentNow(this.deps.clock);
 		for (const { task, clock } of this.#running.get()) {
 			let failure: Error | null = null;
 			await this.deps.notes.process(task.path, (content) => {
@@ -146,24 +184,66 @@ export class Clocks {
 		return this.isRunning(ref) ? this.stop() : this.start(ref);
 	}
 
-	/** Clocked ranges on a day, for drawing on the timeline. */
+	/**
+	 * Clocked ranges on a day, for drawing on the timeline. A task with clocked sub tasks gets
+	 * ranges that span their time (overlapping or touching ones joined), so the sub task's range
+	 * is drawn inside its parent's.
+	 */
 	rangesOn(date: IsoDate): ClockedRange[] {
 		const now = this.deps.now.get();
-		const ranges: ClockedRange[] = [];
+		const tasks = new Map<string, Task>();
 		for (const task of this.deps.tasks.all()) {
+			tasks.set(taskKey(task), task);
+		}
+		const parentOf = (task: Task): Task | undefined =>
+			task.parentLine === null ? undefined : tasks.get(`${task.path}:${task.parentLine}`);
+		const levelOf = (task: Task): number => {
+			let level = 0;
+			for (let up = parentOf(task); up; up = parentOf(up)) {
+				level++;
+			}
+			return level;
+		};
+
+		const own = new Map<string, Span[]>();
+		const nested = new Map<string, Span[]>();
+		for (const task of tasks.values()) {
 			for (const clock of clocksOf(task)) {
 				const range = rangeOnDate(clock, date, now);
-				if (range) {
-					ranges.push({
-						taskId: `${task.path}:${task.line}`,
-						title: taskTitle(task),
-						...range,
-						running: clock.end === null,
-					});
+				if (!range) {
+					continue;
+				}
+				const span = { ...range, running: clock.end === null };
+				own.set(taskKey(task), [...(own.get(taskKey(task)) ?? []), span]);
+				for (let up = parentOf(task); up; up = parentOf(up)) {
+					nested.set(taskKey(up), [...(nested.get(taskKey(up)) ?? []), span]);
 				}
 			}
 		}
-		return ranges.sort((a, b) => a.start - b.start);
+
+		const ranges: ClockedRange[] = [];
+		for (const key of new Set([...own.keys(), ...nested.keys()])) {
+			const task = tasks.get(key);
+			if (!task) {
+				continue;
+			}
+			const inside = nested.get(key) ?? [];
+			const spans =
+				inside.length > 0
+					? mergeSpans([...(own.get(key) ?? []), ...inside])
+					: (own.get(key) ?? []);
+			const depth = levelOf(task);
+			spans.forEach((span, index) => {
+				ranges.push({
+					key: `${key}-${index}`,
+					taskId: key,
+					title: taskTitle(task),
+					depth,
+					...span,
+				});
+			});
+		}
+		return ranges.sort((a, b) => a.start - b.start || a.depth - b.depth);
 	}
 
 	minutesOn(date: IsoDate): Minutes {
@@ -177,10 +257,10 @@ export class Clocks {
 		return total;
 	}
 
-	/** Total clocked minutes for one task. */
+	/** Total clocked minutes for one task, counting the tasks nested under it. */
 	minutesFor(task: Task): Minutes {
 		const now = this.deps.now.get();
-		return clocksOf(task).reduce((sum, clock) => sum + entryMinutes(clock, now), 0);
+		return clocksWithin(task).reduce((sum, clock) => sum + entryMinutes(clock, now), 0);
 	}
 
 	/** Clocked minutes per day across the vault. */

@@ -10,7 +10,7 @@ import {
 import { formatDuration, formatTime, type IsoDate, type Minutes } from "../../../shared/kernel";
 import { Icon, useStore } from "../../../shared/react";
 import { isClosed } from "../../tasks";
-import type { PlannedBlock } from "../domain/day-plan";
+import { childrenOf, type PlannedBlock } from "../domain/day-plan";
 import { PlannerContext } from "./services";
 
 type DragKind = "move" | "resize" | "create";
@@ -28,6 +28,8 @@ interface Drag {
 const DRAG_THRESHOLD = 4;
 /** Blocks shorter than this (in pixels) show only their summary, not the time range. */
 const SHORT_BLOCK = 44;
+/** Width in pixels of one level of the clocked-time bar. */
+const CLOCK_BAR = 4;
 export const TASK_DRAG_TYPE = "application/x-sbos-task";
 
 type Relation = "past" | "present" | "future";
@@ -55,6 +57,9 @@ export function TimelineDay({ date }: { readonly date: IsoDate }): ReactNode {
 	const now = useStore(services.now);
 	const settings = useStore(planner.settingsStore);
 	const plan = planner.plan(date);
+	// A task's clocked time is drawn as a wider bar under the narrower bars of its sub tasks.
+	const clocked = services.clocks?.rangesOn(date) ?? [];
+	const clockedDepth = Math.max(0, ...clocked.map((range) => range.depth));
 	const [drag, setDrag] = useState<Drag | null>(null);
 	const dragRef = useRef<Drag | null>(null);
 	const suppressClick = useRef(false);
@@ -171,6 +176,83 @@ export function TimelineDay({ date }: { readonly date: IsoDate }): ReactNode {
 		}
 	};
 
+	/** A block, with the blocks inside it drawn within it, positioned from the parent's top. */
+	const renderBlock = (block: PlannedBlock, parent: PlannedBlock | null): ReactNode => {
+		const live = drag?.block?.id === block.id && drag.moved ? drag : null;
+		const start = live ? live.start : block.start;
+		const end = live ? live.end : block.end;
+		const closed = isClosed(block.state);
+		const label = `${formatTime(start)} to ${formatTime(end)}, ${block.title}${closed ? ", done" : ""}`;
+		const when = relationToNow(date, now, start, end);
+		const height = Math.max(top(end) - top(start), 18);
+		const running = services.clocks?.isRunning(block) ?? false;
+		const inside = childrenOf(plan, block);
+		return (
+			<div
+				key={block.id}
+				className={`sbos-block is-${when}${height < SHORT_BLOCK ? " is-short" : ""}${closed ? " is-done" : ""}${live ? " is-dragging" : ""}${block.source === "scheduled" ? " is-scheduled" : ""}${parent ? " is-nested" : ""}${inside.length > 0 ? " has-children" : ""}`}
+				data-depth={block.depth}
+				style={{
+					top: `${top(start) - (parent ? top(parent.start) : 0)}px`,
+					height: `${height}px`,
+					left: `${(block.column / block.columns) * 100}%`,
+					width: `${100 / block.columns}%`,
+				}}
+				onPointerDown={(event) => begin("move", block, event)}
+			>
+				<input
+					type="checkbox"
+					className="task-list-item-checkbox"
+					checked={block.state === "done"}
+					aria-label={`Done: ${block.title}`}
+					onPointerDown={(event) => event.stopPropagation()}
+					onChange={() => run(planner.toggleDone(block))}
+				/>
+				<button
+					type="button"
+					className="sbos-block__title"
+					aria-label={label}
+					title={`${formatTime(start)} – ${formatTime(end)}`}
+					aria-keyshortcuts="ArrowUp ArrowDown Shift+ArrowUp Shift+ArrowDown Delete"
+					onClick={() => {
+						if (suppressClick.current) {
+							suppressClick.current = false;
+							return;
+						}
+						services.openTask(block);
+					}}
+					onKeyDown={(event) => onBlockKeyDown(block, event)}
+				>
+					<span className="sbos-block__summary">{block.title}</span>
+					<span className="sbos-block__time">
+						{formatTime(start)} – {formatTime(end)}
+					</span>
+				</button>
+				{services.clocks && !closed && (
+					<button
+						type="button"
+						className={`sbos-block__clock${running ? " is-running" : ""}`}
+						aria-label={`${running ? "Stop" : "Start"} clock on ${block.title}`}
+						onPointerDown={(event) => event.stopPropagation()}
+						onClick={() => services.clocks?.toggle(block)}
+					>
+						<Icon name={running ? "square" : "play"} />
+					</button>
+				)}
+				{inside.length > 0 && (
+					<div className="sbos-block__children">
+						{inside.map((child) => renderBlock(child, block))}
+					</div>
+				)}
+				<div
+					className="sbos-block__resize"
+					aria-hidden="true"
+					onPointerDown={(event) => begin("resize", block, event)}
+				/>
+			</div>
+		);
+	};
+
 	const hours = Array.from(
 		{ length: settings.endHour - settings.startHour },
 		(_, index) => settings.startHour + index,
@@ -204,81 +286,18 @@ export function TimelineDay({ date }: { readonly date: IsoDate }): ReactNode {
 					<div className="sbos-timeline__half" />
 				</div>
 			))}
-			{plan.blocks.map((block) => {
-				const live = drag?.block?.id === block.id && drag.moved ? drag : null;
-				const start = live ? live.start : block.start;
-				const end = live ? live.end : block.end;
-				const closed = isClosed(block.state);
-				const label = `${formatTime(start)} to ${formatTime(end)}, ${block.title}${closed ? ", done" : ""}`;
-				const when = relationToNow(date, now, start, end);
-				const height = Math.max(top(end) - top(start), 18);
-				const running = services.clocks?.isRunning(block) ?? false;
-				return (
-					<div
-						key={block.id}
-						className={`sbos-block is-${when}${height < SHORT_BLOCK ? " is-short" : ""}${closed ? " is-done" : ""}${live ? " is-dragging" : ""}${block.source === "scheduled" ? " is-scheduled" : ""}`}
-						style={{
-							top: `${top(start)}px`,
-							height: `${height}px`,
-							left: `${(block.column / block.columns) * 100}%`,
-							width: `${100 / block.columns}%`,
-						}}
-						onPointerDown={(event) => begin("move", block, event)}
-					>
-						<input
-							type="checkbox"
-							className="task-list-item-checkbox"
-							checked={block.state === "done"}
-							aria-label={`Done: ${block.title}`}
-							onPointerDown={(event) => event.stopPropagation()}
-							onChange={() => run(planner.toggleDone(block))}
-						/>
-						<button
-							type="button"
-							className="sbos-block__title"
-							aria-label={label}
-							title={`${formatTime(start)} – ${formatTime(end)}`}
-							aria-keyshortcuts="ArrowUp ArrowDown Shift+ArrowUp Shift+ArrowDown Delete"
-							onClick={() => {
-								if (suppressClick.current) {
-									suppressClick.current = false;
-									return;
-								}
-								services.openTask(block);
-							}}
-							onKeyDown={(event) => onBlockKeyDown(block, event)}
-						>
-							<span className="sbos-block__summary">{block.title}</span>
-							<span className="sbos-block__time">
-								{formatTime(start)} – {formatTime(end)}
-							</span>
-						</button>
-						{services.clocks && !closed && (
-							<button
-								type="button"
-								className={`sbos-block__clock${running ? " is-running" : ""}`}
-								aria-label={`${running ? "Stop" : "Start"} clock on ${block.title}`}
-								onPointerDown={(event) => event.stopPropagation()}
-								onClick={() => services.clocks?.toggle(block)}
-							>
-								<Icon name={running ? "square" : "play"} />
-							</button>
-						)}
-						<div
-							className="sbos-block__resize"
-							aria-hidden="true"
-							onPointerDown={(event) => begin("resize", block, event)}
-						/>
-					</div>
-				);
-			})}
-			{services.clocks?.rangesOn(date).map((range) => (
+			{plan.blocks
+				.filter((block) => block.parentId === null)
+				.map((block) => renderBlock(block, null))}
+			{clocked.map((range) => (
 				<div
-					key={`${range.taskId}-${range.start}`}
+					key={range.key}
 					className={`sbos-clocked${range.running ? " is-running" : ""}`}
+					data-depth={range.depth}
 					style={{
 						top: `${top(range.start)}px`,
 						height: `${Math.max(top(range.end) - top(range.start), 2)}px`,
+						width: `${(clockedDepth - range.depth + 1) * CLOCK_BAR}px`,
 					}}
 					title={`Clocked: ${range.title}, ${formatDuration(range.end - range.start)}`}
 					aria-hidden="true"

@@ -996,6 +996,28 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 	z-index: 1;
 }
 
+/* A block whose task has sub tasks with blocks inside it: its own title keeps the left part and
+   the sub blocks fill the rest, stacked by time with a line between them. */
+.sbos-block.has-children > .sbos-block__title {
+	max-width: 38%;
+}
+
+.sbos-block__children {
+	position: absolute;
+	top: -1px;
+	right: -1px;
+	bottom: -1px;
+	left: 40%;
+}
+
+.sbos-block.is-nested {
+	margin: 0;
+	border-width: 1px 0 0 1px;
+	border-radius: 0;
+	box-shadow: none;
+	background-color: transparent;
+}
+
 .sbos-block.is-past {
 	background-color: var(--background-secondary);
 }
@@ -1139,11 +1161,16 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 	position: absolute;
 	right: 0;
 	width: 4px;
+	box-sizing: border-box;
 	border-radius: 2px;
 	background-color: var(--color-green);
 	opacity: 0.7;
 	pointer-events: none;
 	z-index: 2;
+}
+
+.sbos-clocked:not([data-depth="0"]) {
+	border: 1px solid var(--background-primary);
 }
 
 .sbos-clocked.is-running {

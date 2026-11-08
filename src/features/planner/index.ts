@@ -2,7 +2,9 @@ export { Planner, type PlannerDeps } from "./application/planner";
 export { newBlockLine, normalizeRange, withBlock, withoutBlock } from "./domain/block-edits";
 export {
 	buildDayPlan,
+	childrenOf,
 	currentBlock,
+	descendantsOf,
 	layoutColumns,
 	nextBlock,
 	nextFreeSlot,

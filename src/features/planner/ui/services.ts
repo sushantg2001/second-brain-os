@@ -15,11 +15,14 @@ export interface PlannerClockControls {
 	readonly isRunning: (task: PlannedTask) => boolean;
 	readonly toggle: (task: PlannedTask) => void;
 	readonly rangesOn: (date: IsoDate) => readonly {
+		readonly key: string;
 		readonly taskId: string;
 		readonly title: string;
 		readonly start: Minutes;
 		readonly end: Minutes;
 		readonly running: boolean;
+		/** 0 for a task that is not under another task; 1 for a sub task of that, and so on. */
+		readonly depth: number;
 	}[];
 	readonly minutesOn: (date: IsoDate) => Minutes;
 }

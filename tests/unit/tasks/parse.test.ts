@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import fc from "fast-check";
 
+import { clocksOf } from "../../../src/features/clocks";
 import {
 	displayText,
 	formatListLine,
@@ -263,5 +264,151 @@ describe("parseTasks", () => {
 	it("maps status symbols", () => {
 		expect(stateOf(">")).toBe("waiting");
 		expect(stateOf("?")).toBe("todo");
+	});
+});
+
+describe("continuation lines", () => {
+	const lines = (items: readonly { line: number }[]): number[] => items.map((item) => item.line);
+
+	it("keeps a clock line written under a task with a tab and spaces", () => {
+		const tasks = parseTasks(
+			"a.md",
+			[
+				"- [x] youtube  [completion:: 2026-10-26]",
+				"\t      [clock::2026-10-26T21:06:26--2026-10-27T00:00:44]",
+				"\t      [clock::2026-10-27T00:35:32--2026-10-27T01:42:36]",
+				"- [ ] next",
+			].join("\n"),
+		);
+		expect(tasks.map((task) => task.text)).toEqual([
+			"youtube  [completion:: 2026-10-26]",
+			"next",
+		]);
+		expect(tasks[0]?.fields.done).toBe("2026-10-26");
+		expect(lines(tasks[0]?.own ?? [])).toEqual([1, 2]);
+		expect(tasks[0] && clocksOf(tasks[0])).toHaveLength(2);
+		expect(tasks[1]?.own).toEqual([]);
+	});
+
+	it("keeps a clock line aligned with the task text", () => {
+		const tasks = parseTasks(
+			"a.md",
+			[
+				"- 00:00 - 10:00 plain bullet, not a task",
+				"\t- [x] sleep #health/sleep  [completion:: 2026-10-29]",
+				"\t  [clock::2026-10-29T00:30:20--2026-10-29T09:55:29]",
+			].join("\n"),
+		);
+		expect(tasks).toHaveLength(1);
+		expect(tasks[0]?.fields.tags).toEqual(["health/sleep"]);
+		expect(tasks[0]?.fields.done).toBe("2026-10-29");
+		expect(lines(tasks[0]?.own ?? [])).toEqual([2]);
+	});
+
+	it("works for numbered tasks and one-tab clock lines", () => {
+		const tasks = parseTasks("a.md", "1. [ ] a\n\t[clock::2026-10-29T09:00:00--]\n");
+		expect(tasks[0] && clocksOf(tasks[0]).map((clock) => clock.line)).toEqual([1]);
+	});
+
+	it("ends the list at text that is not indented under the task", () => {
+		const tasks = parseTasks(
+			"a.md",
+			["- [ ] a", "[clock::2026-10-29T09:00:00--]", "\t- [ ] b"].join("\n"),
+		);
+		expect(tasks[0]?.own).toEqual([]);
+		expect(tasks[0]?.children).toEqual([]);
+		expect(tasks[1]?.parentLine).toBeNull();
+	});
+
+	it("keeps a clock line after a blank line", () => {
+		const tasks = parseTasks("a.md", "- [ ] a\n\n\t[clock::2026-10-29T09:00:00--]\n");
+		expect(lines(tasks[0]?.own ?? [])).toEqual([2]);
+	});
+
+	it("ignores clock lines in code blocks and under plain bullets", () => {
+		const fenced = parseTasks(
+			"a.md",
+			["- [ ] a", "```", "\t[clock::2026-10-29T09:00:00--]", "```"].join("\n"),
+		);
+		expect(fenced[0]?.own).toEqual([]);
+		const bullet = parseTasks("b.md", "- note\n\t[clock::2026-10-29T09:00:00--]\n");
+		expect(bullet).toEqual([]);
+	});
+
+	it("keeps other indented text as part of the task, but it is not a clock", () => {
+		const tasks = parseTasks("a.md", "- [ ] a\n\tsee the notes\n");
+		expect(tasks[0]?.children.map((child) => child.text)).toEqual(["see the notes"]);
+		expect(tasks[0] && clocksOf(tasks[0])).toEqual([]);
+	});
+
+	it("gives each line to the task it is under, and to the tasks above it", () => {
+		const tasks = parseTasks(
+			"a.md",
+			[
+				"- [ ] Main",
+				"\t- [ ] Sub",
+				"\t\t[clock::2026-10-29T09:00:00--2026-10-29T09:30:00]",
+				"\t- [ ] Sub 2",
+			].join("\n"),
+		);
+		const [main, sub, sub2] = tasks;
+		expect(lines(sub?.own ?? [])).toEqual([2]);
+		expect(lines(main?.own ?? [])).toEqual([1, 3]);
+		expect(lines(main?.children ?? [])).toEqual([1, 2, 3]);
+		expect([main?.parentLine, sub?.parentLine, sub2?.parentLine]).toEqual([null, 0, 0]);
+		expect(main && clocksOf(main)).toEqual([]);
+		expect(sub && clocksOf(sub)).toHaveLength(1);
+	});
+
+	it("skips plain bullets when finding a parent task", () => {
+		const tasks = parseTasks("a.md", "- [ ] Main\n\t- note\n\t\t- [ ] Sub\n");
+		expect(tasks[1]?.parentLine).toBe(0);
+	});
+
+	it("does not link tasks under different headings", () => {
+		const tasks = parseTasks("a.md", "# A\n- [ ] one\n# B\n\t- [ ] two\n");
+		expect(tasks[1]?.parentLine).toBeNull();
+	});
+
+	it("closes a nested task when text continues the task above it", () => {
+		const tasks = parseTasks(
+			"a.md",
+			["- [ ] Main", "\t- [ ] Sub", "  text for Main", "\t- [ ] Sub 2"].join("\n"),
+		);
+		expect(tasks[2]?.parentLine).toBe(0);
+		expect(lines(tasks[1]?.children ?? [])).toEqual([]);
+	});
+});
+
+describe("time blocks on tasks and bullets", () => {
+	it("reads blocks with single-digit hours, as in nested blocks", () => {
+		const tasks = parseTasks(
+			"a.md",
+			[
+				"- [ ] 00:00 - 2:00 Main block",
+				"\t- [ ] 00:00 - 1:00 Sub block",
+				"   - [ ] 1:00 - 2:00 Sub block 2",
+			].join("\n"),
+		);
+		expect(tasks.map((task) => [task.block?.start, task.block?.end, task.parentLine])).toEqual([
+			[0, 120, null],
+			[0, 60, 0],
+			[60, 120, 0],
+		]);
+	});
+
+	it("leaves a plain bullet with a time alone, and strips fields from the title", () => {
+		const tasks = parseTasks(
+			"a.md",
+			[
+				"- 00:00 - 10:00 Late night  [type::log]",
+				"\t- [x] brush  [completion:: 2026-10-29]",
+			].join("\n"),
+		);
+		expect(tasks).toHaveLength(1);
+		expect(tasks[0]?.parentLine).toBeNull();
+		expect(displayText(stripTimeBlock("00:00 - 10:00 Late night  [type::log]"))).toBe(
+			"Late night",
+		);
 	});
 });
