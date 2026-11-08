@@ -12,15 +12,18 @@ export {
 	formatMoment,
 	minutesBetween,
 	minutesOnDate,
+	momentNow,
 	parseClockEntry,
 	rangeOnDate,
 	type ClockEntry,
 	type Moment,
 } from "./domain/clock-entry";
 export {
-	childIndent,
+	clockIndent,
+	clockInsertLine,
 	closeClockLine,
 	clocksOf,
+	clocksWithin,
 	openClockLine,
 	type ClockLine,
 } from "./domain/task-clocks";

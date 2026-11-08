@@ -30,6 +30,27 @@ describe("carrying tasks over", () => {
 		]);
 	});
 
+	it("carries clock lines written without a bullet along with their task", () => {
+		const note = [
+			"- [ ] 09:00 - 10:00 Write spec",
+			"\t      [clock::2026-10-28T09:00:10--2026-10-28T09:30:20]",
+			"\t- [ ] Sub step",
+			"\t\t[clock::2026-10-28T09:40:00--]",
+			"- [ ] Next",
+		].join("\n");
+		const items = tasksToCarry(note, parseTasks("2026-10-28.md", note));
+		expect(items.map((item) => item.carried)).toEqual([
+			[
+				"- [ ] Write spec",
+				"\t      [clock::2026-10-28T09:00:10--2026-10-28T09:30:20]",
+				"\t- [ ] Sub step",
+				"\t\t[clock::2026-10-28T09:40:00--]",
+			],
+			["- [ ] Next"],
+		]);
+		expect(removeCarried(note, items)).toBe("");
+	});
+
 	it("removes exactly those lines from the old note", () => {
 		expect(removeCarried(NOTE, carried)).toBe(
 			["# Yesterday", "- [x] Done thing", "- [-] Dropped", "- [ ] ", "Notes"].join("\n"),

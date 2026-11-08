@@ -111,7 +111,7 @@ export function createContainer(plugin: Plugin, overrides: ContainerOverrides = 
 		tasks,
 		taskActions,
 		planner,
-		clocks: new Clocks({ tasks, notes, now }),
+		clocks: new Clocks({ tasks, notes, now, clock }),
 		ppvIndex,
 		ppv,
 		rollups: new Rollups({ ppv, index: ppvIndex, tasks, notes, periodic, now }),

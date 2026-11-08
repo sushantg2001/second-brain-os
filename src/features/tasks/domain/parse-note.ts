@@ -17,14 +17,24 @@ export interface Task extends ListItem {
 	readonly state: TaskState;
 	readonly fields: TaskFields;
 	readonly block: TimeBlock | null;
-	/** Nested list items and tasks directly or indirectly under this task. */
+	/**
+	 * Nested list items, tasks and indented continuation lines (such as a clock line written
+	 * without a bullet) directly or indirectly under this task.
+	 */
 	readonly children: readonly ListItem[];
+	/** The lines of `children` that belong to this task itself, not to a task nested under it. */
+	readonly own: readonly ListItem[];
+	/** Line of the closest task this one is nested under, or null. */
+	readonly parentLine: number | null;
 	/** The closest heading above the task, or null. */
 	readonly heading: string | null;
 }
 
 const FENCE = /^\s*(```|~~~)/;
 const HEADING = /^(#{1,6})\s+(.*?)\s*#*\s*$/;
+const LEADING_SPACE = /^[ \t]*/;
+
+type OpenTask = Task & { children: ListItem[]; own: ListItem[] };
 
 /** Length of the front matter block in lines, or 0. */
 export function frontmatterLines(lines: readonly string[]): number {
@@ -41,7 +51,7 @@ export function frontmatterLines(lines: readonly string[]): number {
 export function parseTasks(path: string, content: string): Task[] {
 	const lines = content.split(/\r?\n/);
 	const tasks: Task[] = [];
-	const open: { task: Task & { children: ListItem[] }; width: number }[] = [];
+	const open: { task: OpenTask; width: number }[] = [];
 	let fence: string | null = null;
 	let heading: string | null = null;
 
@@ -64,9 +74,21 @@ export function parseTasks(path: string, content: string): Task[] {
 		}
 		const item = parseListLine(raw);
 		if (!item) {
-			// A non-list, non-blank line ends any open list.
-			if (raw.trim() !== "") {
-				open.length = 0;
+			if (raw.trim() === "") {
+				continue;
+			}
+			// Text indented deeper than a task continues that task, like a clock line written
+			// under it. Anything else ends the open list.
+			const width = indentWidth(LEADING_SPACE.exec(raw)?.[0] ?? "");
+			const hosts = open.filter((entry) => entry.width < width);
+			open.length = hosts.length;
+			const host = hosts.at(-1);
+			if (host) {
+				const continuation: ListItem = { line: index, raw, text: raw.trim() };
+				for (const entry of hosts) {
+					entry.task.children.push(continuation);
+				}
+				host.task.own.push(continuation);
 			}
 			continue;
 		}
@@ -75,18 +97,22 @@ export function parseTasks(path: string, content: string): Task[] {
 			open.pop();
 		}
 		const listItem: ListItem = { line: index, raw, text: item.text };
-		for (const parent of open) {
-			parent.task.children.push(listItem);
+		for (const ancestor of open) {
+			ancestor.task.children.push(listItem);
 		}
+		const parent = open.at(-1)?.task;
+		parent?.own.push(listItem);
 		if (item.status !== null) {
-			const task = {
+			const task: OpenTask = {
 				...listItem,
 				path,
 				status: item.status,
 				state: stateOf(item.status),
 				fields: parseFields(item.text),
 				block: parseTimeBlock(item.text),
-				children: [] as ListItem[],
+				children: [],
+				own: [],
+				parentLine: parent?.line ?? null,
 				heading,
 			};
 			tasks.push(task);

@@ -1,7 +1,10 @@
 import {
 	addDays,
+	clampMinutes,
 	err,
+	MINUTES_PER_DAY,
 	ok,
+	snapMinutes,
 	Store,
 	type Clock,
 	type IsoDate,
@@ -12,8 +15,20 @@ import {
 } from "../../../shared/kernel";
 import type { PeriodicNotes } from "../../periodic";
 import { appendToSection, type TaskActions, type TaskIndex, type TaskRef } from "../../tasks";
-import { newBlockLine, normalizeRange, withBlock, withoutBlock } from "../domain/block-edits";
-import { buildDayPlan, nextFreeSlot, type DayPlan, type PlannedTask } from "../domain/day-plan";
+import {
+	newBlockLine,
+	normalizeRange,
+	shiftBlockLine,
+	withBlock,
+	withoutBlock,
+} from "../domain/block-edits";
+import {
+	buildDayPlan,
+	nextFreeSlot,
+	type DayPlan,
+	type PlannedBlock,
+	type PlannedTask,
+} from "../domain/day-plan";
 import { removeCarried, tasksToCarry } from "../domain/rollover";
 import type { PlannerSettings } from "../domain/settings";
 
@@ -130,6 +145,38 @@ export class Planner {
 		return this.deps.actions.editLine(refOf(task), (raw) =>
 			withBlock(raw, range.start, range.end),
 		);
+	}
+
+	/**
+	 * Moves a block to a new start, keeping its length, and moves the blocks inside it by the same
+	 * amount, all in one write. If the note changed since it was read, nothing is moved. The block
+	 * stops at the edges of the day instead of shrinking, and the blocks inside follow the
+	 * clamped move.
+	 */
+	async moveBlockWithChildren(
+		block: PlannedBlock,
+		nested: readonly PlannedBlock[],
+		start: Minutes,
+	): Promise<Result<void, Error>> {
+		const length = block.end - block.start;
+		const newStart = clampMinutes(
+			snapMinutes(start, this.settings.snapMinutes),
+			0,
+			MINUTES_PER_DAY - length,
+		);
+		const delta = newStart - block.start;
+		if (delta === 0) {
+			return ok(undefined);
+		}
+		return this.deps.actions.editLines(block.path, [
+			{ ref: refOf(block), edit: (raw) => withBlock(raw, newStart, newStart + length) },
+			...nested
+				.filter((child) => child.path === block.path)
+				.map((child) => ({
+					ref: refOf(child),
+					edit: (raw: string) => shiftBlockLine(raw, child, delta),
+				})),
+		]);
 	}
 
 	unschedule(task: PlannedTask): Promise<Result<void, Error>> {
