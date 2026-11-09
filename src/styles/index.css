@@ -593,7 +593,8 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 
 .sbos-timeline {
 	--sbos-border: var(--border-width) solid var(--background-modifier-border);
-	--sbos-scrollbar-width: 12px;
+	/* Replaced with the real height by the view; 0 until then, so it adds no dead strip. */
+	--sbos-scrollbar-width: 0px;
 	--sbos-flex-basis: 180px;
 	--sbos-block-shadow: 1px 1px 2px 0 var(--background-modifier-box-shadow);
 	--sbos-block-border: var(--background-modifier-border);

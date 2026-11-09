@@ -87,6 +87,7 @@ export function Timeline({ state }: { readonly state: TimelineState }): ReactNod
 	const settings = useStore(planner.settingsStore);
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const rulerRef = useRef<HTMLDivElement>(null);
+	const rootRef = useRef<HTMLDivElement>(null);
 	const days = Array.from({ length: range.days }, (_, index) => addDays(range.date, index));
 	const firstPlan = planner.plan(range.date);
 	const single = range.days === 1;
@@ -106,6 +107,18 @@ export function Timeline({ state }: { readonly state: TimelineState }): ReactNod
 		) : (
 			text
 		);
+
+	// The ruler scrolls in step with the timeline, so it has to end with a strip as tall as the
+	// timeline's own horizontal scrollbar, or it stops short of the last hour. Only the browser
+	// knows how tall that is, and it differs by platform.
+	useEffect(() => {
+		const scroller = scrollRef.current;
+		const root = rootRef.current;
+		if (scroller && root) {
+			const scrollbar = scroller.offsetHeight - scroller.clientHeight;
+			root.style.setProperty("--sbos-scrollbar-width", `${scrollbar}px`);
+		}
+	});
 
 	// Scroll so the current time, or the first block, is in view when the view opens.
 	useEffect(() => {
@@ -147,7 +160,7 @@ export function Timeline({ state }: { readonly state: TimelineState }): ReactNod
 	};
 
 	return (
-		<div className={`sbos-timeline${single ? "" : " is-multi"}`}>
+		<div ref={rootRef} className={`sbos-timeline${single ? "" : " is-multi"}`}>
 			{showMonth && services.calendar && (
 				<div className="sbos-timeline__calendar">
 					<CalendarContext.Provider value={services.calendar}>
