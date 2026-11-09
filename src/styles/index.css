@@ -1352,14 +1352,32 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 	margin: var(--size-4-3) 0 var(--size-2-2);
 }
 
-.sbos-review ul {
-	margin: 0;
+/* The review and query blocks render inside the note itself, where Obsidian's markdown styles
+   reach their lists and tables: a list item picks up the reading indent and a `th` picks up a
+   table border its `td` never gets. These are layout, not prose, so they say so with enough
+   weight to outweigh `.markdown-rendered`. */
+:is(.sbos-block-query, .sbos-review) :is(.sbos-project-list, .sbos-task-list, .sbos-finding-list) {
+	margin: var(--size-2-2) 0;
+	padding: 0;
+	list-style: none;
 }
 
-.sbos-review__table th {
-	text-align: left;
+:is(.sbos-block-query, .sbos-review) :is(.sbos-finding, .sbos-task-list > li) {
+	margin-inline: 0;
+}
+
+.sbos-review .sbos-review__table,
+.sbos-review .sbos-review__table th,
+.sbos-review .sbos-review__table td {
+	border: 0;
+	background: none;
+}
+
+.sbos-review .sbos-review__table th,
+.sbos-review .sbos-review__table td {
+	padding: var(--size-2-1) var(--size-4-4) var(--size-2-1) 0;
 	font-weight: var(--font-normal);
-	padding-right: var(--size-4-4);
+	text-align: left;
 }
 
 /* ---------------------------------------------------------------- vault check */
