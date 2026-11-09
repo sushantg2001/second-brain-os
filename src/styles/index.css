@@ -542,19 +542,12 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 	margin: 0;
 }
 
+/* The call to action is Obsidian's own `mod-cta`, so the theme draws it; the calendar only
+   stops it inheriting the calendar's own font. */
 .sbos-calendar .sbos-calendar__off button {
-	height: var(--input-height, 30px);
-	padding: var(--size-4-1) var(--size-4-3);
-	border-radius: var(--radius-s);
-}
-
-.sbos-calendar .sbos-calendar__off button.mod-cta {
-	background: var(--interactive-accent);
-	color: var(--text-on-accent);
-}
-
-.sbos-calendar .sbos-calendar__off button.mod-cta:hover {
-	background: var(--interactive-accent-hover);
+	font-family: var(--font-interface);
+	font-size: var(--font-ui-small);
+	line-height: normal;
 }
 
 .sbos-calendar__off-hint {
