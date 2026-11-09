@@ -587,9 +587,9 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 	--sbos-border: var(--border-width) solid var(--background-modifier-border);
 	--sbos-scrollbar-width: 12px;
 	--sbos-flex-basis: 180px;
-	--sbos-block-shadow: 1px 1px 2px 0 #0000001f;
-	--sbos-block-border: var(--color-base-40, var(--background-modifier-border));
-	--sbos-shadow-right: 2px 0 2px #00000010;
+	--sbos-block-shadow: 1px 1px 2px 0 var(--background-modifier-box-shadow);
+	--sbos-block-border: var(--background-modifier-border);
+	--sbos-shadow-right: 2px 0 2px var(--background-modifier-box-shadow);
 	--sbos-block-font-size: var(--font-ui-small);
 	flex: 1 1 0;
 	min-height: 0;
@@ -1025,7 +1025,7 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 
 .sbos-block.is-dragging {
 	cursor: grabbing;
-	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+	box-shadow: var(--shadow-l);
 	z-index: 3;
 }
 
