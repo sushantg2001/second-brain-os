@@ -336,7 +336,6 @@ button:is(
 .sbos-calendar__day:focus-visible,
 .sbos-calendar__week-button:focus-visible {
 	--sbos-button-shadow: 0 0 0 2px var(--background-modifier-border-focus);
-	outline: 0;
 }
 
 .sbos-calendar__day.is-other-month {
