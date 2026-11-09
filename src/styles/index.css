@@ -75,24 +75,43 @@
 
 /* ---------------------------------------------------------------- shared */
 
-/* An icon or text button that looks like Obsidian's clickable icons, whatever the theme gives
-   to plain buttons. */
-.sbos-control,
-:where(.sbos-calendar) button {
+/* Calendar days, mode tabs and task titles are plain clickable text, but Obsidian paints
+   every `button:not(.clickable-icon)` as a raised control: a filled background, `--input-shadow`
+   and a padding of its own. Themes repeat that with more weight still, Material 3 through
+   `body.theme-dark button:not(.clickable-icon)`, so opting out takes a selector heavier than
+   both. The four things a button varies come in as custom properties, which each control still
+   sets at its own weight. Buttons meant to look like buttons are left alone. */
+button:is(
+		.sbos-control,
+		.sbos-link,
+		.sbos-icon-button,
+		.sbos-unscheduled__title,
+		.sbos-unscheduled__schedule,
+		.sbos-block__title,
+		.sbos-block__clock
+	):not(.mod-cta):not(.mod-warning),
+.sbos-calendar button:not(.mod-cta):not(.mod-warning) {
 	height: auto;
-	box-shadow: none;
+	padding: var(--sbos-button-padding, 0);
+	background-color: var(--sbos-button-background, transparent);
+	background-image: none;
+	box-shadow: var(--sbos-button-shadow, none);
+	color: var(--sbos-button-color, inherit);
+	outline: var(--sbos-button-outline, none);
+	appearance: none;
 }
 
+/* An icon or text button that looks like Obsidian's clickable icons, whatever the theme gives
+   to plain buttons. */
 .sbos-control {
+	--sbos-button-padding: var(--size-2-2) var(--size-2-3);
+	--sbos-button-color: var(--icon-color, var(--text-muted));
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	gap: var(--size-2-1);
-	padding: var(--size-2-2) var(--size-2-3);
 	border: 0;
 	border-radius: var(--radius-s);
-	background: none;
-	color: var(--icon-color, var(--text-muted));
 	font: inherit;
 	white-space: nowrap;
 	cursor: pointer;
@@ -100,12 +119,11 @@
 
 .sbos-control:hover,
 .sbos-control.is-active {
-	background-color: var(--background-modifier-hover);
-	box-shadow: none;
+	--sbos-button-background: var(--background-modifier-hover);
 }
 
 .sbos-control:focus-visible {
-	box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+	--sbos-button-shadow: 0 0 0 2px var(--background-modifier-border-focus);
 }
 
 .sbos-visually-hidden {
@@ -144,18 +162,10 @@
 }
 
 :where(.sbos-calendar) button {
-	padding: 0;
 	border: 0;
-	background: none;
-	color: inherit;
 	font: inherit;
 	line-height: inherit;
 	cursor: pointer;
-}
-
-:where(.sbos-calendar) button:hover {
-	background: none;
-	box-shadow: none;
 }
 
 .sbos-calendar__nav {
@@ -191,12 +201,14 @@
 }
 
 .sbos-calendar__title-button:focus-visible {
+	--sbos-button-shadow: 0 0 0 2px var(--background-modifier-border-focus);
 	border-radius: var(--radius-s);
-	box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
 }
 
 /* The quarter, as a small tag after the year. It is only there when quarterly notes are on. */
 .sbos-calendar__quarter {
+	--sbos-button-padding: 1px 6px;
+	--sbos-button-color: var(--text-muted);
 	align-self: center;
 	padding: 1px 6px;
 	border: var(--border-width) solid var(--background-modifier-border);
@@ -207,19 +219,15 @@
 	letter-spacing: 0.5px;
 }
 
-button.sbos-calendar__quarter {
-	padding: 1px 6px;
+.sbos-calendar__quarter:hover,
+.sbos-calendar__quarter.has-note {
+	--sbos-button-color: var(--interactive-accent);
+	border-color: var(--interactive-accent);
+	color: var(--interactive-accent);
 }
 
 .sbos-calendar__quarter:hover {
-	border-color: var(--interactive-accent);
-	color: var(--interactive-accent);
 	text-decoration: none;
-}
-
-.sbos-calendar__quarter.has-note {
-	border-color: var(--interactive-accent);
-	color: var(--interactive-accent);
 }
 
 .sbos-calendar__right-nav {
@@ -230,6 +238,7 @@ button.sbos-calendar__quarter {
 }
 
 .sbos-calendar__arrow {
+	--sbos-button-color: var(--color-arrow);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -248,10 +257,10 @@ button.sbos-calendar__quarter {
 }
 
 .sbos-calendar__reset {
+	--sbos-button-padding: 0.5em;
+	--sbos-button-color: var(--color-arrow);
 	display: flex;
 	align-items: center;
-	padding: 0.5em;
-	color: var(--color-arrow);
 	opacity: 0.4;
 	cursor: default;
 }
@@ -261,25 +270,17 @@ button.sbos-calendar__quarter {
 	cursor: pointer;
 }
 
-button.sbos-calendar__reset {
-	padding: 0.5em;
-}
-
 .sbos-calendar__jump {
+	--sbos-button-padding: 0.25em;
+	--sbos-button-color: var(--color-arrow);
 	display: flex;
 	align-items: center;
 	margin-left: 0.25em;
-	padding: 0.25em;
 	border-radius: var(--radius-s);
-	color: var(--color-arrow);
 }
 
-button.sbos-calendar__jump {
-	padding: 0.25em;
-}
-
-button.sbos-calendar__jump:hover {
-	background-color: var(--background-modifier-hover);
+.sbos-calendar__jump:hover {
+	--sbos-button-background: var(--background-modifier-hover);
 }
 
 .sbos-calendar__jump .svg-icon {
@@ -312,14 +313,13 @@ button.sbos-calendar__jump:hover {
 }
 
 .sbos-calendar__day {
+	--sbos-button-padding: 4px;
+	--sbos-button-color: var(--color-text-day);
 	position: relative;
 	display: block;
 	width: 100%;
 	height: 100%;
-	padding: 4px;
 	border-radius: 4px;
-	background-color: transparent;
-	color: var(--color-text-day);
 	font-size: 0.8em;
 	text-align: center;
 	vertical-align: baseline;
@@ -328,22 +328,14 @@ button.sbos-calendar__jump:hover {
 		color 0.1s ease-in;
 }
 
-button.sbos-calendar__day {
-	padding: 4px;
-}
-
-button.sbos-calendar__day:hover {
-	background-color: var(--interactive-hover);
-}
-
-button.sbos-calendar__day.is-active:hover {
-	background-color: var(--interactive-accent-hover);
+.sbos-calendar__day:hover {
+	--sbos-button-background: var(--interactive-hover);
 }
 
 .sbos-calendar__day:focus-visible,
 .sbos-calendar__week-button:focus-visible {
+	--sbos-button-shadow: 0 0 0 2px var(--background-modifier-border-focus);
 	outline: 0;
-	box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
 }
 
 .sbos-calendar__day.is-other-month {
@@ -351,14 +343,18 @@ button.sbos-calendar__day.is-active:hover {
 }
 
 .sbos-calendar__day.is-today {
-	color: var(--color-text-today);
+	--sbos-button-color: var(--color-text-today);
 }
 
 .sbos-calendar__day:active,
 .sbos-calendar__day.is-active,
 .sbos-calendar__day.is-active.is-today {
-	background-color: var(--interactive-accent);
-	color: var(--text-on-accent);
+	--sbos-button-background: var(--interactive-accent);
+	--sbos-button-color: var(--text-on-accent);
+}
+
+.sbos-calendar__day.is-active:hover {
+	--sbos-button-background: var(--interactive-accent-hover);
 }
 
 /* Week numbers, with a rule between them and the days. */
@@ -368,12 +364,12 @@ button.sbos-calendar__day.is-active:hover {
 }
 
 .sbos-calendar__week-button {
+	--sbos-button-padding: 4px;
+	--sbos-button-color: var(--color-text-weeknum);
 	display: block;
 	width: 100%;
 	height: 100%;
-	padding: 4px;
 	border-radius: 4px;
-	color: var(--color-text-weeknum);
 	font-size: 0.65em;
 	text-align: center;
 	transition:
@@ -381,18 +377,14 @@ button.sbos-calendar__day.is-active:hover {
 		color 0.1s ease-in;
 }
 
-button.sbos-calendar__week-button {
-	padding: 4px;
-}
-
-button.sbos-calendar__week-button:hover {
-	background-color: var(--interactive-hover);
+.sbos-calendar__week-button:hover {
+	--sbos-button-background: var(--interactive-hover);
 }
 
 .sbos-calendar__week-button.is-active,
-button.sbos-calendar__week-button.is-active:hover {
-	background-color: var(--interactive-accent);
-	color: var(--text-on-accent);
+.sbos-calendar__week-button.is-active:hover {
+	--sbos-button-background: var(--interactive-accent);
+	--sbos-button-color: var(--text-on-accent);
 }
 
 .sbos-calendar__marks {
@@ -428,33 +420,33 @@ button.sbos-calendar__week-button.is-active:hover {
 	margin: var(--size-4-2) 0 0;
 }
 
-.sbos-calendar .sbos-calendar__tab {
-	padding: 2px 8px;
+.sbos-calendar__tab {
+	--sbos-button-padding: 2px 8px;
+	--sbos-button-color: var(--text-muted);
 	border-radius: var(--radius-s);
-	color: var(--text-muted);
 	font-size: var(--font-ui-smaller);
 	font-weight: var(--font-medium);
 }
 
-.sbos-calendar .sbos-calendar__tab:hover {
-	background-color: var(--background-modifier-hover);
+.sbos-calendar__tab:hover {
+	--sbos-button-background: var(--background-modifier-hover);
 }
 
-.sbos-calendar .sbos-calendar__tab[aria-selected="true"] {
-	background-color: var(--interactive-accent);
-	color: var(--text-on-accent);
+.sbos-calendar__tab[aria-selected="true"] {
+	--sbos-button-background: var(--interactive-accent);
+	--sbos-button-color: var(--text-on-accent);
 }
 
-.sbos-calendar .sbos-calendar__tab.is-off:not([aria-selected="true"]) {
-	color: var(--text-faint);
+.sbos-calendar__tab.is-off:not([aria-selected="true"]) {
+	--sbos-button-color: var(--text-faint);
 }
 
-.sbos-calendar .sbos-calendar__tab:focus-visible {
-	box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+.sbos-calendar__tab:focus-visible {
+	--sbos-button-shadow: 0 0 0 2px var(--background-modifier-border-focus);
 }
 
 tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
-	background-color: var(--interactive-hover);
+	--sbos-button-background: var(--interactive-hover);
 }
 
 /* Months, quarters and years. */
@@ -473,48 +465,47 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 	grid-template-columns: repeat(2, 1fr);
 }
 
-.sbos-calendar .sbos-period-grid__cell {
+.sbos-period-grid__cell {
+	--sbos-button-padding: var(--size-4-2) var(--size-4-1);
+	--sbos-button-color: var(--color-text-day);
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
 	gap: 2px;
 	min-height: 3.4em;
-	padding: var(--size-4-2) var(--size-4-1);
 	border-radius: var(--radius-m);
-	background-color: transparent;
-	color: var(--color-text-day);
 	font-size: 0.85em;
 	transition:
 		background-color 0.1s ease-in,
 		color 0.1s ease-in;
 }
 
-.sbos-calendar .sbos-period-grid__cell:hover {
-	background-color: var(--interactive-hover);
+.sbos-period-grid__cell:hover {
+	--sbos-button-background: var(--interactive-hover);
 }
 
-.sbos-calendar .sbos-period-grid__cell.is-other-month {
+.sbos-period-grid__cell.is-other-month {
 	opacity: 0.35;
 }
 
-.sbos-calendar .sbos-period-grid__cell.is-today {
-	color: var(--color-text-today);
+.sbos-period-grid__cell.is-today {
+	--sbos-button-color: var(--color-text-today);
 	font-weight: var(--font-semibold);
 }
 
-.sbos-calendar .sbos-period-grid__cell.is-active,
-.sbos-calendar .sbos-period-grid__cell.is-active.is-today {
-	background-color: var(--interactive-accent);
-	color: var(--text-on-accent);
+.sbos-period-grid__cell.is-active,
+.sbos-period-grid__cell.is-active.is-today {
+	--sbos-button-background: var(--interactive-accent);
+	--sbos-button-color: var(--text-on-accent);
 }
 
-.sbos-calendar .sbos-period-grid__cell.is-active:hover {
-	background-color: var(--interactive-accent-hover);
+.sbos-period-grid__cell.is-active:hover {
+	--sbos-button-background: var(--interactive-accent-hover);
 }
 
-.sbos-calendar .sbos-period-grid__cell:focus-visible {
-	box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+.sbos-period-grid__cell:focus-visible {
+	--sbos-button-shadow: 0 0 0 2px var(--background-modifier-border-focus);
 }
 
 .sbos-period-grid__hint {
@@ -697,12 +688,12 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 }
 
 .sbos-week-picker__day {
+	--sbos-button-padding: var(--size-2-1) 0;
 	width: 100%;
-	padding: var(--size-2-1) 0;
 }
 
 .sbos-week-picker__day.is-active {
-	background-color: var(--interactive-accent);
+	--sbos-button-background: var(--interactive-accent);
 }
 
 .sbos-week-picker__number {
@@ -736,13 +727,13 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 	font-size: var(--font-ui-medium);
 }
 
-.sbos-timeline .sbos-timeline__title-button {
-	color: var(--text-normal);
+.sbos-timeline__title-button {
+	--sbos-button-color: var(--text-normal);
 	font-weight: inherit;
 }
 
-.sbos-timeline .sbos-timeline__title-button:hover {
-	color: var(--interactive-accent);
+.sbos-timeline__title-button:hover {
+	--sbos-button-color: var(--interactive-accent);
 	text-decoration: none;
 }
 
@@ -855,14 +846,11 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 }
 
 .sbos-unscheduled__title {
+	--sbos-button-padding: 0 var(--size-2-1);
+	--sbos-button-color: var(--text-normal);
 	flex: 1;
 	min-width: 0;
-	height: auto;
-	padding: 0 var(--size-2-1);
 	justify-content: flex-start;
-	background: none;
-	box-shadow: none;
-	color: var(--text-normal);
 	font: inherit;
 	font-weight: var(--font-semibold);
 	text-align: left;
@@ -870,16 +858,13 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 }
 
 .sbos-unscheduled__schedule {
-	height: auto;
-	padding: var(--size-2-1) var(--size-2-2);
-	background: none;
-	box-shadow: none;
-	color: var(--text-faint);
+	--sbos-button-padding: var(--size-2-1) var(--size-2-2);
+	--sbos-button-color: var(--text-faint);
 }
 
 .sbos-unscheduled__schedule:hover {
-	background-color: var(--background-modifier-hover);
-	color: var(--text-muted);
+	--sbos-button-background: var(--background-modifier-hover);
+	--sbos-button-color: var(--text-muted);
 }
 
 /* The hour ruler, kept level with the scrolled timeline. */
@@ -1062,25 +1047,21 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 }
 
 .sbos-block__title {
+	--sbos-button-color: var(--text-normal);
 	flex: 1;
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
 	justify-content: flex-start;
 	min-width: 0;
-	height: auto;
-	padding: 0;
-	background: none;
-	box-shadow: none;
 	text-align: left;
 	white-space: normal;
 	overflow-wrap: anywhere;
-	color: var(--text-normal);
 	font: inherit;
 }
 
 .sbos-block__title:focus-visible {
-	outline: 2px solid var(--background-modifier-border-focus);
+	--sbos-button-outline: 2px solid var(--background-modifier-border-focus);
 }
 
 .sbos-block__summary {
@@ -1145,16 +1126,13 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 /* ---------------------------------------------------------------- clocks */
 
 .sbos-block__clock {
+	--sbos-button-padding: 0 var(--size-2-1);
+	--sbos-button-color: var(--text-muted);
 	flex: 0 0 auto;
-	padding: 0 var(--size-2-1);
-	height: auto;
-	background: none;
-	box-shadow: none;
-	color: var(--text-muted);
 }
 
 .sbos-block__clock.is-running {
-	color: var(--color-red);
+	--sbos-button-color: var(--color-red);
 }
 
 .sbos-clocked {
@@ -1180,11 +1158,7 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 /* ---------------------------------------------------------------- PPV */
 
 .sbos-link {
-	padding: 0;
-	height: auto;
-	background: none;
-	box-shadow: none;
-	color: var(--link-color);
+	--sbos-button-color: var(--link-color);
 	font: inherit;
 	text-align: left;
 	cursor: pointer;
@@ -1209,11 +1183,8 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 }
 
 .sbos-icon-button {
-	padding: 0 var(--size-2-2);
-	height: auto;
-	background: none;
-	box-shadow: none;
-	color: var(--text-muted);
+	--sbos-button-padding: 0 var(--size-2-2);
+	--sbos-button-color: var(--text-muted);
 }
 
 .sbos-dashboard {
