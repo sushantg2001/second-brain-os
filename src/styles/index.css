@@ -1282,6 +1282,29 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 	width: 8em;
 }
 
+/* A native `<progress>` keeps Chromium's own blue whatever accent the theme sets, so draw the
+   track and the bar from the theme instead. Obsidian runs on Electron, so the -webkit- bar and
+   value pseudo-elements are the ones that apply. */
+.sbos-project__meta progress,
+.sbos-progress progress {
+	appearance: none;
+	height: var(--size-4-2);
+	border: 0;
+	border-radius: var(--radius-s);
+	background-color: var(--background-modifier-border);
+	overflow: hidden;
+}
+
+.sbos-project__meta progress::-webkit-progress-bar,
+.sbos-progress progress::-webkit-progress-bar {
+	background-color: var(--background-modifier-border);
+}
+
+.sbos-project__meta progress::-webkit-progress-value,
+.sbos-progress progress::-webkit-progress-value {
+	background-color: var(--interactive-accent);
+}
+
 .sbos-form {
 	display: grid;
 	gap: var(--size-4-2);
