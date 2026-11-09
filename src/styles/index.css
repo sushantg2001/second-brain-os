@@ -723,6 +723,7 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 
 .sbos-timeline__day-title {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: baseline;
 	justify-content: space-between;
 	gap: var(--size-4-2);
@@ -730,8 +731,10 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 }
 
 .sbos-timeline__title {
+	min-width: 0;
 	margin: 0;
 	font-size: var(--font-ui-medium);
+	overflow-wrap: anywhere;
 }
 
 .sbos-timeline__title-button {
