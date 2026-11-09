@@ -191,6 +191,7 @@ button:is(
 }
 
 .sbos-calendar__year {
+	--sbos-button-color: var(--interactive-accent);
 	color: var(--interactive-accent);
 }
 
@@ -650,7 +651,7 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 }
 
 .sbos-timeline__today {
-	color: var(--text-muted);
+	--sbos-button-color: var(--text-muted);
 	font-size: var(--font-ui-small);
 	font-weight: var(--font-medium);
 }
