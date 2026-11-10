@@ -1095,6 +1095,24 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 	display: none;
 }
 
+/* What is hidden is counted instead, beside the title, so a short block still says it has some. */
+.sbos-block__count {
+	display: none;
+	color: var(--text-faint);
+	font-size: var(--font-ui-smaller);
+	font-variant-numeric: tabular-nums;
+}
+
+.sbos-block.is-short .sbos-block__title {
+	flex-direction: row;
+	align-items: baseline;
+	gap: var(--size-2-2);
+}
+
+.sbos-block.is-short .sbos-block__count {
+	display: inline;
+}
+
 .sbos-subtask {
 	display: flex;
 	align-items: baseline;

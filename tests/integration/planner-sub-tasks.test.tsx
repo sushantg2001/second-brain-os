@@ -19,9 +19,9 @@ const LOG = [
 	"\t- [ ] too small to show",
 ].join("\n");
 
-async function setup() {
+async function setup(files: Record<string, string> = { "2026-10-29.md": LOG }) {
 	const harness = await loadPlugin({
-		files: { "2026-10-29.md": LOG },
+		files,
 		today: "2026-10-29",
 		minutes: 9 * 60,
 	});
@@ -30,7 +30,7 @@ async function setup() {
 		?.view as unknown as TimelineView;
 	document.body.append(view.containerEl);
 	await act(() => sleep(0));
-	return { ...harness, ui: within(view.contentEl) };
+	return { ...harness, view, ui: within(view.contentEl) };
 }
 
 const blockOf = (title: HTMLElement): HTMLElement => title.parentElement as HTMLElement;
@@ -102,5 +102,26 @@ describe("sub tasks inside a block", () => {
 		expect(
 			within(short).getByRole("list", { name: "Sub tasks of Short block" }),
 		).toBeInTheDocument();
+	});
+});
+
+describe("sub tasks counted on a short block", () => {
+	it("counts the sub tasks done, and says so in the tooltip", async () => {
+		const { ui } = await setup();
+		const short = ui.getByRole("button", { name: "13:00 to 13:20, Short block" });
+		expect(within(short).getByText("0/1")).toBeInTheDocument();
+		expect(short).toHaveAttribute("title", "13:00 – 13:20 · 0 of 1 sub tasks done");
+	});
+
+	it("counts the ones already done", async () => {
+		const { ui } = await setup();
+		const night = ui.getByRole("button", { name: /^00:00 to 10:00, Late night/ });
+		expect(within(night).getByText("2/2")).toBeInTheDocument();
+	});
+
+	it("shows no count on a block with nothing under it", async () => {
+		const { view } = await setup({ "2026-10-29.md": "## Work\n- [ ] 09:00 - 09:20 Alone\n" });
+		expect(view.contentEl.querySelector(".sbos-block")).not.toBeNull();
+		expect(view.contentEl.querySelector(".sbos-block__count")).toBeNull();
 	});
 });

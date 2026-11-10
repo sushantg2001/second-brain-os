@@ -201,6 +201,7 @@ export function TimelineDay({ date }: { readonly date: IsoDate }): ReactNode {
 		const height = Math.max(top(end) - top(start), 18);
 		const running = services.clocks?.isRunning(block) ?? false;
 		const inside = childrenOf(plan, block);
+		const subtasksDone = block.subtasks.filter((task) => isClosed(task.state)).length;
 		return (
 			<div
 				key={block.id}
@@ -226,7 +227,11 @@ export function TimelineDay({ date }: { readonly date: IsoDate }): ReactNode {
 					type="button"
 					className="sbos-block__title"
 					aria-label={label}
-					title={`${formatTime(start)} – ${formatTime(end)}`}
+					title={`${formatTime(start)} – ${formatTime(end)}${
+						block.subtasks.length > 0
+							? ` · ${subtasksDone} of ${block.subtasks.length} sub tasks done`
+							: ""
+					}`}
 					aria-keyshortcuts="ArrowUp ArrowDown Shift+ArrowUp Shift+ArrowDown Delete"
 					onClick={() => {
 						if (suppressClick.current) {
@@ -238,6 +243,11 @@ export function TimelineDay({ date }: { readonly date: IsoDate }): ReactNode {
 					onKeyDown={(event) => onBlockKeyDown(block, event)}
 				>
 					<span className="sbos-block__summary">{block.title}</span>
+					{block.subtasks.length > 0 && (
+						<span className="sbos-block__count" aria-hidden="true">
+							{subtasksDone}/{block.subtasks.length}
+						</span>
+					)}
 					<span className="sbos-block__time">
 						{formatTime(start)} – {formatTime(end)}
 					</span>
