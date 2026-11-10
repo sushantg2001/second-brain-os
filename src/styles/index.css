@@ -1233,6 +1233,8 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 	border-left: 1px dashed var(--background-modifier-border);
 	pointer-events: none;
 	z-index: 2;
+	/* The blocks adapt to the width of their lane, which depends on the pane, not the window. */
+	container: sbos-clocks / inline-size;
 }
 
 .sbos-clock {
@@ -1277,6 +1279,34 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 
 .sbos-clock.is-short .sbos-clock__time {
 	display: none;
+}
+
+/* In a narrow pane the columns of a busy day are only a few characters wide. Drop what can be
+   read from the tooltip first, then the names of blocks that only hold other blocks, so the
+   tasks that were actually worked on keep room for theirs. */
+@container sbos-clocks (max-width: 200px) {
+	.sbos-clock {
+		padding-inline: var(--size-2-1);
+	}
+
+	.sbos-clock__time {
+		display: none;
+	}
+}
+
+@container sbos-clocks (max-width: 150px) {
+	.sbos-clock:not(.is-leaf) {
+		padding: 0;
+	}
+
+	.sbos-clock:not(.is-leaf) .sbos-clock__title {
+		width: 100%;
+		height: 100%;
+	}
+
+	.sbos-clock:not(.is-leaf) .sbos-clock__summary {
+		display: none;
+	}
 }
 
 /* ---------------------------------------------------------------- PPV */

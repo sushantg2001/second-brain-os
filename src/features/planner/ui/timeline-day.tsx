@@ -35,10 +35,10 @@ const SUBTASK_INDENT = 14;
  * Share of the day's width, in percent, kept for clocked time, by how deeply the day's tasks are
  * nested. Each level of nesting is a column of its own, so a deeper day needs a wider lane.
  */
-const CLOCK_LANE = [40, 52, 58];
+const CLOCK_LANE = [40, 48, 52];
 /** Extra share of the day, in percent, for each task clocked beside another, and the most it can reach. */
-const CLOCK_TRACK_ROOM = 12;
-const MAX_CLOCK_LANE = 70;
+const CLOCK_TRACK_ROOM = 6;
+const MAX_CLOCK_LANE = 56;
 /** Clocked blocks shorter than this (in pixels) show only their title, not the time range. */
 const SHORT_CLOCK = 30;
 export const TASK_DRAG_TYPE = "application/x-sbos-task";
@@ -393,7 +393,7 @@ export function TimelineDay({ date }: { readonly date: IsoDate }): ReactNode {
 									type="button"
 									className="sbos-clock__title"
 									aria-label={`Clocked ${span}, ${range.title}${range.running ? ", running" : ""}`}
-									title={`${range.title}: ${formatDuration(range.end - range.start)}${range.running ? ", running" : ""}`}
+									title={`${range.title}: ${span} · ${formatDuration(range.end - range.start)}${range.running ? ", running" : ""}`}
 									onPointerDown={(event) => event.stopPropagation()}
 									onClick={() => services.openTask(range)}
 								>

@@ -24,15 +24,16 @@ describe("layoutClockLane", () => {
 		expect(lane.tracks).toBe(1);
 	});
 
-	it("puts a task and its sub tasks in the columns of its share, in order", () => {
+	it("puts a task and its sub tasks in the columns of its share, a group narrower than the rest", () => {
 		const ranges = [
 			range("main", 600, 700, { leaf: false }),
 			range("sub", 600, 650, { parentKey: "main", depth: 1 }),
 			range("sub2", 650, 700, { parentKey: "main", depth: 1 }),
 		];
-		expect(placeOf(ranges, "main")).toEqual({ left: 0, width: 50 });
-		expect(placeOf(ranges, "sub")).toEqual({ left: 50, width: 50 });
-		expect(placeOf(ranges, "sub2")).toEqual({ left: 50, width: 50 });
+		// Three parts for the group's column and five for the sub tasks'.
+		expect(placeOf(ranges, "main")).toEqual({ left: 0, width: 37.5 });
+		expect(placeOf(ranges, "sub")).toEqual({ left: 37.5, width: 62.5 });
+		expect(placeOf(ranges, "sub2")).toEqual({ left: 37.5, width: 62.5 });
 	});
 
 	it("lets a range with nothing inside it run to the edge of its share", () => {
@@ -54,10 +55,10 @@ describe("layoutClockLane", () => {
 		];
 		const lane = layoutClockLane(ranges);
 		expect(lane.tracks).toBe(2);
-		expect(lane.places.get("one")).toEqual({ left: 0, width: 25 });
-		expect(lane.places.get("one-sub")).toEqual({ left: 25, width: 25 });
-		expect(lane.places.get("two")).toEqual({ left: 50, width: 25 });
-		expect(lane.places.get("two-sub")).toEqual({ left: 75, width: 25 });
+		expect(lane.places.get("one")).toEqual({ left: 0, width: 18.75 });
+		expect(lane.places.get("one-sub")).toEqual({ left: 18.75, width: 31.25 });
+		expect(lane.places.get("two")).toEqual({ left: 50, width: 18.75 });
+		expect(lane.places.get("two-sub")).toEqual({ left: 68.75, width: 31.25 });
 	});
 
 	it("does not narrow a task that overlaps nothing because another day's tasks do", () => {

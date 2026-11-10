@@ -53,11 +53,11 @@ describe("clocked time on the timeline", () => {
 		expect(bath.dataset.depth).toBe("1");
 		expect(morning).not.toHaveClass("is-leaf");
 		expect(bath).toHaveClass("is-leaf");
-		// A parent keeps its own column; the sub task's block takes the column after it.
+		// A parent keeps its own, narrower column; the sub task's block takes the rest.
 		expect(morning.style.left).toBe("0%");
-		expect(morning.style.width).toBe("50%");
-		expect(bath.style.left).toBe("50%");
-		expect(bath.style.width).toBe("50%");
+		expect(morning.style.width).toBe("37.5%");
+		expect(bath.style.left).toBe("37.5%");
+		expect(bath.style.width).toBe("62.5%");
 		expect(ui.getAllByRole("button", { name: /^Clocked / }).length).toBeGreaterThan(4);
 	});
 
@@ -79,9 +79,9 @@ describe("clocked time on the timeline", () => {
 	it("leaves a lane for them, so planned blocks do not sit underneath", async () => {
 		const { blockOf } = await setup();
 		const planned = blockOf(/^10:00 to 12:00, Morning/);
-		// Two columns of sub tasks at most, so the lane takes 52% of the day.
-		expect(planned.style.left).toBe("calc((100% - 52%) * 0)");
-		expect(planned.style.width).toBe("calc((100% - 52%) / 1)");
+		// Two levels of tasks, so the lane takes 48% of the day.
+		expect(planned.style.left).toBe("calc((100% - 48%) * 0)");
+		expect(planned.style.width).toBe("calc((100% - 48%) / 1)");
 	});
 
 	it("uses the whole day for planned blocks when nothing was clocked", async () => {
@@ -152,19 +152,19 @@ describe("clocked time that overlaps", () => {
 		const first = blockOf("Clocked 12:00 – 13:57, Work");
 		const second = blockOf("Clocked 13:18 – 14:29, Review");
 		// Two tasks side by side, each with a column for its sub task.
-		expect([first.style.left, first.style.width]).toEqual(["0%", "25%"]);
-		expect([second.style.left, second.style.width]).toEqual(["50%", "25%"]);
+		expect([first.style.left, first.style.width]).toEqual(["0%", "18.75%"]);
+		expect([second.style.left, second.style.width]).toEqual(["50%", "18.75%"]);
 		const sub = blockOf("Clocked 12:00 – 13:57, office work");
-		expect([sub.style.left, sub.style.width]).toEqual(["25%", "25%"]);
+		expect([sub.style.left, sub.style.width]).toEqual(["18.75%", "31.25%"]);
 	});
 
 	it("makes the lane wider to fit them", async () => {
 		const { blockOf, view } = await setup({ [DAY]: OVERLAP });
 		const lane = view.contentEl.querySelector<HTMLElement>(".sbos-clocks");
-		// 52% for two levels, and 12% more for the task beside.
-		expect(lane?.style.width).toBe("64%");
+		// 48% for two levels, and 6% more for the task beside.
+		expect(lane?.style.width).toBe("54%");
 		expect(blockOf(/^10:00 to 12:00|^12:00 to 14:00, Work/).style.left).toBe(
-			"calc((100% - 64%) * 0)",
+			"calc((100% - 54%) * 0)",
 		);
 	});
 });

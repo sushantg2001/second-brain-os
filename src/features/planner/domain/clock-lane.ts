@@ -21,10 +21,19 @@ export interface LanePlace {
 }
 
 /**
+ * Width of a column that only holds other blocks, against 5 for the innermost one. A block's name
+ * has to fit in its column, and the tasks worked on need more room for theirs than the groups
+ * they belong to.
+ */
+const GROUP_WEIGHT = 3;
+const LEAF_WEIGHT = 5;
+
+/**
  * Lays out the lane of clocked time. Tasks clocked over the same time sit side by side, each with
  * its sub tasks in the columns after it, so one never covers another. Within its share of the
- * lane a task takes the first column and its sub tasks the ones after, and a block with nothing
- * inside it runs on to the edge of its share.
+ * lane a task takes the first column and its sub tasks the ones after, narrower for a task that
+ * holds others than for one that does not, and a block with nothing inside it runs on to the edge
+ * of its share.
  */
 export function layoutClockLane(ranges: readonly LaneRange[]): {
 	readonly places: ReadonlyMap<string, LanePlace>;
@@ -47,13 +56,25 @@ export function layoutClockLane(ranges: readonly LaneRange[]): {
 		return current;
 	};
 	const levels = Math.max(0, ...ranges.map((range) => range.depth)) + 1;
+	// Every level but the innermost is a group column.
+	const weight = (level: number): number => (level < levels - 1 ? GROUP_WEIGHT : LEAF_WEIGHT);
+	const total = Array.from({ length: levels }, (_, level) => weight(level)).reduce(
+		(sum, each) => sum + each,
+		0,
+	);
+	const before = (level: number): number =>
+		Array.from({ length: level }, (_, each) => weight(each)).reduce(
+			(sum, each) => sum + each,
+			0,
+		);
 	const places = new Map<string, LanePlace>();
 	for (const range of ranges) {
 		const { column, columns } = slots.get(rootOf(range.key)) ?? { column: 0, columns: 1 };
 		const share = 100 / columns;
-		const level = share / levels;
-		const left = column * share + range.depth * level;
-		const right = range.leaf ? (column + 1) * share : left + level;
+		const left = column * share + (before(range.depth) / total) * share;
+		const right = range.leaf
+			? (column + 1) * share
+			: left + (weight(range.depth) / total) * share;
 		places.set(range.key, { left, width: right - left });
 	}
 	return { places, tracks: Math.max(1, ...[...slots.values()].map((slot) => slot.columns)) };
