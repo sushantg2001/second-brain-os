@@ -8,15 +8,16 @@ import { declarations, STYLESHEET } from "./stylesheet";
  * reset sets has to reach a button through a custom property; a plain declaration would lose.
  */
 describe("plain buttons", () => {
-	/** The classes the plugin renders as a bare `<button>`. Mirrors the reset's own list. */
-	const BUTTONS = [
-		"sbos-control",
-		"sbos-link",
-		"sbos-icon-button",
-		"sbos-unscheduled__title",
-		"sbos-unscheduled__schedule",
-		"sbos-block__title",
-		"sbos-block__clock",
+	/**
+	 * The classes the reset names in its `:is(...)` list, read from the stylesheet so a button
+	 * added to the reset is checked without anyone remembering to add it here.
+	 */
+	const NAMED_BY_RESET = [
+		...(/button:is\(([^)]*)\)/.exec(STYLESHEET)?.[1] ?? "").matchAll(/\.([\w-]+)/g),
+	].map((match) => match[1] ?? "");
+
+	/** Buttons inside the calendar are covered by `.sbos-calendar button`, not by name. */
+	const IN_CALENDAR = [
 		"sbos-calendar__arrow",
 		"sbos-calendar__reset",
 		"sbos-calendar__jump",
@@ -31,6 +32,14 @@ describe("plain buttons", () => {
 		"sbos-timeline__title-button",
 		"sbos-timeline__today",
 	];
+
+	const BUTTONS = [...NAMED_BY_RESET, ...IN_CALENDAR];
+
+	it("reads the classes the reset names", () => {
+		expect(NAMED_BY_RESET).toContain("sbos-control");
+		expect(NAMED_BY_RESET).toContain("sbos-block__title");
+		expect(NAMED_BY_RESET.length).toBeGreaterThanOrEqual(7);
+	});
 
 	/** What the reset takes over, and the custom property each one reads. */
 	const RESET: Readonly<Record<string, string>> = {
