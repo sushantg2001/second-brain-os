@@ -2,7 +2,7 @@ import { compareDates, type IsoDate, type NowSnapshot } from "../../../shared/ke
 import { clocksOf, minutesBetween } from "../../clocks";
 import type { DayPlan } from "../../planner";
 import { isClosedStatus, type PpvNote, type PpvType } from "../../ppv";
-import { isClosed, type Task } from "../../tasks";
+import { displayText, isClosed, type Task } from "../../tasks";
 
 export type Severity = "error" | "warning" | "info";
 
@@ -181,7 +181,7 @@ function taskFindings(input: LintInput): Finding[] {
 					"malformed-time-block",
 					task.path,
 					task.line,
-					`"${task.text}" ends before it starts.`,
+					`"${displayText(task.text)}" ends before it starts.`,
 				),
 			);
 		}
@@ -195,7 +195,7 @@ function taskFindings(input: LintInput): Finding[] {
 						"stale-clock",
 						task.path,
 						clock.line,
-						`A clock on "${task.text}" has run since ${clock.start.date}.`,
+						`A clock on "${displayText(task.text)}" has run since ${clock.start.date}.`,
 						{ kind: "close-clock", path: task.path, line: clock.line, raw: clock.raw },
 					),
 				);
