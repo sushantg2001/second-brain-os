@@ -134,3 +134,37 @@ describe("clocked time on the timeline", () => {
 		).toHaveLength(2);
 	});
 });
+
+describe("clocked time that overlaps", () => {
+	/** Two tasks clocked over the same half hour, from different parts of a note. */
+	const OVERLAP = [
+		"## Work",
+		"- [x] 12:00 - 14:00 Work",
+		"\t- [x] office work",
+		"\t      [clock::2026-10-29T12:00:00--2026-10-29T13:57:00]",
+		"- [x] 13:00 - 15:00 Review",
+		"\t- [x] weekly sweep",
+		"\t      [clock::2026-10-29T13:18:00--2026-10-29T14:29:00]",
+	].join("\n");
+
+	it("sets the tasks side by side so neither covers the other", async () => {
+		const { blockOf } = await setup({ [DAY]: OVERLAP });
+		const first = blockOf("Clocked 12:00 – 13:57, Work");
+		const second = blockOf("Clocked 13:18 – 14:29, Review");
+		// Two tasks side by side, each with a column for its sub task.
+		expect([first.style.left, first.style.width]).toEqual(["0%", "25%"]);
+		expect([second.style.left, second.style.width]).toEqual(["50%", "25%"]);
+		const sub = blockOf("Clocked 12:00 – 13:57, office work");
+		expect([sub.style.left, sub.style.width]).toEqual(["25%", "25%"]);
+	});
+
+	it("makes the lane wider to fit them", async () => {
+		const { blockOf, view } = await setup({ [DAY]: OVERLAP });
+		const lane = view.contentEl.querySelector<HTMLElement>(".sbos-clocks");
+		// 52% for two levels, and 12% more for the task beside.
+		expect(lane?.style.width).toBe("64%");
+		expect(blockOf(/^10:00 to 12:00|^12:00 to 14:00, Work/).style.left).toBe(
+			"calc((100% - 64%) * 0)",
+		);
+	});
+});

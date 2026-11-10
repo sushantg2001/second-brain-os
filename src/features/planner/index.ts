@@ -20,6 +20,7 @@ export {
 	type PlannedSubTask,
 	type PlannedTask,
 } from "./domain/day-plan";
+export { layoutClockLane, type LanePlace, type LaneRange } from "./domain/clock-lane";
 export { removeCarried, tasksToCarry, type CarriedTask } from "./domain/rollover";
 export { DEFAULT_PLANNER_SETTINGS, type PlannerSettings } from "./domain/settings";
 export { registerPlanner, statusText, type PlannerModuleDeps } from "./ui/module";

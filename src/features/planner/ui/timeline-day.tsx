@@ -10,6 +10,7 @@ import {
 import { formatDuration, formatTime, type IsoDate, type Minutes } from "../../../shared/kernel";
 import { Icon, useStore } from "../../../shared/react";
 import { isClosed } from "../../tasks";
+import { layoutClockLane } from "../domain/clock-lane";
 import { childrenOf, descendantsOf, type PlannedBlock } from "../domain/day-plan";
 import { PlannerContext } from "./services";
 
@@ -35,6 +36,9 @@ const SUBTASK_INDENT = 14;
  * nested. Each level of nesting is a column of its own, so a deeper day needs a wider lane.
  */
 const CLOCK_LANE = [40, 52, 58];
+/** Extra share of the day, in percent, for each task clocked beside another, and the most it can reach. */
+const CLOCK_TRACK_ROOM = 12;
+const MAX_CLOCK_LANE = 70;
 /** Clocked blocks shorter than this (in pixels) show only their title, not the time range. */
 const SHORT_CLOCK = 30;
 export const TASK_DRAG_TYPE = "application/x-sbos-task";
@@ -67,8 +71,16 @@ export function TimelineDay({ date }: { readonly date: IsoDate }): ReactNode {
 	// A task's clocked time is drawn as a block with its sub tasks' blocks in the columns beside it.
 	const clocked = services.clocks?.rangesOn(date) ?? [];
 	const clockedDepth = Math.max(0, ...clocked.map((range) => range.depth));
+	const { places, tracks } = layoutClockLane(clocked);
+	// Tasks clocked over the same time need room beside each other, up to a limit.
 	const lane =
-		clocked.length === 0 ? 0 : (CLOCK_LANE[Math.min(clockedDepth, CLOCK_LANE.length - 1)] ?? 0);
+		clocked.length === 0
+			? 0
+			: Math.min(
+					MAX_CLOCK_LANE,
+					(CLOCK_LANE[Math.min(clockedDepth, CLOCK_LANE.length - 1)] ?? 0) +
+						(tracks - 1) * CLOCK_TRACK_ROOM,
+				);
 	const [drag, setDrag] = useState<Drag | null>(null);
 	const dragRef = useRef<Drag | null>(null);
 	const suppressClick = useRef(false);
@@ -361,8 +373,7 @@ export function TimelineDay({ date }: { readonly date: IsoDate }): ReactNode {
 			{lane > 0 && (
 				<div className="sbos-clocks" style={{ width: `${lane}%` }}>
 					{clocked.map((range) => {
-						const column = 100 / (clockedDepth + 1);
-						const left = range.depth * column;
+						const place = places.get(range.key) ?? { left: 0, width: 100 };
 						const height = Math.max(top(range.end) - top(range.start), 2);
 						// Clocked time is tracked to the second; the labels are whole minutes.
 						const span = `${formatTime(Math.floor(range.start))} – ${formatTime(Math.floor(range.end))}`;
@@ -374,9 +385,8 @@ export function TimelineDay({ date }: { readonly date: IsoDate }): ReactNode {
 								style={{
 									top: `${top(range.start)}px`,
 									height: `${height}px`,
-									left: `${left}%`,
-									// A block with sub tasks leaves the columns after it to them.
-									width: `${range.leaf ? 100 - left : column}%`,
+									left: `${place.left}%`,
+									width: `${place.width}%`,
 								}}
 							>
 								<button
