@@ -1240,7 +1240,6 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 .sbos-clock {
 	position: absolute;
 	box-sizing: border-box;
-	padding: 1px var(--size-2-2);
 	border: 1px solid var(--color-green);
 	border-radius: var(--radius-s);
 	background-color: color-mix(in srgb, var(--color-green) 14%, var(--background-primary));
@@ -1254,11 +1253,17 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 	background-color: color-mix(in srgb, var(--color-red) 14%, var(--background-primary));
 }
 
+/* The title button covers the whole block, so pressing anywhere on it opens the task instead of
+   falling through to the day underneath, where it would start a new planned block. */
 .sbos-clock__title {
 	--sbos-button-color: var(--text-normal);
+	--sbos-button-height: 100%;
+	--sbos-button-padding: 1px var(--size-2-2);
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
+	justify-content: flex-start;
+	width: 100%;
 	max-width: 100%;
 	text-align: left;
 	white-space: normal;
@@ -1285,8 +1290,8 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
    read from the tooltip first, then the names of blocks that only hold other blocks, so the
    tasks that were actually worked on keep room for theirs. */
 @container sbos-clocks (max-width: 200px) {
-	.sbos-clock {
-		padding-inline: var(--size-2-1);
+	.sbos-clock__title {
+		--sbos-button-padding: 1px var(--size-2-1);
 	}
 
 	.sbos-clock__time {
@@ -1295,13 +1300,8 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 }
 
 @container sbos-clocks (max-width: 150px) {
-	.sbos-clock:not(.is-leaf) {
-		padding: 0;
-	}
-
 	.sbos-clock:not(.is-leaf) .sbos-clock__title {
-		width: 100%;
-		height: 100%;
+		--sbos-button-padding: 0;
 	}
 
 	.sbos-clock:not(.is-leaf) .sbos-clock__summary {
