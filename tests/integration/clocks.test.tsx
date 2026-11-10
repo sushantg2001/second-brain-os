@@ -227,6 +227,49 @@ describe("clock lines without a bullet", () => {
 	});
 });
 
+describe("clocked ranges are worked out once", () => {
+	const CLOCKED = [
+		"- [ ] Main",
+		"\t- [ ] Sub",
+		"\t\t[clock::2026-10-29T09:00:00--2026-10-29T09:30:00]",
+	].join("\n");
+
+	it("returns the same ranges until something changes", async () => {
+		const { container } = await setup({ [DAY]: CLOCKED });
+		const first = container.clocks.rangesOn("2026-10-29");
+		expect(first).toHaveLength(2);
+		expect(container.clocks.rangesOn("2026-10-29")).toBe(first);
+		// Another day is worked out separately and does not disturb this one.
+		expect(container.clocks.rangesOn("2026-10-30")).toEqual([]);
+		expect(container.clocks.rangesOn("2026-10-29")).toBe(first);
+	});
+
+	it("works them out again when a note changes", async () => {
+		const { container, app } = await setup({ [DAY]: CLOCKED });
+		const before = container.clocks.rangesOn("2026-10-29");
+		await app.vault.modify(
+			app.vault.getAbstractFileByPath(DAY) as never,
+			CLOCKED.replace("09:30:00", "10:00:00"),
+		);
+		await act(() => sleep(20));
+		const after = container.clocks.rangesOn("2026-10-29");
+		expect(after).not.toBe(before);
+		expect(after.map((range) => range.end)).toEqual([600, 600]);
+		expect(container.clocks.minutesOn("2026-10-29")).toBe(60);
+	});
+
+	it("extends a running clock as the minutes pass", async () => {
+		const { container, at } = await setup(
+			{ [DAY]: "- [ ] Main\n\t[clock::2026-10-29T09:00:00--]\n" },
+			9 * 60 + 10,
+		);
+		expect(container.clocks.rangesOn("2026-10-29")[0]?.end).toBe(550);
+		await at(9 * 60 + 40);
+		expect(container.clocks.rangesOn("2026-10-29")[0]?.end).toBe(580);
+		expect(container.clocks.minutesOn("2026-10-29")).toBe(40);
+	});
+});
+
 describe("clocks on nested tasks", () => {
 	const ranges = (
 		container: Awaited<ReturnType<typeof setup>>["container"],
