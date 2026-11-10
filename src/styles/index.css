@@ -1400,9 +1400,20 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 
 .sbos-finding {
 	display: flex;
-	align-items: center;
+	align-items: baseline;
 	flex-wrap: wrap;
 	gap: var(--size-2-3);
+}
+
+/* The message takes what the row has left and wraps inside it, so a long one stays beside its
+   severity instead of dropping to a line of its own. */
+.sbos-finding > .sbos-pill {
+	flex: none;
+}
+
+.sbos-finding > .sbos-link {
+	flex: 1 1 0;
+	min-width: 12em;
 }
 
 .sbos-finding--error .sbos-pill {
