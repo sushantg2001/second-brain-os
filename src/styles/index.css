@@ -298,6 +298,14 @@ button:focus-visible {
 .sbos-calendar__grid {
 	width: 100%;
 	border-collapse: collapse;
+	/* Columns share the width equally, so a narrow sidebar shrinks the days instead of pushing
+	   the last column out of the pane. */
+	table-layout: fixed;
+}
+
+.sbos-calendar__week-header,
+.sbos-calendar__week {
+	width: 2.4em;
 }
 
 .sbos-calendar__grid abbr {
