@@ -48,6 +48,7 @@ describe("plain buttons", () => {
 		color: "--sbos-button-color",
 		"box-shadow": "--sbos-button-shadow",
 		outline: "--sbos-button-outline",
+		height: "--sbos-button-height",
 	};
 
 	/** The last compound selector: the element the rule is actually about. */
