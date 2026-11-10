@@ -95,10 +95,16 @@ button:is(
 	padding: var(--sbos-button-padding, 0);
 	background-color: var(--sbos-button-background, transparent);
 	background-image: none;
-	box-shadow: var(--sbos-button-shadow, none);
+	/* Obsidian draws a button's focus ring as its shadow, which this takes over, so the ring is
+	   put back for every button, and a control that wants its own sets `--sbos-button-shadow`. */
+	box-shadow: var(--sbos-button-shadow, var(--sbos-focus-ring, none));
 	color: var(--sbos-button-color, inherit);
 	outline: var(--sbos-button-outline, none);
 	appearance: none;
+}
+
+button:focus-visible {
+	--sbos-focus-ring: 0 0 0 2px var(--background-modifier-border-focus);
 }
 
 /* An icon or text button that looks like Obsidian's clickable icons, whatever the theme gives

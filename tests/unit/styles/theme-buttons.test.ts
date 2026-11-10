@@ -87,6 +87,19 @@ describe("plain buttons", () => {
 		expect(direct).toEqual([]);
 	});
 
+	it("puts the keyboard focus ring back, since the reset takes over the shadow it is drawn with", () => {
+		const reset = declarations(STYLESHEET).filter(({ selector }) =>
+			selector.includes("button:not(.mod-cta):not(.mod-warning)"),
+		);
+		const shadow = reset.find((rule) => rule.property === "box-shadow");
+		expect(shadow?.value).toContain("var(--sbos-focus-ring");
+		const ring = declarations(STYLESHEET).find(
+			({ selector, property }) =>
+				selector === "button:focus-visible" && property === "--sbos-focus-ring",
+		);
+		expect(ring?.value).toContain("--background-modifier-border-focus");
+	});
+
 	it("keeps a reset that outweighs Obsidian and the themes", () => {
 		const reset = declarations(STYLESHEET).filter(({ selector }) =>
 			selector.includes("button:not(.mod-cta):not(.mod-warning)"),
