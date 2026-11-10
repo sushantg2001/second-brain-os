@@ -44,13 +44,53 @@ export function parseFields(text: string): TaskFields {
 	};
 }
 
+const FIELD_START = /[[(][\w-]+::/y;
+
+/**
+ * Removes Dataview inline fields, `[key:: value]` and `(key:: value)`, with the space before them.
+ * A value can hold brackets of its own, such as a link in `[reference::[[Note|Alias]]]`, so the
+ * field ends at the bracket that closes the one it opened, not at the first one.
+ */
+function withoutInlineFields(text: string): string {
+	let kept = "";
+	let at = 0;
+	while (at < text.length) {
+		const open = text[at];
+		if (open === "[" || open === "(") {
+			FIELD_START.lastIndex = at;
+			const close = open === "[" ? "]" : ")";
+			if (FIELD_START.test(text)) {
+				let depth = 0;
+				let end = at;
+				for (; end < text.length; end++) {
+					if (text[end] === open) {
+						depth++;
+					} else if (text[end] === close && --depth === 0) {
+						break;
+					}
+				}
+				// With no closing bracket it is just text, so it is kept.
+				if (end < text.length) {
+					kept = kept.replace(/\s+$/, "");
+					at = end + 1;
+					continue;
+				}
+			}
+		}
+		kept += text[at];
+		at++;
+	}
+	return kept;
+}
+
 /** Text for display: the task without Tasks emoji fields, inline fields or block ids. */
 export function displayText(text: string): string {
-	return text
-		.replace(/\s*[⏳📅🛫✅➕❌]️?\s*\d{4}-\d{2}-\d{2}/gu, "")
-		.replace(/\s*[⏫🔼🔽🔺⏬]️?/gu, "")
-		.replace(/\s*🔁️?[^⏳📅🛫✅➕❌⏫🔼🔽🔺⏬]*/gu, "")
-		.replace(/\s*[[(][\w-]+::[^\])]*[\])]/g, "")
+	return withoutInlineFields(
+		text
+			.replace(/\s*[⏳📅🛫✅➕❌]️?\s*\d{4}-\d{2}-\d{2}/gu, "")
+			.replace(/\s*[⏫🔼🔽🔺⏬]️?/gu, "")
+			.replace(/\s*🔁️?[^⏳📅🛫✅➕❌⏫🔼🔽🔺⏬]*/gu, ""),
+	)
 		.replace(/\s*\^[\w-]+$/, "")
 		.trim();
 }
