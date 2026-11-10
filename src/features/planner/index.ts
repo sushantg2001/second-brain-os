@@ -17,6 +17,7 @@ export {
 	type BlockSource,
 	type DayPlan,
 	type PlannedBlock,
+	type PlannedSubTask,
 	type PlannedTask,
 } from "./domain/day-plan";
 export { removeCarried, tasksToCarry, type CarriedTask } from "./domain/rollover";
