@@ -31,7 +31,7 @@ export const REQUIRED_PLUGINS: readonly RequiredPlugin[] = [
 		id: "datacore",
 		name: "Datacore",
 		minVersion: "0.1.0",
-		purpose: "Queries over notes, tasks and fields in your own notes and templates.",
+		purpose: "Indexes your notes, so the plugin only reads the ones that hold tasks.",
 	},
 	{
 		id: "obsidian-tasks-plugin",

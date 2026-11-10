@@ -19,11 +19,11 @@ The [user guide](docs/user-guide.md) shows every note format, command and settin
 
 Obsidian 1.7.2 or later, plus these community plugins, which the plugin checks for on start:
 
-| Plugin           | Why                                  |
-| ---------------- | ------------------------------------ |
-| Datacore 0.1.0+  | Queries over notes, tasks and fields |
-| Tasks 7.0.0+     | Task syntax and statuses             |
-| Templater 2.0.0+ | Note templates                       |
+| Plugin           | Why                         |
+| ---------------- | --------------------------- |
+| Datacore 0.1.0+  | Says which notes hold tasks |
+| Tasks 7.0.0+     | Task syntax and statuses    |
+| Templater 2.0.0+ | Note templates              |
 
 ## Documentation
 

@@ -6,6 +6,7 @@ import {
 	type ReadableStore,
 } from "../../../shared/kernel";
 import { parseTasks, type Task } from "../domain/parse-note";
+import type { TaskSource } from "./ports";
 
 export interface TaskSnapshot {
 	readonly byPath: ReadonlyMap<string, readonly Task[]>;
@@ -26,7 +27,10 @@ export class TaskIndex {
 		this.#resolveReady = resolve;
 	});
 
-	constructor(private readonly notes: NoteStore) {}
+	constructor(
+		private readonly notes: NoteStore,
+		private readonly source?: TaskSource,
+	) {}
 
 	get snapshot(): ReadableStore<TaskSnapshot> {
 		return this.#store;
@@ -59,8 +63,14 @@ export class TaskIndex {
 	}
 
 	async rebuild(): Promise<void> {
+		// Only the notes the source names are read, when it names any. Notes that change later are
+		// read as they change, whatever the source said.
+		const named = await this.source?.paths().catch(() => null);
 		const byPath = new Map<string, readonly Task[]>();
 		for (const note of this.notes.list()) {
+			if (named && !named.has(note.path)) {
+				continue;
+			}
 			const tasks = await this.parse(note.path);
 			if (tasks.length > 0) {
 				byPath.set(note.path, tasks);

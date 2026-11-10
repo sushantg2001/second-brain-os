@@ -8,6 +8,7 @@ import { PpvIndex, PpvService } from "../features/ppv";
 import { Rollups } from "../features/rollups";
 import { DependencyGate } from "../features/setup";
 import { TaskActions, TaskIndex } from "../features/tasks";
+import { DatacoreTaskSource } from "../infrastructure/datacore";
 import {
 	MomentDateFormatter,
 	NoticeNotifier,
@@ -74,7 +75,7 @@ export function createContainer(plugin: Plugin, overrides: ContainerOverrides = 
 		templates,
 		clock,
 	});
-	const tasks = new TaskIndex(notes);
+	const tasks = new TaskIndex(notes, new DatacoreTaskSource(app));
 	const taskActions = new TaskActions(notes, clock, new TasksPluginToggler(app));
 	const now = new NowTicker(clock);
 	const ppvIndex = new PpvIndex(notes, settings.section("ppv").store);

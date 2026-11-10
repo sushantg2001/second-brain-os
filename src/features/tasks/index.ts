@@ -1,4 +1,4 @@
-export type { TaskToggler } from "./application/ports";
+export type { TaskSource, TaskToggler } from "./application/ports";
 export { TaskActions, type TaskRef } from "./application/task-actions";
 export { TaskIndex, type TaskSnapshot } from "./application/task-index";
 export {

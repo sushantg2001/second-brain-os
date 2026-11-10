@@ -13,7 +13,7 @@ async function revealSetupView(plugin: Plugin): Promise<void> {
 }
 
 /**
- * Loads settings, registers the setup view, and registers features once Dataview, Tasks and
+ * Loads settings, registers the setup view, and registers features once Datacore, Tasks and
  * Templater are ready. Other plugins may load after this one, so the gate is first evaluated
  * when the layout is ready, and again whenever the user rechecks from the setup view.
  */
