@@ -110,7 +110,7 @@ describe("clocks", () => {
 		expect(harness.content()).toContain("\t[clock::2026-10-29T09:05:00--]");
 		await harness.at(9 * 60 + 35);
 		expect(ui.getByText("Planned 1h · Clocked 30m")).toBeInTheDocument();
-		expect(view.contentEl.querySelector(".sbos-clocked.is-running")).not.toBeNull();
+		expect(view.contentEl.querySelector(".sbos-clock.is-running")).not.toBeNull();
 		await userEvent.click(ui.getByRole("button", { name: "Stop clock on Write spec" }));
 		await act(() => sleep(10));
 		expect(harness.content()).toContain("\t[clock::2026-10-29T09:05:00--2026-10-29T09:35:00]");
@@ -302,6 +302,44 @@ describe("clocks on nested tasks", () => {
 			["Mid", 1, 540, 570],
 			["Leaf", 2, 540, 570],
 		]);
+	});
+
+	it("joins the parent's range when sub task clocks are only seconds apart", async () => {
+		const { container } = await setup({
+			[DAY]: [
+				"- [ ] Main",
+				"\t- [ ] One",
+				"\t\t[clock::2026-10-29T10:00:00--2026-10-29T10:30:40]",
+				"\t- [ ] Two",
+				"\t\t[clock::2026-10-29T10:30:47--2026-10-29T11:16:53]",
+			].join("\n"),
+		});
+		const parents = container.clocks
+			.rangesOn("2026-10-29")
+			.filter((range) => range.depth === 0);
+		expect(parents).toHaveLength(1);
+		expect(parents[0]?.start).toBe(600);
+		expect(parents[0]?.end).toBeCloseTo(11 * 60 + 16 + 53 / 60, 5);
+	});
+
+	it("links each range to the range above it that holds it", async () => {
+		const { container } = await setup({
+			[DAY]: [
+				"- [ ] Main",
+				"\t- [ ] Write spec",
+				"\t\t[clock::2026-10-29T09:05:00--2026-10-29T09:50:00]",
+				"\t- [ ] Review PR",
+				"\t\t[clock::2026-10-29T10:05:00--2026-10-29T11:40:00]",
+			].join("\n"),
+		});
+		const found = container.clocks.rangesOn("2026-10-29");
+		const [firstMain, firstSub, secondMain, secondSub] = found;
+		expect([firstMain?.parentKey, firstMain?.leaf]).toEqual([null, false]);
+		expect([secondMain?.parentKey, secondMain?.leaf]).toEqual([null, false]);
+		expect(firstSub?.parentKey).toBe(firstMain?.key);
+		expect(secondSub?.parentKey).toBe(secondMain?.key);
+		expect([firstSub?.leaf, secondSub?.leaf]).toEqual([true, true]);
+		expect([firstSub?.path, firstSub?.line]).toEqual([DAY, 1]);
 	});
 
 	it("marks the parent's bar as running while a sub task's clock runs", async () => {

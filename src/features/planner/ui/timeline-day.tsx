@@ -30,8 +30,13 @@ const DRAG_THRESHOLD = 4;
 const SHORT_BLOCK = 44;
 /** Pixels a sub task is indented for each level it is nested below its block. */
 const SUBTASK_INDENT = 14;
-/** Width in pixels of one level of the clocked-time bar. */
-const CLOCK_BAR = 4;
+/**
+ * Share of the day's width, in percent, kept for clocked time, by how deeply the day's tasks are
+ * nested. Each level of nesting is a column of its own, so a deeper day needs a wider lane.
+ */
+const CLOCK_LANE = [40, 52, 58];
+/** Clocked blocks shorter than this (in pixels) show only their title, not the time range. */
+const SHORT_CLOCK = 30;
 export const TASK_DRAG_TYPE = "application/x-sbos-task";
 
 type Relation = "past" | "present" | "future";
@@ -59,9 +64,11 @@ export function TimelineDay({ date }: { readonly date: IsoDate }): ReactNode {
 	const now = useStore(services.now);
 	const settings = useStore(planner.settingsStore);
 	const plan = planner.plan(date);
-	// A task's clocked time is drawn as a wider bar under the narrower bars of its sub tasks.
+	// A task's clocked time is drawn as a block with its sub tasks' blocks in the columns beside it.
 	const clocked = services.clocks?.rangesOn(date) ?? [];
 	const clockedDepth = Math.max(0, ...clocked.map((range) => range.depth));
+	const lane =
+		clocked.length === 0 ? 0 : (CLOCK_LANE[Math.min(clockedDepth, CLOCK_LANE.length - 1)] ?? 0);
 	const [drag, setDrag] = useState<Drag | null>(null);
 	const dragRef = useRef<Drag | null>(null);
 	const suppressClick = useRef(false);
@@ -210,8 +217,16 @@ export function TimelineDay({ date }: { readonly date: IsoDate }): ReactNode {
 				style={{
 					top: `${top(start) - (parent ? top(parent.start) : 0)}px`,
 					height: `${height}px`,
-					left: `${(block.column / block.columns) * 100}%`,
-					width: `${100 / block.columns}%`,
+					// Planned blocks leave the clocked lane free; blocks inside another do not
+					// share the day with it, so they keep a share of their parent.
+					left:
+						parent || lane === 0
+							? `${(block.column / block.columns) * 100}%`
+							: `calc((100% - ${lane}%) * ${block.column / block.columns})`,
+					width:
+						parent || lane === 0
+							? `${100 / block.columns}%`
+							: `calc((100% - ${lane}%) / ${block.columns})`,
 				}}
 				onPointerDown={(event) => begin("move", block, event)}
 			>
@@ -343,20 +358,45 @@ export function TimelineDay({ date }: { readonly date: IsoDate }): ReactNode {
 			{plan.blocks
 				.filter((block) => block.parentId === null)
 				.map((block) => renderBlock(block, null))}
-			{clocked.map((range) => (
-				<div
-					key={range.key}
-					className={`sbos-clocked${range.running ? " is-running" : ""}`}
-					data-depth={range.depth}
-					style={{
-						top: `${top(range.start)}px`,
-						height: `${Math.max(top(range.end) - top(range.start), 2)}px`,
-						width: `${(clockedDepth - range.depth + 1) * CLOCK_BAR}px`,
-					}}
-					title={`Clocked: ${range.title}, ${formatDuration(range.end - range.start)}`}
-					aria-hidden="true"
-				/>
-			))}
+			{lane > 0 && (
+				<div className="sbos-clocks" style={{ width: `${lane}%` }}>
+					{clocked.map((range) => {
+						const column = 100 / (clockedDepth + 1);
+						const left = range.depth * column;
+						const height = Math.max(top(range.end) - top(range.start), 2);
+						// Clocked time is tracked to the second; the labels are whole minutes.
+						const span = `${formatTime(Math.floor(range.start))} – ${formatTime(Math.floor(range.end))}`;
+						return (
+							<div
+								key={range.key}
+								className={`sbos-clock${range.running ? " is-running" : ""}${range.leaf ? " is-leaf" : ""}${height < SHORT_CLOCK ? " is-short" : ""}`}
+								data-depth={range.depth}
+								style={{
+									top: `${top(range.start)}px`,
+									height: `${height}px`,
+									left: `${left}%`,
+									// A block with sub tasks leaves the columns after it to them.
+									width: `${range.leaf ? 100 - left : column}%`,
+								}}
+							>
+								<button
+									type="button"
+									className="sbos-clock__title"
+									aria-label={`Clocked ${span}, ${range.title}${range.running ? ", running" : ""}`}
+									title={`${range.title}: ${formatDuration(range.end - range.start)}${range.running ? ", running" : ""}`}
+									onPointerDown={(event) => event.stopPropagation()}
+									onClick={() => services.openTask(range)}
+								>
+									<span className="sbos-clock__summary">{range.title}</span>
+									<span className="sbos-clock__time">
+										{span} · {formatDuration(range.end - range.start)}
+									</span>
+								</button>
+							</div>
+						);
+					})}
+				</div>
+			)}
 			{drag?.kind === "create" && (
 				<div
 					className="sbos-block is-ghost"

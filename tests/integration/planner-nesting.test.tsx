@@ -342,20 +342,4 @@ describe("nested blocks on the timeline", () => {
 			"- [ ] 09:00 - 11:30 Main\n\t- [ ] 09:00 - 10:00 Sub\n\t- [ ] 10:00 - 11:00 Sub 2",
 		);
 	});
-
-	it("draws a parent's clocked time as a wider bar under its sub tasks' bars", async () => {
-		const { view } = await setup({
-			[DAY]: [
-				"- [ ] 09:00 - 11:00 Main",
-				"\t- [ ] 09:00 - 10:00 Sub",
-				"\t\t[clock::2026-10-29T09:05:00--2026-10-29T09:50:00]",
-			].join("\n"),
-		});
-		const bars = [...view.contentEl.querySelectorAll<HTMLElement>(".sbos-clocked")];
-		expect(bars.map((bar) => [bar.dataset.depth, bar.style.width])).toEqual([
-			["0", "8px"],
-			["1", "4px"],
-		]);
-		expect(bars.map((bar) => bar.title)).toEqual(["Clocked: Main, 45m", "Clocked: Sub, 45m"]);
-	});
 });

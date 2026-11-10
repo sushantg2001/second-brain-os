@@ -89,7 +89,8 @@ button:is(
 		.sbos-unscheduled__schedule,
 		.sbos-block__title,
 		.sbos-subtask__title,
-		.sbos-block__clock
+		.sbos-block__clock,
+		.sbos-clock__title
 	):not(.mod-cta):not(.mod-warning),
 .sbos-calendar button:not(.mod-cta):not(.mod-warning) {
 	height: var(--sbos-button-height, auto);
@@ -1221,24 +1222,61 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 	--sbos-button-color: var(--color-red);
 }
 
-.sbos-clocked {
+/* Clocked time sits in a lane down the right of the day, beside the planned blocks. Each level
+   of nesting is a column: a task's block takes the first, its sub tasks' blocks the ones after,
+   level with the time they were clocked. */
+.sbos-clocks {
 	position: absolute;
+	top: 0;
 	right: 0;
-	width: 4px;
-	box-sizing: border-box;
-	border-radius: 2px;
-	background-color: var(--color-green);
-	opacity: 0.7;
+	bottom: 0;
+	border-left: 1px dashed var(--background-modifier-border);
 	pointer-events: none;
 	z-index: 2;
 }
 
-.sbos-clocked:not([data-depth="0"]) {
-	border: 1px solid var(--background-primary);
+.sbos-clock {
+	position: absolute;
+	box-sizing: border-box;
+	padding: 1px var(--size-2-2);
+	border: 1px solid var(--color-green);
+	border-radius: var(--radius-s);
+	background-color: color-mix(in srgb, var(--color-green) 14%, var(--background-primary));
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	overflow: hidden;
 }
 
-.sbos-clocked.is-running {
-	background-color: var(--color-red);
+.sbos-clock.is-running {
+	border-color: var(--color-red);
+	background-color: color-mix(in srgb, var(--color-red) 14%, var(--background-primary));
+}
+
+.sbos-clock__title {
+	--sbos-button-color: var(--text-normal);
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	max-width: 100%;
+	text-align: left;
+	white-space: normal;
+	overflow-wrap: anywhere;
+	font: inherit;
+	pointer-events: auto;
+	cursor: pointer;
+}
+
+.sbos-clock__summary {
+	font-weight: var(--font-semibold);
+}
+
+.sbos-clock__time {
+	color: var(--text-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+.sbos-clock.is-short .sbos-clock__time {
+	display: none;
 }
 
 /* ---------------------------------------------------------------- PPV */

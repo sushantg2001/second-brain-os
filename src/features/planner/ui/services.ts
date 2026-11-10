@@ -17,12 +17,18 @@ export interface PlannerClockControls {
 	readonly rangesOn: (date: IsoDate) => readonly {
 		readonly key: string;
 		readonly taskId: string;
+		readonly path: string;
+		readonly line: number;
 		readonly title: string;
 		readonly start: Minutes;
 		readonly end: Minutes;
 		readonly running: boolean;
 		/** 0 for a task that is not under another task; 1 for a sub task of that, and so on. */
 		readonly depth: number;
+		/** The range that holds this one, or null at depth 0. */
+		readonly parentKey: string | null;
+		/** True when no range of a sub task sits inside this one. */
+		readonly leaf: boolean;
 	}[];
 	readonly minutesOn: (date: IsoDate) => Minutes;
 }
@@ -34,7 +40,7 @@ export interface PlannerServices {
 	readonly now: ReadableStore<NowSnapshot>;
 	/** Changes whenever plans may have changed. */
 	readonly version: ReadableStore<unknown>;
-	readonly openTask: (task: PlannedTask) => void;
+	readonly openTask: (task: { readonly path: string; readonly line: number }) => void;
 	readonly newBlock: (date: IsoDate, start: Minutes, end: Minutes) => void;
 	readonly report: (error: Error) => void;
 	readonly clocks?: PlannerClockControls;
