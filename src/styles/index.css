@@ -88,6 +88,7 @@ button:is(
 		.sbos-unscheduled__title,
 		.sbos-unscheduled__schedule,
 		.sbos-block__title,
+		.sbos-subtask__title,
 		.sbos-block__clock
 	):not(.mod-cta):not(.mod-warning),
 .sbos-calendar button:not(.mod-cta):not(.mod-warning) {
@@ -976,9 +977,14 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 .sbos-block {
 	position: absolute;
 	box-sizing: border-box;
-	display: flex;
-	align-items: flex-start;
-	gap: var(--size-2-2);
+	/* The checkbox, title and clock button share the first row; the sub tasks go below the
+	   title. Placing each by hand keeps a block without a clock from shifting its columns. */
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	align-content: start;
+	align-items: start;
+	column-gap: var(--size-2-2);
+	row-gap: var(--size-2-1);
 	/* The width comes from the block's share of the day, so a side margin would sit outside it
 	   and push the column into a scrollbar it never needs. Blocks are set apart by their own
 	   borders instead. */
@@ -997,8 +1003,8 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 
 /* A block whose task has sub tasks with blocks inside it: its own title keeps the left part and
    the sub blocks fill the rest, stacked by time with a line between them. */
-.sbos-block.has-children > .sbos-block__title {
-	max-width: 38%;
+.sbos-block.has-children {
+	grid-template-columns: auto minmax(0, 38%) auto;
 }
 
 .sbos-block__children {
@@ -1056,13 +1062,13 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 
 .sbos-block .task-list-item-checkbox {
 	--checkbox-size: var(--sbos-block-font-size);
-	flex: 0 0 auto;
+	grid-area: 1 / 1;
 	margin-top: var(--size-2-1);
 }
 
 .sbos-block__title {
 	--sbos-button-color: var(--text-normal);
-	flex: 1;
+	grid-area: 1 / 2;
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
@@ -1072,6 +1078,54 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 	white-space: normal;
 	overflow-wrap: anywhere;
 	font: inherit;
+}
+
+/* Sub tasks need height, so a block too short for its time range shows none of them. */
+.sbos-block__subtasks {
+	grid-area: 2 / 2 / auto / -1;
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.sbos-block.is-short .sbos-block__subtasks {
+	display: none;
+}
+
+.sbos-subtask {
+	display: flex;
+	align-items: baseline;
+	gap: var(--size-2-2);
+	min-width: 0;
+}
+
+.sbos-subtask .task-list-item-checkbox {
+	--checkbox-size: var(--font-ui-smaller);
+	flex: 0 0 auto;
+	margin: 0;
+}
+
+.sbos-subtask__title {
+	--sbos-button-color: var(--text-muted);
+	min-width: 0;
+	font: inherit;
+	font-size: var(--font-ui-smaller);
+	text-align: left;
+	white-space: normal;
+	overflow-wrap: anywhere;
+}
+
+.sbos-subtask__title:hover {
+	--sbos-button-color: var(--text-normal);
+}
+
+.sbos-subtask.is-done .sbos-subtask__title,
+.sbos-subtask.is-cancelled .sbos-subtask__title {
+	text-decoration: line-through;
+	text-decoration-color: var(--text-faint);
 }
 
 .sbos-block__title:focus-visible {
@@ -1142,7 +1196,7 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 .sbos-block__clock {
 	--sbos-button-padding: 0 var(--size-2-1);
 	--sbos-button-color: var(--text-muted);
-	flex: 0 0 auto;
+	grid-area: 1 / 3;
 }
 
 .sbos-block__clock.is-running {

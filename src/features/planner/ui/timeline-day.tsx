@@ -28,6 +28,8 @@ interface Drag {
 const DRAG_THRESHOLD = 4;
 /** Blocks shorter than this (in pixels) show only their summary, not the time range. */
 const SHORT_BLOCK = 44;
+/** Pixels a sub task is indented for each level it is nested below its block. */
+const SUBTASK_INDENT = 14;
 /** Width in pixels of one level of the clocked-time bar. */
 const CLOCK_BAR = 4;
 export const TASK_DRAG_TYPE = "application/x-sbos-task";
@@ -240,6 +242,36 @@ export function TimelineDay({ date }: { readonly date: IsoDate }): ReactNode {
 						{formatTime(start)} – {formatTime(end)}
 					</span>
 				</button>
+				{block.subtasks.length > 0 && (
+					<ul className="sbos-block__subtasks" aria-label={`Sub tasks of ${block.title}`}>
+						{block.subtasks.map((task) => (
+							<li
+								key={task.id}
+								className={`sbos-subtask is-${task.state}`}
+								style={{
+									paddingInlineStart: `${task.level * SUBTASK_INDENT}px`,
+								}}
+							>
+								<input
+									type="checkbox"
+									className="task-list-item-checkbox"
+									checked={task.state === "done"}
+									aria-label={`Done: ${task.title}`}
+									onPointerDown={(event) => event.stopPropagation()}
+									onChange={() => run(planner.toggleDone(task))}
+								/>
+								<button
+									type="button"
+									className="sbos-subtask__title"
+									onPointerDown={(event) => event.stopPropagation()}
+									onClick={() => services.openTask(task)}
+								>
+									{task.title}
+								</button>
+							</li>
+						))}
+					</ul>
+				)}
 				{services.clocks && !closed && (
 					<button
 						type="button"
