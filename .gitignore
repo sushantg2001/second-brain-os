@@ -27,6 +27,4 @@ data.json
 !.env.example
 
 # Private documents: kept on the maintainer's machine, not published
-docs/definition-of-ready-and-done.md
-docs/testing.md
-docs/sdlc.md
+docs/
