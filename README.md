@@ -27,15 +27,12 @@ Obsidian 1.7.2 or later, plus these community plugins, which the plugin checks f
 
 ## Documentation
 
-| Document                                                             | Contents                                                  |
-| -------------------------------------------------------------------- | --------------------------------------------------------- |
-| [User guide](docs/user-guide.md)                                     | Note formats, commands and settings                       |
-| [Changelog](CHANGELOG.md)                                            | What changed in each release                              |
-| [Architecture](docs/architecture.md)                                 | Layers, domain model, ports and adapters, key decisions   |
-| [Features](docs/features.md)                                         | Full feature list with IDs, priorities and the roadmap    |
-| [Definition of Ready and Done](docs/definition-of-ready-and-done.md) | When work can start and when it is finished               |
-| [Testing strategy](docs/testing.md)                                  | Test levels, fixtures, coverage and the release checklist |
-| [Development lifecycle](docs/sdlc.md)                                | Branching, CI workflows, releases                         |
+| Document                             | Contents                                                |
+| ------------------------------------ | ------------------------------------------------------- |
+| [User guide](docs/user-guide.md)     | Note formats, commands and settings                     |
+| [Changelog](CHANGELOG.md)            | What changed in each release                            |
+| [Architecture](docs/architecture.md) | Layers, domain model, ports and adapters, key decisions |
+| [Features](docs/features.md)         | Full feature list with IDs, priorities and the roadmap  |
 
 ## Development
 
