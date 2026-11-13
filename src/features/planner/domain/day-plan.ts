@@ -14,6 +14,12 @@ export interface PlannedTask {
 	readonly source: BlockSource;
 }
 
+/** A task nested under a block, listed inside it. */
+export interface PlannedSubTask extends PlannedTask {
+	/** 0 for a task directly under the block, 1 for one under that, and so on. */
+	readonly level: number;
+}
+
 export interface PlannedBlock extends PlannedTask {
 	readonly start: Minutes;
 	readonly end: Minutes;
@@ -26,6 +32,12 @@ export interface PlannedBlock extends PlannedTask {
 	readonly parentId: string | null;
 	/** 0 for a block that is not inside another, 1 for one inside that, and so on. */
 	readonly depth: number;
+	/**
+	 * Tasks nested under this block's task that are not blocks of their own: a day's log often
+	 * has a timed task with the things done in it listed below, without times. Sub tasks that are
+	 * drawn as blocks inside this one are not repeated here.
+	 */
+	readonly subtasks: readonly PlannedSubTask[];
 }
 
 export interface DayPlan {
@@ -40,9 +52,13 @@ export interface DayPlan {
 	readonly plannedMinutes: Minutes;
 }
 
+function taskKey(task: { path: string; line: number }): string {
+	return `${task.path}:${task.line}`;
+}
+
 function plannedTask(task: Task, source: BlockSource): PlannedTask {
 	return {
-		id: `${task.path}:${task.line}`,
+		id: taskKey(task),
 		path: task.path,
 		line: task.line,
 		raw: task.raw,
@@ -86,7 +102,7 @@ export function layoutColumns<T extends { start: Minutes; end: Minutes }>(
 	return result;
 }
 
-type Timed = Omit<PlannedBlock, "column" | "columns" | "parentId" | "depth"> & {
+type Timed = Omit<PlannedBlock, "column" | "columns" | "parentId" | "depth" | "subtasks"> & {
 	readonly task: Task;
 };
 
@@ -101,12 +117,16 @@ function byTime(a: { start: Minutes; end: Minutes; line: number }, b: typeof a):
  * A block whose time falls inside that of a task it is nested under is drawn inside it: its parent
  * is the closest task above it, in the same note, that has a block containing it. Blocks that only
  * overlap, or are not inside the block of the task they are under, sit side by side.
+ *
+ * `inNote` lists every task in a note, so a block can list the tasks nested under it even when
+ * they are not themselves part of the day. Without it only `tasks` are looked at.
  */
 export function buildDayPlan(
 	date: IsoDate,
 	dailyPath: string | null,
 	tasks: Iterable<Task>,
 	defaultDuration: Minutes,
+	inNote?: (path: string) => readonly Task[],
 ): DayPlan {
 	const all = [...tasks];
 	const timed: Timed[] = [];
@@ -156,6 +176,37 @@ export function buildDayPlan(
 		return parent === null ? 0 : depthOf(parent) + 1;
 	};
 
+	const nestedUnder = new Map<string, Task[]>();
+	const noted = new Set<string>();
+	const noteTasks = (path: string): readonly Task[] =>
+		inNote ? inNote(path) : all.filter((task) => task.path === path);
+	const childTasks = (task: Task): readonly Task[] => {
+		if (!noted.has(task.path)) {
+			noted.add(task.path);
+			for (const candidate of noteTasks(task.path)) {
+				if (candidate.parentLine !== null) {
+					const key = `${task.path}:${candidate.parentLine}`;
+					nestedUnder.set(key, [...(nestedUnder.get(key) ?? []), candidate]);
+				}
+			}
+		}
+		return nestedUnder.get(taskKey(task)) ?? [];
+	};
+	const subtasksOf = (block: Timed): PlannedSubTask[] => {
+		const found: PlannedSubTask[] = [];
+		const walk = (task: Task, level: number): void => {
+			for (const child of childTasks(task)) {
+				// A sub task drawn as a block lists its own sub tasks.
+				if (!blockAt.has(taskKey(child))) {
+					found.push({ ...plannedTask(child, block.source), level });
+					walk(child, level + 1);
+				}
+			}
+		};
+		walk(block.task, 0);
+		return found;
+	};
+
 	const groups = new Map<string | null, Timed[]>();
 	for (const block of timed) {
 		const parent = parents.get(block.id) ?? null;
@@ -163,10 +214,11 @@ export function buildDayPlan(
 	}
 	const blocks = [...groups.entries()]
 		.flatMap(([parentId, group]) =>
-			layoutColumns(group).map(({ task: _task, ...block }) => ({
+			layoutColumns(group).map(({ task, ...block }) => ({
 				...block,
 				parentId,
 				depth: depthOf(block.id),
+				subtasks: subtasksOf({ ...block, task }),
 			})),
 		)
 		.sort((a, b) => a.start - b.start || a.depth - b.depth || byTime(a, b));

@@ -75,24 +75,51 @@
 
 /* ---------------------------------------------------------------- shared */
 
-/* An icon or text button that looks like Obsidian's clickable icons, whatever the theme gives
-   to plain buttons. */
-.sbos-control,
-:where(.sbos-calendar) button {
-	height: auto;
-	box-shadow: none;
+/* Calendar days, mode tabs and task titles are plain clickable text, but Obsidian paints
+   every `button:not(.clickable-icon)` as a raised control: a filled background, `--input-shadow`
+   and a padding of its own. Themes repeat that with more weight still, Material 3 through
+   `body.theme-dark button:not(.clickable-icon)`, so opting out takes a selector heavier than
+   both. The four things a button varies come in as custom properties, which each control still
+   sets at its own weight. Buttons meant to look like buttons are left alone. */
+button:is(
+		.sbos-control,
+		.sbos-link,
+		.sbos-icon-button,
+		.sbos-unscheduled__title,
+		.sbos-unscheduled__schedule,
+		.sbos-block__title,
+		.sbos-subtask__title,
+		.sbos-block__clock,
+		.sbos-clock__title
+	):not(.mod-cta):not(.mod-warning),
+.sbos-calendar button:not(.mod-cta):not(.mod-warning) {
+	height: var(--sbos-button-height, auto);
+	padding: var(--sbos-button-padding, 0);
+	background-color: var(--sbos-button-background, transparent);
+	background-image: none;
+	/* Obsidian draws a button's focus ring as its shadow, which this takes over, so the ring is
+	   put back for every button, and a control that wants its own sets `--sbos-button-shadow`. */
+	box-shadow: var(--sbos-button-shadow, var(--sbos-focus-ring, none));
+	color: var(--sbos-button-color, inherit);
+	outline: var(--sbos-button-outline, none);
+	appearance: none;
 }
 
+button:focus-visible {
+	--sbos-focus-ring: 0 0 0 2px var(--background-modifier-border-focus);
+}
+
+/* An icon or text button that looks like Obsidian's clickable icons, whatever the theme gives
+   to plain buttons. */
 .sbos-control {
+	--sbos-button-padding: var(--size-2-2) var(--size-2-3);
+	--sbos-button-color: var(--icon-color, var(--text-muted));
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	gap: var(--size-2-1);
-	padding: var(--size-2-2) var(--size-2-3);
 	border: 0;
 	border-radius: var(--radius-s);
-	background: none;
-	color: var(--icon-color, var(--text-muted));
 	font: inherit;
 	white-space: nowrap;
 	cursor: pointer;
@@ -100,12 +127,11 @@
 
 .sbos-control:hover,
 .sbos-control.is-active {
-	background-color: var(--background-modifier-hover);
-	box-shadow: none;
+	--sbos-button-background: var(--background-modifier-hover);
 }
 
 .sbos-control:focus-visible {
-	box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+	--sbos-button-shadow: 0 0 0 2px var(--background-modifier-border-focus);
 }
 
 .sbos-visually-hidden {
@@ -144,18 +170,10 @@
 }
 
 :where(.sbos-calendar) button {
-	padding: 0;
 	border: 0;
-	background: none;
-	color: inherit;
 	font: inherit;
 	line-height: inherit;
 	cursor: pointer;
-}
-
-:where(.sbos-calendar) button:hover {
-	background: none;
-	box-shadow: none;
 }
 
 .sbos-calendar__nav {
@@ -181,6 +199,7 @@
 }
 
 .sbos-calendar__year {
+	--sbos-button-color: var(--interactive-accent);
 	color: var(--interactive-accent);
 }
 
@@ -191,12 +210,14 @@
 }
 
 .sbos-calendar__title-button:focus-visible {
+	--sbos-button-shadow: 0 0 0 2px var(--background-modifier-border-focus);
 	border-radius: var(--radius-s);
-	box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
 }
 
 /* The quarter, as a small tag after the year. It is only there when quarterly notes are on. */
 .sbos-calendar__quarter {
+	--sbos-button-padding: 1px 6px;
+	--sbos-button-color: var(--text-muted);
 	align-self: center;
 	padding: 1px 6px;
 	border: var(--border-width) solid var(--background-modifier-border);
@@ -207,19 +228,15 @@
 	letter-spacing: 0.5px;
 }
 
-button.sbos-calendar__quarter {
-	padding: 1px 6px;
+.sbos-calendar__quarter:hover,
+.sbos-calendar__quarter.has-note {
+	--sbos-button-color: var(--interactive-accent);
+	border-color: var(--interactive-accent);
+	color: var(--interactive-accent);
 }
 
 .sbos-calendar__quarter:hover {
-	border-color: var(--interactive-accent);
-	color: var(--interactive-accent);
 	text-decoration: none;
-}
-
-.sbos-calendar__quarter.has-note {
-	border-color: var(--interactive-accent);
-	color: var(--interactive-accent);
 }
 
 .sbos-calendar__right-nav {
@@ -230,6 +247,7 @@ button.sbos-calendar__quarter {
 }
 
 .sbos-calendar__arrow {
+	--sbos-button-color: var(--color-arrow);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -248,10 +266,10 @@ button.sbos-calendar__quarter {
 }
 
 .sbos-calendar__reset {
+	--sbos-button-padding: 0.5em;
+	--sbos-button-color: var(--color-arrow);
 	display: flex;
 	align-items: center;
-	padding: 0.5em;
-	color: var(--color-arrow);
 	opacity: 0.4;
 	cursor: default;
 }
@@ -261,25 +279,17 @@ button.sbos-calendar__quarter {
 	cursor: pointer;
 }
 
-button.sbos-calendar__reset {
-	padding: 0.5em;
-}
-
 .sbos-calendar__jump {
+	--sbos-button-padding: 0.25em;
+	--sbos-button-color: var(--color-arrow);
 	display: flex;
 	align-items: center;
 	margin-left: 0.25em;
-	padding: 0.25em;
 	border-radius: var(--radius-s);
-	color: var(--color-arrow);
 }
 
-button.sbos-calendar__jump {
-	padding: 0.25em;
-}
-
-button.sbos-calendar__jump:hover {
-	background-color: var(--background-modifier-hover);
+.sbos-calendar__jump:hover {
+	--sbos-button-background: var(--background-modifier-hover);
 }
 
 .sbos-calendar__jump .svg-icon {
@@ -290,6 +300,14 @@ button.sbos-calendar__jump:hover {
 .sbos-calendar__grid {
 	width: 100%;
 	border-collapse: collapse;
+	/* Columns share the width equally, so a narrow sidebar shrinks the days instead of pushing
+	   the last column out of the pane. */
+	table-layout: fixed;
+}
+
+.sbos-calendar__week-header,
+.sbos-calendar__week {
+	width: 2.4em;
 }
 
 .sbos-calendar__grid abbr {
@@ -312,14 +330,13 @@ button.sbos-calendar__jump:hover {
 }
 
 .sbos-calendar__day {
+	--sbos-button-padding: 4px;
+	--sbos-button-color: var(--color-text-day);
+	--sbos-button-height: 100%;
 	position: relative;
 	display: block;
 	width: 100%;
-	height: 100%;
-	padding: 4px;
 	border-radius: 4px;
-	background-color: transparent;
-	color: var(--color-text-day);
 	font-size: 0.8em;
 	text-align: center;
 	vertical-align: baseline;
@@ -328,22 +345,13 @@ button.sbos-calendar__jump:hover {
 		color 0.1s ease-in;
 }
 
-button.sbos-calendar__day {
-	padding: 4px;
-}
-
-button.sbos-calendar__day:hover {
-	background-color: var(--interactive-hover);
-}
-
-button.sbos-calendar__day.is-active:hover {
-	background-color: var(--interactive-accent-hover);
+.sbos-calendar__day:hover {
+	--sbos-button-background: var(--interactive-hover);
 }
 
 .sbos-calendar__day:focus-visible,
 .sbos-calendar__week-button:focus-visible {
-	outline: 0;
-	box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+	--sbos-button-shadow: 0 0 0 2px var(--background-modifier-border-focus);
 }
 
 .sbos-calendar__day.is-other-month {
@@ -351,14 +359,18 @@ button.sbos-calendar__day.is-active:hover {
 }
 
 .sbos-calendar__day.is-today {
-	color: var(--color-text-today);
+	--sbos-button-color: var(--color-text-today);
 }
 
 .sbos-calendar__day:active,
 .sbos-calendar__day.is-active,
 .sbos-calendar__day.is-active.is-today {
-	background-color: var(--interactive-accent);
-	color: var(--text-on-accent);
+	--sbos-button-background: var(--interactive-accent);
+	--sbos-button-color: var(--text-on-accent);
+}
+
+.sbos-calendar__day.is-active:hover {
+	--sbos-button-background: var(--interactive-accent-hover);
 }
 
 /* Week numbers, with a rule between them and the days. */
@@ -368,12 +380,12 @@ button.sbos-calendar__day.is-active:hover {
 }
 
 .sbos-calendar__week-button {
+	--sbos-button-padding: 4px;
+	--sbos-button-color: var(--color-text-weeknum);
+	--sbos-button-height: 100%;
 	display: block;
 	width: 100%;
-	height: 100%;
-	padding: 4px;
 	border-radius: 4px;
-	color: var(--color-text-weeknum);
 	font-size: 0.65em;
 	text-align: center;
 	transition:
@@ -381,18 +393,14 @@ button.sbos-calendar__day.is-active:hover {
 		color 0.1s ease-in;
 }
 
-button.sbos-calendar__week-button {
-	padding: 4px;
-}
-
-button.sbos-calendar__week-button:hover {
-	background-color: var(--interactive-hover);
+.sbos-calendar__week-button:hover {
+	--sbos-button-background: var(--interactive-hover);
 }
 
 .sbos-calendar__week-button.is-active,
-button.sbos-calendar__week-button.is-active:hover {
-	background-color: var(--interactive-accent);
-	color: var(--text-on-accent);
+.sbos-calendar__week-button.is-active:hover {
+	--sbos-button-background: var(--interactive-accent);
+	--sbos-button-color: var(--text-on-accent);
 }
 
 .sbos-calendar__marks {
@@ -428,33 +436,33 @@ button.sbos-calendar__week-button.is-active:hover {
 	margin: var(--size-4-2) 0 0;
 }
 
-.sbos-calendar .sbos-calendar__tab {
-	padding: 2px 8px;
+.sbos-calendar__tab {
+	--sbos-button-padding: 2px 8px;
+	--sbos-button-color: var(--text-muted);
 	border-radius: var(--radius-s);
-	color: var(--text-muted);
 	font-size: var(--font-ui-smaller);
 	font-weight: var(--font-medium);
 }
 
-.sbos-calendar .sbos-calendar__tab:hover {
-	background-color: var(--background-modifier-hover);
+.sbos-calendar__tab:hover {
+	--sbos-button-background: var(--background-modifier-hover);
 }
 
-.sbos-calendar .sbos-calendar__tab[aria-selected="true"] {
-	background-color: var(--interactive-accent);
-	color: var(--text-on-accent);
+.sbos-calendar__tab[aria-selected="true"] {
+	--sbos-button-background: var(--interactive-accent);
+	--sbos-button-color: var(--text-on-accent);
 }
 
-.sbos-calendar .sbos-calendar__tab.is-off:not([aria-selected="true"]) {
-	color: var(--text-faint);
+.sbos-calendar__tab.is-off:not([aria-selected="true"]) {
+	--sbos-button-color: var(--text-faint);
 }
 
-.sbos-calendar .sbos-calendar__tab:focus-visible {
-	box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+.sbos-calendar__tab:focus-visible {
+	--sbos-button-shadow: 0 0 0 2px var(--background-modifier-border-focus);
 }
 
 tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
-	background-color: var(--interactive-hover);
+	--sbos-button-background: var(--interactive-hover);
 }
 
 /* Months, quarters and years. */
@@ -473,48 +481,47 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 	grid-template-columns: repeat(2, 1fr);
 }
 
-.sbos-calendar .sbos-period-grid__cell {
+.sbos-period-grid__cell {
+	--sbos-button-padding: var(--size-4-2) var(--size-4-1);
+	--sbos-button-color: var(--color-text-day);
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
 	gap: 2px;
 	min-height: 3.4em;
-	padding: var(--size-4-2) var(--size-4-1);
 	border-radius: var(--radius-m);
-	background-color: transparent;
-	color: var(--color-text-day);
 	font-size: 0.85em;
 	transition:
 		background-color 0.1s ease-in,
 		color 0.1s ease-in;
 }
 
-.sbos-calendar .sbos-period-grid__cell:hover {
-	background-color: var(--interactive-hover);
+.sbos-period-grid__cell:hover {
+	--sbos-button-background: var(--interactive-hover);
 }
 
-.sbos-calendar .sbos-period-grid__cell.is-other-month {
+.sbos-period-grid__cell.is-other-month {
 	opacity: 0.35;
 }
 
-.sbos-calendar .sbos-period-grid__cell.is-today {
-	color: var(--color-text-today);
+.sbos-period-grid__cell.is-today {
+	--sbos-button-color: var(--color-text-today);
 	font-weight: var(--font-semibold);
 }
 
-.sbos-calendar .sbos-period-grid__cell.is-active,
-.sbos-calendar .sbos-period-grid__cell.is-active.is-today {
-	background-color: var(--interactive-accent);
-	color: var(--text-on-accent);
+.sbos-period-grid__cell.is-active,
+.sbos-period-grid__cell.is-active.is-today {
+	--sbos-button-background: var(--interactive-accent);
+	--sbos-button-color: var(--text-on-accent);
 }
 
-.sbos-calendar .sbos-period-grid__cell.is-active:hover {
-	background-color: var(--interactive-accent-hover);
+.sbos-period-grid__cell.is-active:hover {
+	--sbos-button-background: var(--interactive-accent-hover);
 }
 
-.sbos-calendar .sbos-period-grid__cell:focus-visible {
-	box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+.sbos-period-grid__cell:focus-visible {
+	--sbos-button-shadow: 0 0 0 2px var(--background-modifier-border-focus);
 }
 
 .sbos-period-grid__hint {
@@ -551,19 +558,12 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 	margin: 0;
 }
 
+/* The call to action is Obsidian's own `mod-cta`, so the theme draws it; the calendar only
+   stops it inheriting the calendar's own font. */
 .sbos-calendar .sbos-calendar__off button {
-	height: var(--input-height, 30px);
-	padding: var(--size-4-1) var(--size-4-3);
-	border-radius: var(--radius-s);
-}
-
-.sbos-calendar .sbos-calendar__off button.mod-cta {
-	background: var(--interactive-accent);
-	color: var(--text-on-accent);
-}
-
-.sbos-calendar .sbos-calendar__off button.mod-cta:hover {
-	background: var(--interactive-accent-hover);
+	font-family: var(--font-interface);
+	font-size: var(--font-ui-small);
+	line-height: normal;
 }
 
 .sbos-calendar__off-hint {
@@ -595,11 +595,12 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 
 .sbos-timeline {
 	--sbos-border: var(--border-width) solid var(--background-modifier-border);
-	--sbos-scrollbar-width: 12px;
+	/* Replaced with the real height by the view; 0 until then, so it adds no dead strip. */
+	--sbos-scrollbar-width: 0px;
 	--sbos-flex-basis: 180px;
-	--sbos-block-shadow: 1px 1px 2px 0 #0000001f;
-	--sbos-block-border: var(--color-base-40, var(--background-modifier-border));
-	--sbos-shadow-right: 2px 0 2px #00000010;
+	--sbos-block-shadow: 1px 1px 2px 0 var(--background-modifier-box-shadow);
+	--sbos-block-border: var(--background-modifier-border);
+	--sbos-shadow-right: 2px 0 2px var(--background-modifier-box-shadow);
 	--sbos-block-font-size: var(--font-ui-small);
 	flex: 1 1 0;
 	min-height: 0;
@@ -659,7 +660,7 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 }
 
 .sbos-timeline__today {
-	color: var(--text-muted);
+	--sbos-button-color: var(--text-muted);
 	font-size: var(--font-ui-small);
 	font-weight: var(--font-medium);
 }
@@ -697,12 +698,12 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 }
 
 .sbos-week-picker__day {
+	--sbos-button-padding: var(--size-2-1) 0;
 	width: 100%;
-	padding: var(--size-2-1) 0;
 }
 
 .sbos-week-picker__day.is-active {
-	background-color: var(--interactive-accent);
+	--sbos-button-background: var(--interactive-accent);
 }
 
 .sbos-week-picker__number {
@@ -725,6 +726,7 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 
 .sbos-timeline__day-title {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: baseline;
 	justify-content: space-between;
 	gap: var(--size-4-2);
@@ -732,17 +734,19 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 }
 
 .sbos-timeline__title {
+	min-width: 0;
 	margin: 0;
 	font-size: var(--font-ui-medium);
+	overflow-wrap: anywhere;
 }
 
-.sbos-timeline .sbos-timeline__title-button {
-	color: var(--text-normal);
+.sbos-timeline__title-button {
+	--sbos-button-color: var(--text-normal);
 	font-weight: inherit;
 }
 
-.sbos-timeline .sbos-timeline__title-button:hover {
-	color: var(--interactive-accent);
+.sbos-timeline__title-button:hover {
+	--sbos-button-color: var(--interactive-accent);
 	text-decoration: none;
 }
 
@@ -855,14 +859,11 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 }
 
 .sbos-unscheduled__title {
+	--sbos-button-padding: 0 var(--size-2-1);
+	--sbos-button-color: var(--text-normal);
 	flex: 1;
 	min-width: 0;
-	height: auto;
-	padding: 0 var(--size-2-1);
 	justify-content: flex-start;
-	background: none;
-	box-shadow: none;
-	color: var(--text-normal);
 	font: inherit;
 	font-weight: var(--font-semibold);
 	text-align: left;
@@ -870,16 +871,13 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 }
 
 .sbos-unscheduled__schedule {
-	height: auto;
-	padding: var(--size-2-1) var(--size-2-2);
-	background: none;
-	box-shadow: none;
-	color: var(--text-faint);
+	--sbos-button-padding: var(--size-2-1) var(--size-2-2);
+	--sbos-button-color: var(--text-faint);
 }
 
 .sbos-unscheduled__schedule:hover {
-	background-color: var(--background-modifier-hover);
-	color: var(--text-muted);
+	--sbos-button-background: var(--background-modifier-hover);
+	--sbos-button-color: var(--text-muted);
 }
 
 /* The hour ruler, kept level with the scrolled timeline. */
@@ -980,10 +978,18 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 .sbos-block {
 	position: absolute;
 	box-sizing: border-box;
-	display: flex;
-	align-items: flex-start;
-	gap: var(--size-2-2);
-	margin: 0 1px 2px;
+	/* The checkbox, title and clock button share the first row; the sub tasks go below the
+	   title. Placing each by hand keeps a block without a clock from shifting its columns. */
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	align-content: start;
+	align-items: start;
+	column-gap: var(--size-2-2);
+	row-gap: var(--size-2-1);
+	/* The width comes from the block's share of the day, so a side margin would sit outside it
+	   and push the column into a scrollbar it never needs. Blocks are set apart by their own
+	   borders instead. */
+	margin: 0 0 2px;
 	padding: var(--size-2-1) var(--size-4-1);
 	border: 1px solid var(--sbos-block-border);
 	border-radius: var(--radius-s);
@@ -998,8 +1004,8 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 
 /* A block whose task has sub tasks with blocks inside it: its own title keeps the left part and
    the sub blocks fill the rest, stacked by time with a line between them. */
-.sbos-block.has-children > .sbos-block__title {
-	max-width: 38%;
+.sbos-block.has-children {
+	grid-template-columns: auto minmax(0, 38%) auto;
 }
 
 .sbos-block__children {
@@ -1041,7 +1047,7 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 
 .sbos-block.is-dragging {
 	cursor: grabbing;
-	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+	box-shadow: var(--shadow-l);
 	z-index: 3;
 }
 
@@ -1057,30 +1063,92 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 
 .sbos-block .task-list-item-checkbox {
 	--checkbox-size: var(--sbos-block-font-size);
-	flex: 0 0 auto;
+	grid-area: 1 / 1;
 	margin-top: var(--size-2-1);
 }
 
 .sbos-block__title {
-	flex: 1;
+	--sbos-button-color: var(--text-normal);
+	grid-area: 1 / 2;
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
 	justify-content: flex-start;
 	min-width: 0;
-	height: auto;
-	padding: 0;
-	background: none;
-	box-shadow: none;
 	text-align: left;
 	white-space: normal;
 	overflow-wrap: anywhere;
-	color: var(--text-normal);
 	font: inherit;
 }
 
+/* Sub tasks need height, so a block too short for its time range shows none of them. */
+.sbos-block__subtasks {
+	grid-area: 2 / 2 / auto / -1;
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.sbos-block.is-short .sbos-block__subtasks {
+	display: none;
+}
+
+/* What is hidden is counted instead, beside the title, so a short block still says it has some. */
+.sbos-block__count {
+	display: none;
+	color: var(--text-faint);
+	font-size: var(--font-ui-smaller);
+	font-variant-numeric: tabular-nums;
+}
+
+.sbos-block.is-short .sbos-block__title {
+	flex-direction: row;
+	align-items: baseline;
+	gap: var(--size-2-2);
+}
+
+.sbos-block.is-short .sbos-block__count {
+	display: inline;
+}
+
+.sbos-subtask {
+	display: flex;
+	align-items: baseline;
+	gap: var(--size-2-2);
+	min-width: 0;
+}
+
+.sbos-subtask .task-list-item-checkbox {
+	--checkbox-size: var(--font-ui-smaller);
+	flex: 0 0 auto;
+	margin: 0;
+}
+
+.sbos-subtask__title {
+	--sbos-button-color: var(--text-muted);
+	min-width: 0;
+	font: inherit;
+	font-size: var(--font-ui-smaller);
+	text-align: left;
+	white-space: normal;
+	overflow-wrap: anywhere;
+}
+
+.sbos-subtask__title:hover {
+	--sbos-button-color: var(--text-normal);
+}
+
+.sbos-subtask.is-done .sbos-subtask__title,
+.sbos-subtask.is-cancelled .sbos-subtask__title {
+	text-decoration: line-through;
+	text-decoration-color: var(--text-faint);
+}
+
 .sbos-block__title:focus-visible {
-	outline: 2px solid var(--background-modifier-border-focus);
+	--sbos-button-outline: 2px solid var(--background-modifier-border-focus);
 }
 
 .sbos-block__summary {
@@ -1145,48 +1213,112 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 /* ---------------------------------------------------------------- clocks */
 
 .sbos-block__clock {
-	flex: 0 0 auto;
-	padding: 0 var(--size-2-1);
-	height: auto;
-	background: none;
-	box-shadow: none;
-	color: var(--text-muted);
+	--sbos-button-padding: 0 var(--size-2-1);
+	--sbos-button-color: var(--text-muted);
+	grid-area: 1 / 3;
 }
 
 .sbos-block__clock.is-running {
-	color: var(--color-red);
+	--sbos-button-color: var(--color-red);
 }
 
-.sbos-clocked {
+/* Clocked time sits in a lane down the right of the day, beside the planned blocks. Each level
+   of nesting is a column: a task's block takes the first, its sub tasks' blocks the ones after,
+   level with the time they were clocked. */
+.sbos-clocks {
 	position: absolute;
+	top: 0;
 	right: 0;
-	width: 4px;
-	box-sizing: border-box;
-	border-radius: 2px;
-	background-color: var(--color-green);
-	opacity: 0.7;
+	bottom: 0;
+	border-left: 1px dashed var(--background-modifier-border);
 	pointer-events: none;
 	z-index: 2;
+	/* The blocks adapt to the width of their lane, which depends on the pane, not the window. */
+	container: sbos-clocks / inline-size;
 }
 
-.sbos-clocked:not([data-depth="0"]) {
-	border: 1px solid var(--background-primary);
+.sbos-clock {
+	position: absolute;
+	box-sizing: border-box;
+	border: 1px solid var(--color-green);
+	border-radius: var(--radius-s);
+	background-color: color-mix(in srgb, var(--color-green) 14%, var(--background-primary));
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	overflow: hidden;
 }
 
-.sbos-clocked.is-running {
-	background-color: var(--color-red);
+.sbos-clock.is-running {
+	border-color: var(--color-red);
+	background-color: color-mix(in srgb, var(--color-red) 14%, var(--background-primary));
+}
+
+/* The title button covers the whole block, so pressing anywhere on it opens the task instead of
+   falling through to the day underneath, where it would start a new planned block. */
+.sbos-clock__title {
+	--sbos-button-color: var(--text-normal);
+	--sbos-button-height: 100%;
+	--sbos-button-padding: 1px var(--size-2-2);
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: flex-start;
+	width: 100%;
+	max-width: 100%;
+	text-align: left;
+	white-space: normal;
+	overflow-wrap: anywhere;
+	font: inherit;
+	pointer-events: auto;
+	cursor: pointer;
+}
+
+.sbos-clock__summary {
+	font-weight: var(--font-semibold);
+}
+
+.sbos-clock__time {
+	color: var(--text-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+.sbos-clock.is-short .sbos-clock__time {
+	display: none;
+}
+
+/* In a narrow pane the columns of a busy day are only a few characters wide. Drop what can be
+   read from the tooltip first, then the names of blocks that only hold other blocks, so the
+   tasks that were actually worked on keep room for theirs. */
+@container sbos-clocks (max-width: 200px) {
+	.sbos-clock__title {
+		--sbos-button-padding: 1px var(--size-2-1);
+	}
+
+	.sbos-clock__time {
+		display: none;
+	}
+}
+
+@container sbos-clocks (max-width: 150px) {
+	.sbos-clock:not(.is-leaf) .sbos-clock__title {
+		--sbos-button-padding: 0;
+	}
+
+	.sbos-clock:not(.is-leaf) .sbos-clock__summary {
+		display: none;
+	}
 }
 
 /* ---------------------------------------------------------------- PPV */
 
 .sbos-link {
-	padding: 0;
-	height: auto;
-	background: none;
-	box-shadow: none;
-	color: var(--link-color);
+	--sbos-button-color: var(--link-color);
 	font: inherit;
 	text-align: left;
+	/* Obsidian keeps button text on one line, so a long title would push its row wider than the
+	   pane instead of wrapping. */
+	white-space: normal;
+	overflow-wrap: anywhere;
 	cursor: pointer;
 }
 
@@ -1209,11 +1341,8 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 }
 
 .sbos-icon-button {
-	padding: 0 var(--size-2-2);
-	height: auto;
-	background: none;
-	box-shadow: none;
-	color: var(--text-muted);
+	--sbos-button-padding: 0 var(--size-2-2);
+	--sbos-button-color: var(--text-muted);
 }
 
 .sbos-dashboard {
@@ -1312,6 +1441,29 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 	width: 8em;
 }
 
+/* A native `<progress>` keeps Chromium's own blue whatever accent the theme sets, so draw the
+   track and the bar from the theme instead. Obsidian runs on Electron, so the -webkit- bar and
+   value pseudo-elements are the ones that apply. */
+.sbos-project__meta progress,
+.sbos-progress progress {
+	appearance: none;
+	height: var(--size-4-2);
+	border: 0;
+	border-radius: var(--radius-s);
+	background-color: var(--background-modifier-border);
+	overflow: hidden;
+}
+
+.sbos-project__meta progress::-webkit-progress-bar,
+.sbos-progress progress::-webkit-progress-bar {
+	background-color: var(--background-modifier-border);
+}
+
+.sbos-project__meta progress::-webkit-progress-value,
+.sbos-progress progress::-webkit-progress-value {
+	background-color: var(--interactive-accent);
+}
+
 .sbos-form {
 	display: grid;
 	gap: var(--size-4-2);
@@ -1359,14 +1511,32 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 	margin: var(--size-4-3) 0 var(--size-2-2);
 }
 
-.sbos-review ul {
-	margin: 0;
+/* The review and query blocks render inside the note itself, where Obsidian's markdown styles
+   reach their lists and tables: a list item picks up the reading indent and a `th` picks up a
+   table border its `td` never gets. These are layout, not prose, so they say so with enough
+   weight to outweigh `.markdown-rendered`. */
+:is(.sbos-block-query, .sbos-review) :is(.sbos-project-list, .sbos-task-list, .sbos-finding-list) {
+	margin: var(--size-2-2) 0;
+	padding: 0;
+	list-style: none;
 }
 
-.sbos-review__table th {
-	text-align: left;
+:is(.sbos-block-query, .sbos-review) :is(.sbos-finding, .sbos-task-list > li) {
+	margin-inline: 0;
+}
+
+.sbos-review .sbos-review__table,
+.sbos-review .sbos-review__table th,
+.sbos-review .sbos-review__table td {
+	border: 0;
+	background: none;
+}
+
+.sbos-review .sbos-review__table th,
+.sbos-review .sbos-review__table td {
+	padding: var(--size-2-1) var(--size-4-4) var(--size-2-1) 0;
 	font-weight: var(--font-normal);
-	padding-right: var(--size-4-4);
+	text-align: left;
 }
 
 /* ---------------------------------------------------------------- vault check */
@@ -1385,9 +1555,20 @@ tr.is-pickable:hover .sbos-calendar__day:not(.is-active) {
 
 .sbos-finding {
 	display: flex;
-	align-items: center;
+	align-items: baseline;
 	flex-wrap: wrap;
 	gap: var(--size-2-3);
+}
+
+/* The message takes what the row has left and wraps inside it, so a long one stays beside its
+   severity instead of dropping to a line of its own. */
+.sbos-finding > .sbos-pill {
+	flex: none;
+}
+
+.sbos-finding > .sbos-link {
+	flex: 1 1 0;
+	min-width: 12em;
 }
 
 .sbos-finding--error .sbos-pill {

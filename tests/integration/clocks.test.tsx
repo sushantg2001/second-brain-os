@@ -110,7 +110,7 @@ describe("clocks", () => {
 		expect(harness.content()).toContain("\t[clock::2026-10-29T09:05:00--]");
 		await harness.at(9 * 60 + 35);
 		expect(ui.getByText("Planned 1h · Clocked 30m")).toBeInTheDocument();
-		expect(view.contentEl.querySelector(".sbos-clocked.is-running")).not.toBeNull();
+		expect(view.contentEl.querySelector(".sbos-clock.is-running")).not.toBeNull();
 		await userEvent.click(ui.getByRole("button", { name: "Stop clock on Write spec" }));
 		await act(() => sleep(10));
 		expect(harness.content()).toContain("\t[clock::2026-10-29T09:05:00--2026-10-29T09:35:00]");
@@ -227,6 +227,49 @@ describe("clock lines without a bullet", () => {
 	});
 });
 
+describe("clocked ranges are worked out once", () => {
+	const CLOCKED = [
+		"- [ ] Main",
+		"\t- [ ] Sub",
+		"\t\t[clock::2026-10-29T09:00:00--2026-10-29T09:30:00]",
+	].join("\n");
+
+	it("returns the same ranges until something changes", async () => {
+		const { container } = await setup({ [DAY]: CLOCKED });
+		const first = container.clocks.rangesOn("2026-10-29");
+		expect(first).toHaveLength(2);
+		expect(container.clocks.rangesOn("2026-10-29")).toBe(first);
+		// Another day is worked out separately and does not disturb this one.
+		expect(container.clocks.rangesOn("2026-10-30")).toEqual([]);
+		expect(container.clocks.rangesOn("2026-10-29")).toBe(first);
+	});
+
+	it("works them out again when a note changes", async () => {
+		const { container, app } = await setup({ [DAY]: CLOCKED });
+		const before = container.clocks.rangesOn("2026-10-29");
+		await app.vault.modify(
+			app.vault.getAbstractFileByPath(DAY) as never,
+			CLOCKED.replace("09:30:00", "10:00:00"),
+		);
+		await act(() => sleep(20));
+		const after = container.clocks.rangesOn("2026-10-29");
+		expect(after).not.toBe(before);
+		expect(after.map((range) => range.end)).toEqual([600, 600]);
+		expect(container.clocks.minutesOn("2026-10-29")).toBe(60);
+	});
+
+	it("extends a running clock as the minutes pass", async () => {
+		const { container, at } = await setup(
+			{ [DAY]: "- [ ] Main\n\t[clock::2026-10-29T09:00:00--]\n" },
+			9 * 60 + 10,
+		);
+		expect(container.clocks.rangesOn("2026-10-29")[0]?.end).toBe(550);
+		await at(9 * 60 + 40);
+		expect(container.clocks.rangesOn("2026-10-29")[0]?.end).toBe(580);
+		expect(container.clocks.minutesOn("2026-10-29")).toBe(40);
+	});
+});
+
 describe("clocks on nested tasks", () => {
 	const ranges = (
 		container: Awaited<ReturnType<typeof setup>>["container"],
@@ -302,6 +345,44 @@ describe("clocks on nested tasks", () => {
 			["Mid", 1, 540, 570],
 			["Leaf", 2, 540, 570],
 		]);
+	});
+
+	it("joins the parent's range when sub task clocks are only seconds apart", async () => {
+		const { container } = await setup({
+			[DAY]: [
+				"- [ ] Main",
+				"\t- [ ] One",
+				"\t\t[clock::2026-10-29T10:00:00--2026-10-29T10:30:40]",
+				"\t- [ ] Two",
+				"\t\t[clock::2026-10-29T10:30:47--2026-10-29T11:16:53]",
+			].join("\n"),
+		});
+		const parents = container.clocks
+			.rangesOn("2026-10-29")
+			.filter((range) => range.depth === 0);
+		expect(parents).toHaveLength(1);
+		expect(parents[0]?.start).toBe(600);
+		expect(parents[0]?.end).toBeCloseTo(11 * 60 + 16 + 53 / 60, 5);
+	});
+
+	it("links each range to the range above it that holds it", async () => {
+		const { container } = await setup({
+			[DAY]: [
+				"- [ ] Main",
+				"\t- [ ] Write spec",
+				"\t\t[clock::2026-10-29T09:05:00--2026-10-29T09:50:00]",
+				"\t- [ ] Review PR",
+				"\t\t[clock::2026-10-29T10:05:00--2026-10-29T11:40:00]",
+			].join("\n"),
+		});
+		const found = container.clocks.rangesOn("2026-10-29");
+		const [firstMain, firstSub, secondMain, secondSub] = found;
+		expect([firstMain?.parentKey, firstMain?.leaf]).toEqual([null, false]);
+		expect([secondMain?.parentKey, secondMain?.leaf]).toEqual([null, false]);
+		expect(firstSub?.parentKey).toBe(firstMain?.key);
+		expect(secondSub?.parentKey).toBe(secondMain?.key);
+		expect([firstSub?.leaf, secondSub?.leaf]).toEqual([true, true]);
+		expect([firstSub?.path, firstSub?.line]).toEqual([DAY, 1]);
 	});
 
 	it("marks the parent's bar as running while a sub task's clock runs", async () => {

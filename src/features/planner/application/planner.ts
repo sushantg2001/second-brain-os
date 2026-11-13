@@ -100,6 +100,7 @@ export class Planner {
 				dailyPath,
 				[...daily, ...scheduled],
 				this.settings.defaultDuration,
+				(path) => this.deps.tasks.tasksIn(path),
 			);
 			this.#cache.set(date, plan);
 		}

@@ -19,6 +19,7 @@ import {
 	type Task,
 	type TaskIndex,
 	type TaskRef,
+	type TaskSnapshot,
 } from "../../tasks";
 import {
 	datesOf,
@@ -46,12 +47,19 @@ export interface ClockedRange {
 	/** Unique among the ranges of one day, for rendering. */
 	readonly key: string;
 	readonly taskId: string;
+	/** Where the task is, so the range can open it. */
+	readonly path: string;
+	readonly line: number;
 	readonly title: string;
 	readonly start: Minutes;
 	readonly end: Minutes;
 	readonly running: boolean;
 	/** 0 for a task that is not nested under another task; 1 for a sub task of that, and so on. */
 	readonly depth: number;
+	/** The range of the task above this one that holds it, or null for a range at depth 0. */
+	readonly parentKey: string | null;
+	/** True when no range of a sub task sits inside this one. */
+	readonly leaf: boolean;
 }
 
 export interface ClocksDeps {
@@ -67,12 +75,18 @@ interface Span {
 	running: boolean;
 }
 
-/** Joins spans that overlap or touch into one. */
+/**
+ * Spans closer together than this, in minutes, are one stretch of work: stopping a clock by hand
+ * and starting the next leaves a few seconds between them.
+ */
+const JOIN_WITHIN = 1;
+
+/** Joins spans that overlap, touch or are only a moment apart into one. */
 function mergeSpans(spans: readonly Span[]): Span[] {
 	const merged: Span[] = [];
 	for (const span of [...spans].sort((a, b) => a.start - b.start)) {
 		const last = merged.at(-1);
-		if (last && span.start <= last.end) {
+		if (last && span.start <= last.end + JOIN_WITHIN) {
 			last.end = Math.max(last.end, span.end);
 			last.running = last.running || span.running;
 		} else {
@@ -108,12 +122,50 @@ function findRunning(tasks: Iterable<Task>): RunningClock[] {
 	);
 }
 
+/**
+ * What the clock views need from the task index: every task by position, so a task's parents can
+ * be found, and the few that have clock lines, with those lines read once.
+ */
+interface ClockIndex {
+	readonly snapshot: TaskSnapshot;
+	readonly tasks: ReadonlyMap<string, Task>;
+	readonly clocked: readonly { readonly task: Task; readonly clocks: readonly ClockLine[] }[];
+}
+
 /** Time tracking: clock entries written on the lines under tasks. */
 export class Clocks {
 	readonly #running: ReadableStore<readonly RunningClock[]>;
+	#index: ClockIndex | null = null;
+	/** Ranges by day, valid for one version of the task index and one minute of the day. */
+	#ranges: {
+		readonly snapshot: TaskSnapshot;
+		readonly now: NowSnapshot;
+		readonly byDate: Map<IsoDate, ClockedRange[]>;
+	} | null = null;
 
 	constructor(private readonly deps: ClocksDeps) {
 		this.#running = select(deps.tasks.snapshot, () => findRunning(deps.tasks.all()));
+	}
+
+	/**
+	 * Read once per version of the task index. The views ask on every render, a drag renders on
+	 * every pointer move, and a vault holds thousands of tasks of which a few have clocks.
+	 */
+	#indexed(): ClockIndex {
+		const snapshot = this.deps.tasks.snapshot.get();
+		if (this.#index?.snapshot !== snapshot) {
+			const tasks = new Map<string, Task>();
+			const clocked: { task: Task; clocks: ClockLine[] }[] = [];
+			for (const task of this.deps.tasks.all()) {
+				tasks.set(taskKey(task), task);
+				const clocks = clocksOf(task);
+				if (clocks.length > 0) {
+					clocked.push({ task, clocks });
+				}
+			}
+			this.#index = { snapshot, tasks, clocked };
+		}
+		return this.#index;
 	}
 
 	/** Every running clock, oldest first. Normally zero or one. */
@@ -190,11 +242,26 @@ export class Clocks {
 	 * is drawn inside its parent's.
 	 */
 	rangesOn(date: IsoDate): ClockedRange[] {
+		const { snapshot, tasks, clocked } = this.#indexed();
 		const now = this.deps.now.get();
-		const tasks = new Map<string, Task>();
-		for (const task of this.deps.tasks.all()) {
-			tasks.set(taskKey(task), task);
+		if (this.#ranges?.snapshot !== snapshot || this.#ranges.now !== now) {
+			this.#ranges = { snapshot, now, byDate: new Map() };
 		}
+		const known = this.#ranges.byDate.get(date);
+		if (known) {
+			return known;
+		}
+		const ranges = this.#rangesOn(date, now, tasks, clocked);
+		this.#ranges.byDate.set(date, ranges);
+		return ranges;
+	}
+
+	#rangesOn(
+		date: IsoDate,
+		now: NowSnapshot,
+		tasks: ReadonlyMap<string, Task>,
+		clocked: ClockIndex["clocked"],
+	): ClockedRange[] {
 		const parentOf = (task: Task): Task | undefined =>
 			task.parentLine === null ? undefined : tasks.get(`${task.path}:${task.parentLine}`);
 		const levelOf = (task: Task): number => {
@@ -207,8 +274,8 @@ export class Clocks {
 
 		const own = new Map<string, Span[]>();
 		const nested = new Map<string, Span[]>();
-		for (const task of tasks.values()) {
-			for (const clock of clocksOf(task)) {
+		for (const { task, clocks } of clocked) {
+			for (const clock of clocks) {
 				const range = rangeOnDate(clock, date, now);
 				if (!range) {
 					continue;
@@ -221,7 +288,8 @@ export class Clocks {
 			}
 		}
 
-		const ranges: ClockedRange[] = [];
+		type Draft = Omit<ClockedRange, "parentKey" | "leaf">;
+		const drafts: Draft[] = [];
 		for (const key of new Set([...own.keys(), ...nested.keys()])) {
 			const task = tasks.get(key);
 			if (!task) {
@@ -234,23 +302,50 @@ export class Clocks {
 					: (own.get(key) ?? []);
 			const depth = levelOf(task);
 			spans.forEach((span, index) => {
-				ranges.push({
+				drafts.push({
 					key: `${key}-${index}`,
 					taskId: key,
+					path: task.path,
+					line: task.line,
 					title: taskTitle(task),
 					depth,
 					...span,
 				});
 			});
 		}
-		return ranges.sort((a, b) => a.start - b.start || a.depth - b.depth);
+
+		// A sub task's range always lies inside one of its parent's, since the parent's ranges are
+		// built from them, so the parent is the range of the task above that holds it.
+		const byTask = new Map<string, Draft[]>();
+		for (const draft of drafts) {
+			byTask.set(draft.taskId, [...(byTask.get(draft.taskId) ?? []), draft]);
+		}
+		const parentKeyOf = (draft: Draft): string | null => {
+			const task = tasks.get(draft.taskId);
+			const above = task ? parentOf(task) : undefined;
+			const holder = above
+				? byTask
+						.get(taskKey(above))
+						?.find((range) => range.start <= draft.start && draft.end <= range.end)
+				: undefined;
+			return holder?.key ?? null;
+		};
+		const parents = new Map(drafts.map((draft) => [draft.key, parentKeyOf(draft)]));
+		const holders = new Set(parents.values());
+		return drafts
+			.map((draft): ClockedRange => ({
+				...draft,
+				parentKey: parents.get(draft.key) ?? null,
+				leaf: !holders.has(draft.key),
+			}))
+			.sort((a, b) => a.start - b.start || a.depth - b.depth);
 	}
 
 	minutesOn(date: IsoDate): Minutes {
 		const now = this.deps.now.get();
 		let total = 0;
-		for (const task of this.deps.tasks.all()) {
-			for (const clock of clocksOf(task)) {
+		for (const { clocks } of this.#indexed().clocked) {
+			for (const clock of clocks) {
 				total += minutesOnDate(clock, date, now);
 			}
 		}
@@ -267,8 +362,8 @@ export class Clocks {
 	minutesByDate(): Map<IsoDate, Minutes> {
 		const now = this.deps.now.get();
 		const totals = new Map<IsoDate, Minutes>();
-		for (const task of this.deps.tasks.all()) {
-			for (const clock of clocksOf(task)) {
+		for (const { clocks } of this.#indexed().clocked) {
+			for (const clock of clocks) {
 				for (const date of datesOf(clock, now)) {
 					const minutes = minutesOnDate(clock, date, now);
 					if (minutes > 0) {
