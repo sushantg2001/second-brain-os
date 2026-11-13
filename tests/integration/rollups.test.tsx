@@ -64,7 +64,7 @@ describe("rollups", () => {
 		expect(review?.range).toEqual({ from: "2026-10-25", to: "2026-10-31" });
 		expect(review?.completed.map((task) => [task.title, task.done, task.project])).toEqual([
 			["Buy shoes", "2026-10-27", "PPV/Projects/Marathon.md"],
-			["Stretch [[Marathon]]", "2026-10-29", "PPV/Projects/Marathon.md"],
+			["Stretch Marathon", "2026-10-29", "PPV/Projects/Marathon.md"],
 		]);
 		expect([...(review?.clockedByPillar ?? [])]).toEqual([
 			["Health", 90],

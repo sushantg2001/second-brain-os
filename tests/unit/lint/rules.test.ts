@@ -110,6 +110,23 @@ describe("project rules", () => {
 });
 
 describe("task rules", () => {
+	it("quotes a task without its inline fields, links as text", () => {
+		const tasks = parseTasks(
+			"a.md",
+			[
+				"- [x] 12:00 - 3:00 work [completion:: 2025-04-19]",
+				"- [ ] 10:00 - 09:00 plan [[Roadmap|the roadmap]] [id:: abc]",
+				"- [ ] Long [reference::[[Epic|Big epic]]]",
+				"\t[clock::2026-10-28T09:00--]",
+			].join("\n"),
+		);
+		expect(lint(input({ tasks })).map((item) => item.message)).toEqual([
+			'"12:00 - 3:00 work" ends before it starts.',
+			'"10:00 - 09:00 plan the roadmap" ends before it starts.',
+			'A clock on "Long" has run since 2026-10-28.',
+		]);
+	});
+
 	it("reports malformed blocks and clocks running too long", () => {
 		const tasks = parseTasks(
 			"a.md",
