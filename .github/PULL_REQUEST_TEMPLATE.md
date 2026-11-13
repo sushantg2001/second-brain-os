@@ -12,5 +12,5 @@ Closes #
 
 - [ ] CI is green
 - [ ] Tests cover the change; a bug fix has a test that failed first
-- [ ] Docs updated where behaviour changed
+- [ ] README updated where behaviour changed
 - [ ] Title is `type(scope): summary` (feat, fix, perf, refactor, test, docs, build, ci, chore, style, revert); `!` or a `BREAKING CHANGE:` footer marks a breaking change

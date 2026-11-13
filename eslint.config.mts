@@ -7,7 +7,7 @@ import type { ESLint, Linter } from "eslint";
 import { defineConfig, globalIgnores } from "eslint/config";
 import globals from "globals";
 
-/** Layers, innermost first. docs/architecture.md explains each one. */
+/** Layers, innermost first. */
 const ELEMENTS = [
 	{ type: "app", pattern: "src/app" },
 	{ type: "feature", pattern: "src/features/*", capture: ["feature"] },
