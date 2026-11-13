@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping with second-brain-os. The full process is in [docs/sdlc.md](docs/sdlc.md). This page is the short version.
+Thanks for helping with second-brain-os. This page is how a change gets in.
 
 ## Making a change
 
@@ -18,7 +18,7 @@ Right now collaboration means opening pull requests: fork the repo, or push a `<
 
 ## Releases
 
-Nobody but the maintainer releases. release-please keeps a `chore(main): release x.y.z` pull request and a draft release up to date but creates no tag. The maintainer merges that PR, signs the tag (`git tag -s x.y.z`) and pushes it; the release workflow then checks the tag, waits for the maintainer's approval and publishes. See [docs/sdlc.md](docs/sdlc.md).
+Nobody but the maintainer releases. release-please keeps a `chore(main): release x.y.z` pull request and a draft release up to date but creates no tag. The maintainer merges that PR, signs the tag (`git tag -s x.y.z`) and pushes it; the release workflow then checks the tag, waits for the maintainer's approval and publishes.
 
 ## License
 
