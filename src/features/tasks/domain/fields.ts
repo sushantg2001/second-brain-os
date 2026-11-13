@@ -83,13 +83,40 @@ function withoutInlineFields(text: string): string {
 	return kept;
 }
 
-/** Text for display: the task without Tasks emoji fields, inline fields or block ids. */
+/**
+ * Links as Obsidian shows them: `[[Note|Alias]]` is "Alias", `[[Note]]` is "Note", a link to a
+ * heading is "Note > Heading" and one to a block is just the note. An embed reads the same, and
+ * `[text](url)` is "text".
+ */
+function withLinksAsText(text: string): string {
+	return text
+		.replace(
+			/!?\[\[([^\]|#]*)(?:#([^\]|]*))?(?:\|([^\]]*))?\]\]/g,
+			(_, target: string, heading: string | undefined, alias: string | undefined) => {
+				if (alias !== undefined) {
+					return alias;
+				}
+				if (heading === undefined || heading.startsWith("^")) {
+					return target;
+				}
+				return target ? `${target} > ${heading}` : heading;
+			},
+		)
+		.replace(/\[([^\]]+)\]\((?:[^()\s]|\([^()\s]*\))*\)/g, "$1");
+}
+
+/**
+ * Text for display: the task without Tasks emoji fields, inline fields or block ids, and with
+ * its links shown by their text.
+ */
 export function displayText(text: string): string {
-	return withoutInlineFields(
-		text
-			.replace(/\s*[⏳📅🛫✅➕❌]️?\s*\d{4}-\d{2}-\d{2}/gu, "")
-			.replace(/\s*[⏫🔼🔽🔺⏬]️?/gu, "")
-			.replace(/\s*🔁️?[^⏳📅🛫✅➕❌⏫🔼🔽🔺⏬]*/gu, ""),
+	return withLinksAsText(
+		withoutInlineFields(
+			text
+				.replace(/\s*[⏳📅🛫✅➕❌]️?\s*\d{4}-\d{2}-\d{2}/gu, "")
+				.replace(/\s*[⏫🔼🔽🔺⏬]️?/gu, "")
+				.replace(/\s*🔁️?[^⏳📅🛫✅➕❌⏫🔼🔽🔺⏬]*/gu, ""),
+		),
 	)
 		.replace(/\s*\^[\w-]+$/, "")
 		.trim();

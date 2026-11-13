@@ -25,3 +25,37 @@ describe("displayText: inline fields", () => {
 		expect(displayText("Use a [note] and (a remark)")).toBe("Use a [note] and (a remark)");
 	});
 });
+
+describe("displayText: links", () => {
+	it("shows a wiki link by its alias", () => {
+		expect(
+			displayText("create story for [[2025-10#^d97457|dataview properties in tasks plugin]]"),
+		).toBe("create story for dataview properties in tasks plugin");
+	});
+
+	it("shows a wiki link without an alias by its target", () => {
+		expect(displayText("Create the initial [[Data-Science]] resources")).toBe(
+			"Create the initial Data-Science resources",
+		);
+		expect(displayText("Review ([[2025-10]] to [[2025-12]])")).toBe(
+			"Review (2025-10 to 2025-12)",
+		);
+	});
+
+	it("shows a link to a heading as the note and the heading, and one to a block as the note", () => {
+		expect(displayText("See [[Plan#Timeline]]")).toBe("See Plan > Timeline");
+		expect(displayText("See [[Plan#^abc123]]")).toBe("See Plan");
+		expect(displayText("See [[#Timeline]]")).toBe("See Timeline");
+	});
+
+	it("shows an embed and a markdown link by their text", () => {
+		expect(displayText("Read ![[Notes]] and [the docs](https://example.com/a_(b))")).toBe(
+			"Read Notes and the docs",
+		);
+	});
+
+	it("leaves a task with no links or fields alone", () => {
+		expect(displayText("Buy milk")).toBe("Buy milk");
+		expect(displayText("")).toBe("");
+	});
+});
