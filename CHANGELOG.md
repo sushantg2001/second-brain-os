@@ -1,5 +1,22 @@
 # Changelog
 
+## [3.0.0](https://github.com/sushantg2001/second-brain-os/compare/2.2.0...3.0.0) (2026-11-14)
+
+
+### ⚠ BREAKING CHANGES
+
+* read tasks, dates and clocks from Dataview ([#16](https://github.com/sushantg2001/second-brain-os/issues/16))
+
+### Features
+
+* read tasks, dates and clocks from Dataview ([#16](https://github.com/sushantg2001/second-brain-os/issues/16)) ([1b4bf4d](https://github.com/sushantg2001/second-brain-os/commit/1b4bf4da527f8167df1d03e88d48c4b7a9003d37))
+
+
+### Bug Fixes
+
+* **tasks:** show task titles without brackets and with links as text ([#10](https://github.com/sushantg2001/second-brain-os/issues/10)) ([e3efdb8](https://github.com/sushantg2001/second-brain-os/commit/e3efdb881dce53f2d74e4175d50e763b94069663))
+* **ui:** work with community themes and show sub tasks and clocks ([#9](https://github.com/sushantg2001/second-brain-os/issues/9)) ([7ee28e2](https://github.com/sushantg2001/second-brain-os/commit/7ee28e28cfb48ab2ec5ada010ad3a8aea205385b))
+
 ## [2.2.0](https://github.com/sushantg2001/second-brain-os/compare/2.1.0...2.2.0) (2026-11-08)
 
 
