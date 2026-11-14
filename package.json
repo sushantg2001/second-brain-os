@@ -1,6 +1,6 @@
 {
 	"name": "second-brain-os",
-	"version": "3.0.0",
+	"version": "4.0.0",
 	"description": "Obsidian plugin that combines a day planner, calendar and periodic notes, and the Pillars, Pipelines & Vaults (PPV) system",
 	"private": true,
 	"type": "module",
