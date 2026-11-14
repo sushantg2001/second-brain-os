@@ -2,45 +2,47 @@ import { describe, expect, it } from "bun:test";
 import fc from "fast-check";
 
 import {
-	clockIndent,
-	clockInsertLine,
-	closeClockLine,
 	clocksOf,
-	clocksWithin,
+	closeClockIn,
+	closedClockValue,
 	datesOf,
 	entryMinutes,
+	findClockLine,
 	formatClockEntry,
+	formatClockValue,
 	minutesBetween,
 	minutesOnDate,
 	momentNow,
 	openClockLine,
-	parseClockEntry,
+	parseClockValue,
+	previewClosedClock,
 	rangeOnDate,
 } from "../../../src/features/clocks";
-import { parseTasks } from "../../../src/features/tasks";
+
 import { addDays } from "../../../src/shared/kernel";
 import { FixedClock } from "../../fakes/fixed-clock";
+import { tasksIn } from "../../fakes/tasks";
 
 const now = { date: "2026-10-29", minutes: 12 * 60 };
 
 describe("clock entries", () => {
 	it("parses closed and running entries", () => {
-		expect(parseClockEntry("[clock::2026-10-29T09:00--2026-10-29T10:15]")).toEqual({
+		expect(parseClockValue("2026-10-29T09:00--2026-10-29T10:15")).toEqual({
 			start: { date: "2026-10-29", minutes: 540 },
 			end: { date: "2026-10-29", minutes: 615 },
 		});
-		expect(parseClockEntry("note [clock:: 2026-10-29T09:00 -- ] more")).toEqual({
+		expect(parseClockValue(" 2026-10-29T09:00 -- ")).toEqual({
 			start: { date: "2026-10-29", minutes: 540 },
 			end: null,
 		});
 	});
 
 	it("rejects malformed entries", () => {
-		expect(parseClockEntry("[clock::2026-10-29T10:00--2026-10-29T09:00]")).toBeNull();
-		expect(parseClockEntry("[clock::2026-02-30T10:00--]")).toBeNull();
-		expect(parseClockEntry("[clock::2026-10-29T24:00--]")).toBeNull();
-		expect(parseClockEntry("[clock::2026-10-29T09:00--2026-13-01T09:00]")).toBeNull();
-		expect(parseClockEntry("no clock")).toBeNull();
+		expect(parseClockValue("2026-10-29T10:00--2026-10-29T09:00")).toBeNull();
+		expect(parseClockValue("2026-02-30T10:00--")).toBeNull();
+		expect(parseClockValue("2026-10-29T24:00--")).toBeNull();
+		expect(parseClockValue("2026-10-29T09:00--2026-13-01T09:00")).toBeNull();
+		expect(parseClockValue("no clock")).toBeNull();
 	});
 
 	it("round-trips formatting", () => {
@@ -68,7 +70,7 @@ describe("clock entries", () => {
 								minutes: endMinutes % 1440,
 							};
 					const entry = { start, end };
-					expect(parseClockEntry(formatClockEntry(entry))).toEqual(entry);
+					expect(parseClockValue(formatClockValue(entry))).toEqual(entry);
 					if (end) {
 						expect(minutesBetween(start, end)).toBe(length);
 					}
@@ -135,7 +137,7 @@ function at<T>(items: readonly T[], index: number): T {
 
 describe("clock stamps with seconds", () => {
 	it("parses seconds and keeps them", () => {
-		const entry = parseClockEntry("[clock::2026-10-29T00:30:20--2026-10-29T09:55:29]");
+		const entry = parseClockValue("2026-10-29T00:30:20--2026-10-29T09:55:29");
 		expect(entry).toEqual({
 			start: { date: "2026-10-29", minutes: 30, seconds: 20 },
 			end: { date: "2026-10-29", minutes: 595, seconds: 29 },
@@ -144,7 +146,7 @@ describe("clock stamps with seconds", () => {
 	});
 
 	it("leaves minute-only stamps without a seconds field", () => {
-		const entry = parseClockEntry("[clock::2026-10-29T09:00--2026-10-29T09:30]");
+		const entry = parseClockValue("2026-10-29T09:00--2026-10-29T09:30");
 		expect(entry).toEqual({
 			start: { date: "2026-10-29", minutes: 540 },
 			end: { date: "2026-10-29", minutes: 570 },
@@ -153,11 +155,11 @@ describe("clock stamps with seconds", () => {
 	});
 
 	it("reads a running clock and mixed precision", () => {
-		expect(parseClockEntry("[clock::2026-10-29T09:05:12--]")).toEqual({
+		expect(parseClockValue("2026-10-29T09:05:12--")).toEqual({
 			start: { date: "2026-10-29", minutes: 545, seconds: 12 },
 			end: null,
 		});
-		const mixed = parseClockEntry("[clock::2026-10-29T09:00--2026-10-29T09:30:15]");
+		const mixed = parseClockValue("2026-10-29T09:00--2026-10-29T09:30:15");
 		expect(mixed?.start).not.toHaveProperty("seconds");
 		expect(mixed?.end?.seconds).toBe(15);
 		expect(mixed && formatClockEntry(mixed)).toBe(
@@ -166,21 +168,21 @@ describe("clock stamps with seconds", () => {
 	});
 
 	it("rejects bad seconds, and an end that is earlier by seconds", () => {
-		expect(parseClockEntry("[clock::2026-10-29T09:00:60--]")).toBeNull();
-		expect(parseClockEntry("[clock::2026-10-29T09:00:5--]")).toBeNull();
-		expect(parseClockEntry("[clock::2026-10-29T09:00:ab--]")).toBeNull();
-		expect(parseClockEntry("[clock::2026-10-29T09:00:30--2026-10-29T09:00:10]")).toBeNull();
-		expect(parseClockEntry("[clock::2026-10-29T09:00:10--2026-10-29T09:00:10]")).not.toBeNull();
+		expect(parseClockValue("2026-10-29T09:00:60--")).toBeNull();
+		expect(parseClockValue("2026-10-29T09:00:5--")).toBeNull();
+		expect(parseClockValue("2026-10-29T09:00:ab--")).toBeNull();
+		expect(parseClockValue("2026-10-29T09:00:30--2026-10-29T09:00:10")).toBeNull();
+		expect(parseClockValue("2026-10-29T09:00:10--2026-10-29T09:00:10")).not.toBeNull();
 	});
 
 	it("tolerates spaces around the stamps", () => {
-		expect(
-			parseClockEntry("[clock:: 2026-10-29T09:00:00 -- 2026-10-29T09:10:00 ]")?.end?.minutes,
-		).toBe(550);
+		expect(parseClockValue("2026-10-29T09:00:00 -- 2026-10-29T09:10:00")?.end?.minutes).toBe(
+			550,
+		);
 	});
 
 	it("splits an entry that crosses midnight, to the second", () => {
-		const entry = parseClockEntry("[clock::2026-10-26T21:06:26--2026-10-27T00:00:44]");
+		const entry = parseClockValue("2026-10-26T21:06:26--2026-10-27T00:00:44");
 		if (!entry) {
 			throw new Error("not parsed");
 		}
@@ -221,7 +223,7 @@ describe("clock stamps with seconds", () => {
 								seconds: total % 60,
 							};
 					const entry = { start, end };
-					expect(parseClockEntry(formatClockEntry(entry))).toEqual(entry);
+					expect(parseClockValue(formatClockValue(entry))).toEqual(entry);
 					if (end) {
 						expect(minutesBetween(start, end) * 60).toBeCloseTo(length, 5);
 					}
@@ -236,8 +238,8 @@ describe("clock stamps with seconds", () => {
 	});
 });
 
-describe("clock lines under tasks", () => {
-	const tasks = parseTasks(
+describe("clocks of a task", () => {
+	const tasks = tasksIn(
 		"a.md",
 		[
 			"- [ ] Write",
@@ -249,15 +251,20 @@ describe("clock lines under tasks", () => {
 		].join("\n"),
 	);
 
-	it("finds entries written with or without a bullet, each once", () => {
-		expect(clocksOf(at(tasks, 0)).map((clock) => [clock.line, clock.end === null])).toEqual([
-			[1, false],
-			[2, true],
+	it("reads entries written with or without a bullet, each once", () => {
+		expect(clocksOf(at(tasks, 0)).map((clock) => [clock.value, clock.end === null])).toEqual([
+			["2026-10-29T09:00:15--2026-10-29T09:30:15", false],
+			["2026-10-29T11:00--", true],
 		]);
 	});
 
+	it("skips a clock field that is not a clock", () => {
+		const [task] = tasksIn("c.md", "- [ ] A\n\t[clock::soon]\n\t[clock::2026-10-29T09:00--]\n");
+		expect(task && clocksOf(task).map((clock) => clock.value)).toEqual(["2026-10-29T09:00--"]);
+	});
+
 	it("separates a task's own clocks from those of tasks nested under it", () => {
-		const nested = parseTasks(
+		const nested = tasksIn(
 			"b.md",
 			[
 				"- [ ] Main",
@@ -267,57 +274,105 @@ describe("clock lines under tasks", () => {
 				"\t\t- [clock::2026-10-29T10:00--2026-10-29T10:05]",
 			].join("\n"),
 		);
-		expect(clocksOf(at(nested, 0)).map((clock) => clock.line)).toEqual([1]);
-		expect(clocksOf(at(nested, 1)).map((clock) => clock.line)).toEqual([3, 4]);
-		expect(clocksWithin(at(nested, 0)).map((clock) => clock.line)).toEqual([1, 3, 4]);
-	});
-
-	it("indents a new clock line one tab under the task", () => {
-		expect(clockIndent(at(tasks, 0))).toBe("\t");
-		expect(clockIndent(at(tasks, 2))).toBe("  \t");
-		expect(clockIndent(at(parseTasks("c.md", "\t- [ ] Nested\n"), 0))).toBe("\t\t");
-		expect(clockIndent(at(parseTasks("d.md", "1. [ ] Numbered\n"), 0))).toBe("\t");
-	});
-
-	it("inserts below the task and the continuation lines already under it", () => {
-		expect(clockInsertLine(at(tasks, 0))).toBe(2);
-		expect(clockInsertLine(at(tasks, 1))).toBe(5);
-		const spaced = parseTasks(
-			"e.md",
-			[
-				"- [ ] A",
-				"\tsee notes",
-				"\t[clock::2026-10-29T09:00--2026-10-29T09:10]",
-				"",
-				"\tlater",
-			].join("\n"),
-		);
-		expect(clockInsertLine(at(spaced, 0))).toBe(3);
+		expect(clocksOf(at(nested, 0)).map((clock) => clock.value)).toEqual([
+			"2026-10-29T08:00:00--2026-10-29T08:10:00",
+		]);
+		expect(clocksOf(at(nested, 1)).map((clock) => clock.value)).toEqual([
+			"2026-10-29T09:00:00--2026-10-29T09:20:00",
+			"2026-10-29T10:00--2026-10-29T10:05",
+		]);
 	});
 
 	it("writes a running clock line with no bullet", () => {
 		const open = openClockLine("\t", { date: "2026-10-29", minutes: 600, seconds: 7 });
 		expect(open).toBe("\t[clock::2026-10-29T10:00:07--]");
-		expect(parseClockEntry(open)?.end).toBeNull();
 	});
+});
+
+describe("closing a clock", () => {
+	const end = { date: "2026-10-29", minutes: 645, seconds: 40 };
 
 	it("closes a clock to the precision it was started with", () => {
-		const end = { date: "2026-10-29", minutes: 645, seconds: 40 };
-		expect(closeClockLine("\t[clock::2026-10-29T10:00:07--]", end)).toBe(
-			"\t[clock::2026-10-29T10:00:07--2026-10-29T10:45:40]",
+		expect(closedClockValue("2026-10-29T10:00:07--", end)).toBe(
+			"2026-10-29T10:00:07--2026-10-29T10:45:40",
 		);
 		expect(
-			closeClockLine("\t[clock::2026-10-29T10:00:07--]", {
-				date: end.date,
-				minutes: end.minutes,
-			}),
-		).toBe("\t[clock::2026-10-29T10:00:07--2026-10-29T10:45:00]");
-		// An older minute-only line stays minute-only, and keeps its bullet.
-		expect(closeClockLine("\t- [clock::2026-10-29T10:00--]", end)).toBe(
-			"\t- [clock::2026-10-29T10:00--2026-10-29T10:45]",
+			closedClockValue("2026-10-29T10:00:07--", { date: end.date, minutes: end.minutes }),
+		).toBe("2026-10-29T10:00:07--2026-10-29T10:45:00");
+		// An older minute-only clock stays minute-only.
+		expect(closedClockValue("2026-10-29T10:00--", end)).toBe(
+			"2026-10-29T10:00--2026-10-29T10:45",
 		);
-		expect(
-			closeClockLine("\t[clock::2026-10-29T10:00:07--2026-10-29T10:45:40]", now),
-		).toBeNull();
+		expect(closedClockValue("2026-10-29T10:00:07--2026-10-29T10:45:40", now)).toBeNull();
+		expect(closedClockValue("soon", end)).toBeNull();
+	});
+
+	it("shows the field before and after", () => {
+		expect(previewClosedClock("2026-10-29T10:00--", end)).toEqual({
+			before: "[clock::2026-10-29T10:00--]",
+			after: "[clock::2026-10-29T10:00--2026-10-29T10:45]",
+		});
+		expect(previewClosedClock("2026-10-29T10:00--2026-10-29T10:30", end)).toBeNull();
+	});
+
+	const note = [
+		"- [ ] Write",
+		"\t      [clock::2026-10-29T09:00:15--2026-10-29T09:30:15]",
+		"\t      [clock::2026-10-29T10:00:07--] still going",
+		"- [ ] Other",
+		"\t- [clock::2026-10-29T10:00--]",
+	].join("\n");
+
+	it("rewrites the field and leaves the rest of the line alone", () => {
+		const spot = { line: 0, lastLine: 2, value: "2026-10-29T10:00:07--" };
+		const closed = closeClockIn(note, spot, end);
+		expect(closed.ok && closed.value.split("\n")[2]).toBe(
+			"\t      [clock::2026-10-29T10:00:07--2026-10-29T10:45:40] still going",
+		);
+		expect(closed.ok && closed.value.split("\n").filter((_, i) => i !== 2)).toEqual(
+			note.split("\n").filter((_, i) => i !== 2),
+		);
+	});
+
+	it("finds the clock where the task moved to, and keeps CRLF line endings", () => {
+		const moved = `new line\r\n${note.replaceAll("\n", "\r\n")}`;
+		const closed = closeClockIn(
+			moved,
+			{ line: 0, lastLine: 2, value: "2026-10-29T10:00:07--" },
+			end,
+		);
+		expect(closed.ok && closed.value.split("\r\n")[3]).toBe(
+			"\t      [clock::2026-10-29T10:00:07--2026-10-29T10:45:40] still going",
+		);
+	});
+
+	it("prefers the clock in the task's lines when two notes lines look the same", () => {
+		const twins = [
+			"- [ ] A",
+			"\t[clock::2026-10-29T10:00--]",
+			"- [ ] B",
+			"\t[clock::2026-10-29T10:00--]",
+		];
+		const first = findClockLine(twins, { line: 0, lastLine: 1, value: "2026-10-29T10:00--" });
+		const second = findClockLine(twins, { line: 2, lastLine: 3, value: "2026-10-29T10:00--" });
+		expect([first.ok && first.value, second.ok && second.value]).toEqual([1, 3]);
+		expect(findClockLine(twins, { line: 9, lastLine: 9, value: "2026-10-29T10:00--" }).ok).toBe(
+			false,
+		);
+	});
+
+	it("fails when the clock is gone or already closed", () => {
+		const gone = closeClockIn(
+			"- [ ] A",
+			{ line: 0, lastLine: 0, value: "2026-10-29T10:00--" },
+			end,
+		);
+		expect(gone.ok).toBe(false);
+		const closedAlready = closeClockIn(
+			note,
+			{ line: 0, lastLine: 2, value: "2026-10-29T09:00:15--2026-10-29T09:30:15" },
+			end,
+		);
+		expect(!closedAlready.ok && closedAlready.error.message).toBe("That clock is not running.");
 	});
 });

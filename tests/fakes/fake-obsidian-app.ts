@@ -2,6 +2,7 @@ import type { App as ObsidianApp } from "obsidian";
 
 import { App, type PluginManagerState } from "../mocks/obsidian";
 
+import { installDataview } from "./fake-dataview";
 import type { FakePlugin } from "./fake-plugin-registry";
 
 export function createPluginManager(plugins: readonly FakePlugin[] = []): PluginManagerState {
@@ -20,6 +21,8 @@ export interface TestAppOptions {
 	/** Vault files by path. Folders are created as needed. */
 	readonly files?: Readonly<Record<string, string>>;
 	readonly plugins?: readonly FakePlugin[];
+	/** Leave Dataview out, as when the plugin is not installed. */
+	readonly dataview?: boolean;
 }
 
 /** An in-memory Obsidian app seeded with notes. */
@@ -35,6 +38,9 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<App> 
 			}
 		}
 		await app.vault.create(path, content);
+	}
+	if (options.dataview !== false) {
+		installDataview(app);
 	}
 	return app;
 }

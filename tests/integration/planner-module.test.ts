@@ -18,13 +18,14 @@ async function setup(notify: boolean) {
 	const plugin = new Plugin(app);
 	const obsidianPlugin = plugin as unknown as ObsidianPlugin;
 	const clock = new FixedClock("2026-10-29", 10 * 60 + 25);
-	const container = createContainer(obsidianPlugin, { clock });
+	const container = createContainer(obsidianPlugin, { clock, taskDebounceMs: 0 });
 	await container.settings.load();
 	await container.settings
 		.section("planner")
 		.update((settings) => ({ ...settings, notifyOnStart: notify }));
 	container.periodic.refresh();
-	await container.tasks.rebuild();
+	container.tasks.attach();
+	await container.tasks.ready;
 	const services = registerPlanner(obsidianPlugin, {
 		app: app as unknown as ObsidianApp,
 		planner: container.planner,

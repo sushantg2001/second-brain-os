@@ -1,5 +1,5 @@
 import { err, ok, type Clock, type NoteStore, type Result } from "../../../shared/kernel";
-import { replaceLine, type LineRef } from "../domain/edit";
+import { editLine, type LineRef } from "../domain/edit";
 import { toggleDoneLine } from "../domain/toggle";
 import type { TaskToggler } from "./ports";
 
@@ -7,7 +7,7 @@ export interface TaskRef extends LineRef {
 	readonly path: string;
 }
 
-/** Writes to task lines. Every edit is checked against the line as it was read. */
+/** Writes to task lines. Every edit is checked against the task as it was read. */
 export class TaskActions {
 	constructor(
 		private readonly notes: NoteStore,
@@ -18,16 +18,11 @@ export class TaskActions {
 	/** Rewrites one task line with a pure function. */
 	async editLine(
 		ref: TaskRef,
-		edit: (raw: string) => string | readonly string[] | null,
+		edit: (line: string) => string | readonly string[] | null,
 	): Promise<Result<void, Error>> {
 		let failure: Error | null = null;
 		await this.notes.process(ref.path, (content) => {
-			const replacement = edit(ref.raw);
-			if (replacement === null) {
-				failure = new Error("That line is not a task.");
-				return content;
-			}
-			const next = replaceLine(content, ref, replacement);
+			const next = editLine(content, ref, edit);
 			if (!next.ok) {
 				failure = next.error;
 				return content;
@@ -45,19 +40,14 @@ export class TaskActions {
 		path: string,
 		edits: readonly {
 			readonly ref: LineRef;
-			readonly edit: (raw: string) => string | readonly string[] | null;
+			readonly edit: (line: string) => string | readonly string[] | null;
 		}[],
 	): Promise<Result<void, Error>> {
 		let failure: Error | null = null;
 		await this.notes.process(path, (content) => {
 			let next = content;
 			for (const { ref, edit } of edits) {
-				const replacement = edit(ref.raw);
-				if (replacement === null) {
-					failure = new Error("That line is not a task.");
-					return content;
-				}
-				const replaced = replaceLine(next, ref, replacement);
+				const replaced = editLine(next, ref, edit);
 				if (!replaced.ok) {
 					failure = replaced.error;
 					return content;
@@ -70,9 +60,9 @@ export class TaskActions {
 	}
 
 	toggleDone(ref: TaskRef): Promise<Result<void, Error>> {
-		return this.editLine(ref, (raw) => {
-			const viaTasks = this.toggler?.toggle(raw, ref.path);
-			return viaTasks ? viaTasks.split("\n") : toggleDoneLine(raw, this.clock.today());
+		return this.editLine(ref, (line) => {
+			const viaTasks = this.toggler?.toggle(line, ref.path);
+			return viaTasks ? viaTasks.split("\n") : toggleDoneLine(line, this.clock.today());
 		});
 	}
 }

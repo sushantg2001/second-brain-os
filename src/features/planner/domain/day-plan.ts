@@ -8,7 +8,9 @@ export interface PlannedTask {
 	readonly id: string;
 	readonly path: string;
 	readonly line: number;
-	readonly raw: string;
+	/** The checkbox character and text of the task line, to find it again when it is edited. */
+	readonly status: string;
+	readonly text: string;
 	readonly title: string;
 	readonly state: TaskState;
 	readonly source: BlockSource;
@@ -61,7 +63,8 @@ function plannedTask(task: Task, source: BlockSource): PlannedTask {
 		id: taskKey(task),
 		path: task.path,
 		line: task.line,
-		raw: task.raw,
+		status: task.status,
+		text: task.text,
 		title: displayText(stripTimeBlock(task.text)) || "Untitled",
 		state: task.state,
 		source,

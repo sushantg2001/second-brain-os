@@ -76,7 +76,7 @@ describe("vault check", () => {
 		await userEvent.click(within(clockGroup).getByRole("button", { name: "Fix…" }));
 		const preview = screen.getByLabelText("Preview");
 		expect(preview.textContent).toBe(
-			"- \t- [clock::2026-10-27T09:00--]+ \t- [clock::2026-10-27T09:00--2026-10-29T12:00]",
+			"- [clock::2026-10-27T09:00--]+ [clock::2026-10-27T09:00--2026-10-29T12:00]",
 		);
 		await userEvent.click(screen.getByRole("button", { name: "Apply" }));
 		await act(() => sleep(10));
@@ -94,7 +94,7 @@ describe("vault check", () => {
 		const group = ui.getByRole("region", { name: "Clock running for more than 12 hours (1)" });
 		await userEvent.click(within(group).getByRole("button", { name: "Fix…" }));
 		expect(screen.getByLabelText("Preview").textContent).toBe(
-			"- \t[clock::2026-10-27T09:00:30--]+ \t[clock::2026-10-27T09:00:30--2026-10-29T12:00:00]",
+			"- [clock::2026-10-27T09:00:30--]+ [clock::2026-10-27T09:00:30--2026-10-29T12:00:00]",
 		);
 		await userEvent.click(screen.getByRole("button", { name: "Apply" }));
 		await act(() => sleep(10));
@@ -140,7 +140,7 @@ describe("vault check", () => {
 		);
 		const notRunning = await harness.container.linter.closeClock({
 			...fix,
-			raw: "\t- [clock::2026-10-27T09:00--2026-10-27T10:00]",
+			value: "2026-10-27T09:00--2026-10-27T10:00",
 		});
 		expect(!notRunning.ok && notRunning.error.message).toBe("That clock is no longer running.");
 		expect(

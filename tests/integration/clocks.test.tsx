@@ -4,9 +4,10 @@ import userEvent from "@testing-library/user-event";
 
 import { clockStatusText, taskAtLine } from "../../src/features/clocks";
 import type { TimelineView } from "../../src/features/planner";
-import { parseTasks } from "../../src/features/tasks";
+
 import { Notice } from "../mocks/obsidian";
 import { loadPlugin, sleep } from "../fakes/plugin-harness";
+import { tasksIn } from "../fakes/tasks";
 
 const NOTE = ["- [ ] 09:00 - 10:00 Write spec", "\t- context", "- [ ] Review", ""].join("\n");
 
@@ -444,7 +445,7 @@ describe("clocks on nested tasks", () => {
 
 describe("clock helpers", () => {
 	it("finds the task for a line, including nested lines", () => {
-		const tasks = parseTasks("a.md", "- [ ] A\n\t- note\n- [ ] B\n\ntext");
+		const tasks = tasksIn("a.md", "- [ ] A\n\t- note\n- [ ] B\n\ntext");
 		expect(taskAtLine(tasks, 1)?.text).toBe("A");
 		expect(taskAtLine(tasks, 2)?.text).toBe("B");
 		expect(taskAtLine(tasks, 4)).toBeNull();

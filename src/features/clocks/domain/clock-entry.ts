@@ -29,7 +29,8 @@ export interface ClockEntry {
 }
 
 const STAMP = "(\\d{4}-\\d{2}-\\d{2})T(\\d{2}:\\d{2})(?::(\\d{2}))?";
-const ENTRY = new RegExp(`\\[clock::\\s*${STAMP}\\s*--\\s*(?:${STAMP})?\\s*\\]`, "i");
+/** The value of a `clock` field: a start and, once the clock has stopped, an end. */
+const VALUE = new RegExp(`^\\s*${STAMP}\\s*--\\s*(?:${STAMP})?\\s*$`);
 
 function moment(
 	date: string | undefined,
@@ -61,8 +62,12 @@ export function momentNow(clock: Clock): Moment {
 	};
 }
 
-export function parseClockEntry(text: string): ClockEntry | null {
-	const match = ENTRY.exec(text);
+/**
+ * Reads the value of a `clock` field, `START--END` or `START--` while it runs. Dataview finds the
+ * field; the one field holds both ends, so splitting them is left to this.
+ */
+export function parseClockValue(value: string): ClockEntry | null {
+	const match = VALUE.exec(value);
 	if (!match) {
 		return null;
 	}
@@ -82,8 +87,13 @@ export function formatMoment(value: Moment): string {
 	return `${value.date}T${formatTime(value.minutes)}${seconds}`;
 }
 
+/** The value of a `clock` field for an entry. */
+export function formatClockValue(entry: ClockEntry): string {
+	return `${formatMoment(entry.start)}--${entry.end ? formatMoment(entry.end) : ""}`;
+}
+
 export function formatClockEntry(entry: ClockEntry): string {
-	return `[clock::${formatMoment(entry.start)}--${entry.end ? formatMoment(entry.end) : ""}]`;
+	return `[clock::${formatClockValue(entry)}]`;
 }
 
 /** Minutes from one moment to another. Fractional when either one has seconds. */

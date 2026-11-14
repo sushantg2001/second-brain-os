@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 
 import { buildDayPlan } from "../../../src/features/planner";
-import { parseTasks } from "../../../src/features/tasks";
+import { tasksIn } from "../../fakes/tasks";
 
 /** A day log: timed tasks with what was done in them listed below, untimed, one clock each. */
 const LOG = [
@@ -18,7 +18,7 @@ const LOG = [
 ].join("\n");
 
 function plan(content = LOG) {
-	const tasks = parseTasks("2026-10-29.md", content);
+	const tasks = tasksIn("2026-10-29.md", content);
 	return buildDayPlan("2026-10-29", "2026-10-29.md", tasks, 30);
 }
 
@@ -64,7 +64,7 @@ describe("sub tasks of a block", () => {
 	});
 
 	it("lists the sub tasks of a block that is scheduled from another note", () => {
-		const elsewhere = parseTasks(
+		const elsewhere = tasksIn(
 			"Projects/Site.md",
 			[
 				"- [ ] 14:00 - 15:00 Review ⏳ 2026-10-29",

@@ -15,9 +15,9 @@ import {
 	withBlock,
 	withoutBlock,
 } from "../../../src/features/planner";
-import { parseTasks } from "../../../src/features/tasks";
+import { tasksIn } from "../../fakes/tasks";
 
-const daily = parseTasks(
+const daily = tasksIn(
 	"2026-10-29.md",
 	[
 		"- [ ] 09:00 - 10:00 Write spec ⏫",
@@ -27,7 +27,7 @@ const daily = parseTasks(
 		"- [ ] 09:30 - 11:00 Overlap",
 	].join("\n"),
 );
-const elsewhere = parseTasks(
+const elsewhere = tasksIn(
 	"Projects/Site.md",
 	[
 		"- [ ] 14:00 - 15:00 Review ⏳ 2026-10-29",
@@ -170,8 +170,8 @@ describe("nested blocks", () => {
 			DATE,
 			"d.md",
 			[
-				...parseTasks("d.md", note),
-				...Object.entries(extra).flatMap(([path, text]) => parseTasks(path, text)),
+				...tasksIn("d.md", note),
+				...Object.entries(extra).flatMap(([path, text]) => tasksIn(path, text)),
 			],
 			duration,
 		);
@@ -363,7 +363,7 @@ describe("nested blocks", () => {
 
 describe("shiftBlockLine", () => {
 	const block = (text: string) => {
-		const [task] = buildDayPlan("2026-10-29", "d.md", parseTasks("d.md", text), 30).blocks;
+		const [task] = buildDayPlan("2026-10-29", "d.md", tasksIn("d.md", text), 30).blocks;
 		if (!task) {
 			throw new Error("no block");
 		}

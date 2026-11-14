@@ -42,7 +42,7 @@ export interface PlannerDeps {
 }
 
 function refOf(task: PlannedTask): TaskRef {
-	return { path: task.path, line: task.line, raw: task.raw };
+	return { path: task.path, line: task.line, status: task.status, text: task.text };
 }
 
 /** Builds day plans from the task index and writes block changes back to the notes. */
@@ -217,7 +217,6 @@ export class Planner {
 		await this.deps.notes.process(note.value.path, (content) =>
 			appendToSection(content, this.settings.heading, [line]),
 		);
-		await this.deps.tasks.update(note.value.path);
 		return ok(undefined);
 	}
 
@@ -234,7 +233,6 @@ export class Planner {
 		if (!from) {
 			return ok({ count: 0, from: null });
 		}
-		await this.deps.tasks.update(from);
 		const content = await this.deps.notes.read(from);
 		const carried = tasksToCarry(content, this.deps.tasks.tasksIn(from));
 		if (carried.length === 0) {
@@ -257,7 +255,6 @@ export class Planner {
 			removed = next !== null;
 			return next ?? text;
 		});
-		await Promise.all([this.deps.tasks.update(from), this.deps.tasks.update(note.value.path)]);
 		if (!removed) {
 			return err(
 				new Error(

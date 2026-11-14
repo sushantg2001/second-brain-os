@@ -1,4 +1,5 @@
-import { isClosed, type Task } from "../../tasks";
+import { isClosed, parseListLine, type Task } from "../../tasks";
+
 import { withoutBlock } from "./block-edits";
 
 export interface CarriedTask {
@@ -9,19 +10,25 @@ export interface CarriedTask {
 	readonly carried: readonly string[];
 }
 
-/** Open tasks that are not nested inside another task, with their nested lines. */
+/**
+ * Open tasks that are not nested inside another task, with their nested lines. The tasks come
+ * from the index, which can be a moment behind the note, so one that is no longer on its line is
+ * left out rather than carried with the wrong lines.
+ */
 export function tasksToCarry(content: string, tasks: readonly Task[]): CarriedTask[] {
 	const lines = content.split(/\r?\n/);
-	const nested = new Set(tasks.flatMap((task) => task.children.map((child) => child.line)));
 	return tasks
 		.filter(
-			(task) => !nested.has(task.line) && !isClosed(task.state) && task.text.trim() !== "",
+			(task) => task.parentLine === null && !isClosed(task.state) && task.text.trim() !== "",
 		)
-		.map((task) => {
-			const last = task.children.at(-1)?.line ?? task.line;
-			const block = lines.slice(task.line, last + 1);
-			const [first = task.raw, ...rest] = block;
-			return { task, lines: block, carried: [withoutBlock(first) ?? first, ...rest] };
+		.flatMap((task) => {
+			const block = lines.slice(task.line, task.lastLine + 1);
+			const [first = "", ...rest] = block;
+			const item = parseListLine(first);
+			if (!item || item.status !== task.status || item.text.trim() !== task.text.trim()) {
+				return [];
+			}
+			return [{ task, lines: block, carried: [withoutBlock(first) ?? first, ...rest] }];
 		});
 }
 

@@ -15,11 +15,11 @@ Time you track rolls up into projects and pillars, and your periodic reviews sum
 
 Obsidian 1.7.2 or later, and these community plugins. Second Brain OS checks for them on start and shows a "Required plugins" screen until all three are enabled.
 
-| Plugin           | Why                                                          |
-| ---------------- | ------------------------------------------------------------ |
-| Datacore 0.1.0+  | Lets you query the notes, tasks and clocks the plugin writes |
-| Tasks 7.0.0+     | Task statuses and toggling, including recurring tasks        |
-| Templater 2.0.0+ | Renders note templates                                       |
+| Plugin           | Why                                                                      |
+| ---------------- | ------------------------------------------------------------------------ |
+| Dataview 0.5.68+ | Reads the tasks, dates and clocks in your notes, and lets you query them |
+| Tasks 7.0.0+     | Task statuses and toggling, including recurring tasks                    |
+| Templater 2.0.0+ | Renders note templates                                                   |
 
 ## Installation
 
@@ -31,7 +31,7 @@ Second Brain OS is installed from its [GitHub releases](https://github.com/susha
 
 ## Getting started
 
-1. Enable Datacore, Tasks, Templater and Second Brain OS.
+1. Enable Dataview, Tasks, Templater and Second Brain OS.
 2. Optional: under Settings → Second Brain OS → Calendar, choose **Import settings** to copy formats, folders and templates from Periodic Notes or Calendar.
 3. Run **Second Brain OS: Set up PPV folders** to create the PPV folders and an example pillar. It never overwrites anything.
 4. Run **Second Brain OS: Create review templates** to add weekly to yearly review templates.
@@ -73,7 +73,7 @@ New blocks go under the **Day planner** heading of the daily note, which is crea
 
 ## Time tracking
 
-A clock is an inline field on a line under the task. A clock without an end is still running.
+A clock is an inline field on a line under the task, which Dataview reads. A clock without an end is still running.
 
 ```markdown
 - [ ] Write the spec
@@ -81,7 +81,7 @@ A clock is an inline field on a line under the task. A clock without an end is s
       [clock::2026-10-29T14:00:00--]
 ```
 
-Start and stop clocks with **Start or stop clock on the current task**, or with the play and stop buttons on a block. Starting a clock stops any other. Clocked time shows as named blocks beside the planned ones, with the clocked blocks of a task's sub tasks next to it, and a clock that runs past midnight counts on both days. When Obsidian starts it reminds you about clocks left running.
+Start and stop clocks with **Start or stop clock on the current task**, or with the play and stop buttons on a block. Starting a clock stops any other. Clocked time shows as named blocks beside the planned ones, with the clocked blocks of a task's sub tasks next to it, and a clock that runs past midnight counts on both days. When Obsidian starts it reminds you about clocks left running. Dataview re-reads a note a moment after it changes, so a new clock or block can take a moment to show.
 
 ## Pillars, pipelines and vaults
 
@@ -97,7 +97,7 @@ due: 2026-12-01
 ---
 ```
 
-Goals link to a pillar with `pillar:`. Projects link to a goal with `goal:`, or straight to a pillar. A task belongs to a project if it is in the project's note or links to it, as in `- [ ] Stretch [[Training plan]]`. Because it is all front matter and inline fields, you can also query it with Datacore.
+Goals link to a pillar with `pillar:`. Projects link to a goal with `goal:`, or straight to a pillar. A task belongs to a project if it is in the project's note or links to it, as in `- [ ] Stretch [[Training plan]]`. Because it is all front matter and inline fields, you can also query it with Dataview.
 
 - **Open PPV dashboard** lists pillars, goals and projects with progress, clocked time and the next action.
 - **New pillar**, **goal**, **project** and **resource** create a note in its folder, linked to a parent you pick.

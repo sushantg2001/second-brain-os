@@ -64,9 +64,9 @@ describe("evaluateDependencies", () => {
 		]);
 	});
 
-	it("requires Datacore, Tasks and Templater, not Dataview", () => {
+	it("requires Dataview, Tasks and Templater, not Datacore", () => {
 		expect(REQUIRED_PLUGINS.map((plugin) => plugin.id)).toEqual([
-			"datacore",
+			"dataview",
 			"obsidian-tasks-plugin",
 			"templater-obsidian",
 		]);
