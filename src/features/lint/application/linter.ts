@@ -6,11 +6,11 @@ import {
 	type ReadableStore,
 	type Result,
 } from "../../../shared/kernel";
-import { closeClockLine } from "../../clocks";
+import { closeClockIn, previewClosedClock } from "../../clocks";
 import type { PeriodicNotes } from "../../periodic";
 import type { Planner } from "../../planner";
 import type { PpvIndex, PpvService, PpvType } from "../../ppv";
-import { replaceLine, type TaskIndex } from "../../tasks";
+import type { TaskIndex } from "../../tasks";
 import { lint, type Finding, type LintFix } from "../domain/rules";
 import { applySettings, type LintSettings } from "../domain/settings";
 
@@ -79,25 +79,23 @@ export class Linter {
 	previewCloseClock(
 		fix: Extract<LintFix, { kind: "close-clock" }>,
 	): { before: string; after: string } | null {
-		const after = closeClockLine(fix.raw, this.deps.now.get());
-		return after === null ? null : { before: fix.raw, after };
+		return previewClosedClock(fix.value, this.deps.now.get());
 	}
 
 	async closeClock(fix: Extract<LintFix, { kind: "close-clock" }>): Promise<Result<void, Error>> {
-		const after = closeClockLine(fix.raw, this.deps.now.get());
-		if (after === null) {
+		const now = this.deps.now.get();
+		if (previewClosedClock(fix.value, now) === null) {
 			return err(new Error("That clock is no longer running."));
 		}
 		let failure: Error | null = null;
 		await this.deps.notes.process(fix.path, (content) => {
-			const next = replaceLine(content, fix, after);
+			const next = closeClockIn(content, fix, now);
 			if (!next.ok) {
 				failure = next.error;
 				return content;
 			}
 			return next.value;
 		});
-		await this.deps.tasks.update(fix.path);
 		return failure ? err(failure) : ok(undefined);
 	}
 

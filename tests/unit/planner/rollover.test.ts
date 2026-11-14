@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 
 import { removeCarried, tasksToCarry } from "../../../src/features/planner";
-import { parseTasks } from "../../../src/features/tasks";
+import { tasksIn } from "../../fakes/tasks";
 
 const NOTE = [
 	"# Yesterday",
@@ -16,7 +16,7 @@ const NOTE = [
 ].join("\n");
 
 describe("carrying tasks over", () => {
-	const tasks = parseTasks("2026-10-28.md", NOTE);
+	const tasks = tasksIn("2026-10-28.md", NOTE);
 	const carried = tasksToCarry(NOTE, tasks);
 
 	it("takes open top-level tasks with their nested lines, without old times", () => {
@@ -38,7 +38,7 @@ describe("carrying tasks over", () => {
 			"\t\t[clock::2026-10-28T09:40:00--]",
 			"- [ ] Next",
 		].join("\n");
-		const items = tasksToCarry(note, parseTasks("2026-10-28.md", note));
+		const items = tasksToCarry(note, tasksIn("2026-10-28.md", note));
 		expect(items.map((item) => item.carried)).toEqual([
 			[
 				"- [ ] Write spec",

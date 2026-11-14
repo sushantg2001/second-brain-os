@@ -8,9 +8,9 @@ import {
 	rollupTasks,
 	sortedPillarTimes,
 } from "../../../src/features/rollups";
-import { parseTasks } from "../../../src/features/tasks";
+import { tasksIn } from "../../fakes/tasks";
 
-const tasks = parseTasks(
+const tasks = tasksIn(
 	"p.md",
 	["- [x] A ✅ 2026-10-20", "- [-] B", "- [ ] C", "- [/] D", "- [x] E ✅ 2026-10-25"].join("\n"),
 );

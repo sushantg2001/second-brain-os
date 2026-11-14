@@ -1,6 +1,6 @@
 /** One Markdown list line, split into its parts so it can be rebuilt byte for byte. */
 export interface ListLine {
-	/** Leading whitespace as written. */
+	/** Leading whitespace and quote marks as written, so tasks in a callout can be edited. */
 	readonly indent: string;
 	/** "-", "*", "+", "1." or "1)". */
 	readonly marker: string;
@@ -10,8 +10,8 @@ export interface ListLine {
 	readonly text: string;
 }
 
-const LIST = /^([ \t]*)([-*+]|\d+[.)])[ \t]+(?:\[(.)\][ \t]+)?(.*)$/;
-const EMPTY_TASK = /^([ \t]*)([-*+]|\d+[.)])[ \t]+\[(.)\]$/;
+const LIST = /^([ \t>]*)([-*+]|\d+[.)])[ \t]+(?:\[(.)\][ \t]+)?(.*)$/;
+const EMPTY_TASK = /^([ \t>]*)([-*+]|\d+[.)])[ \t]+\[(.)\]$/;
 
 export function parseListLine(line: string): ListLine | null {
 	const empty = EMPTY_TASK.exec(line);
@@ -38,13 +38,4 @@ export function parseListLine(line: string): ListLine | null {
 export function formatListLine(line: ListLine): string {
 	const checkbox = line.status === null ? "" : `[${line.status}] `;
 	return `${line.indent}${line.marker} ${checkbox}${line.text}`.trimEnd();
-}
-
-/** Indent width with tabs counted as four spaces. */
-export function indentWidth(indent: string): number {
-	let width = 0;
-	for (const char of indent) {
-		width += char === "\t" ? 4 : 1;
-	}
-	return width;
 }

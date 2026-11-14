@@ -1,5 +1,7 @@
 import { describe, expect, it } from "bun:test";
 
+import { DataviewTaskIndex } from "../../src/infrastructure/dataview";
+import { asObsidianApp } from "../fakes/fake-obsidian-app";
 import { loadPlugin } from "../fakes/plugin-harness";
 
 /** A vault of 2,000 notes: daily notes with tasks, projects, and plain notes. */
@@ -40,9 +42,10 @@ describe("performance", () => {
 			work();
 			return performance.now() - started;
 		};
-		const rebuild = performance.now();
-		await container.tasks.rebuild();
-		const rebuildMs = performance.now() - rebuild;
+		// A fresh index, so every note with tasks is read from Dataview once.
+		const fresh = new DataviewTaskIndex(asObsidianApp(harness.app), { debounceMs: 0 });
+		fresh.attach();
+		const scanMs = time(() => [...fresh.all()]);
 		const periodicMs = time(() => container.periodic.refresh());
 		const ppvMs = time(() => container.ppvIndex.rebuild());
 		const planMs = time(() => container.planner.plan("2022-06-01"));
@@ -52,7 +55,7 @@ describe("performance", () => {
 		const lintMs = time(() => container.linter.run());
 
 		// Generous limits for slow CI machines; typical runs are several times faster.
-		expect(rebuildMs).toBeLessThan(1500);
+		expect(scanMs).toBeLessThan(1500);
 		expect(periodicMs).toBeLessThan(1000);
 		expect(ppvMs).toBeLessThan(500);
 		expect(planMs).toBeLessThan(200);
@@ -63,7 +66,7 @@ describe("performance", () => {
 			container.rollups.review({ from: "2022-01-01", to: "2022-12-31" }).completed,
 		).toHaveLength(365);
 		console.info(
-			`large vault: tasks ${rebuildMs.toFixed(0)}ms, periodic ${periodicMs.toFixed(0)}ms, ppv ${ppvMs.toFixed(0)}ms, ` +
+			`large vault: tasks ${scanMs.toFixed(0)}ms, periodic ${periodicMs.toFixed(0)}ms, ppv ${ppvMs.toFixed(0)}ms, ` +
 				`plan ${planMs.toFixed(0)}ms, review ${rollupMs.toFixed(0)}ms, lint ${lintMs.toFixed(0)}ms`,
 		);
 	}, 60_000);

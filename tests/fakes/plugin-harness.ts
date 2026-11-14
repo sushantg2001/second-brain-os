@@ -26,7 +26,7 @@ export async function loadPlugin(
 	plugin.data = options.data ?? null;
 	const clock = new FixedClock(options.today, options.minutes);
 	const obsidianPlugin = plugin as unknown as ObsidianPlugin;
-	const container = createContainer(obsidianPlugin, { clock });
+	const container = createContainer(obsidianPlugin, { clock, taskDebounceMs: 0 });
 	await startPlugin(obsidianPlugin, container);
 	app.workspace.finishLayout();
 	await sleep(0);

@@ -1,10 +1,32 @@
 import { err, ok, type Result } from "../../../shared/kernel";
-import { frontmatterLines } from "./parse-note";
 
-/** A pointer to a line, with the text it had when it was read. */
+import { parseListLine } from "./list-line";
+
+/**
+ * A pointer to a task line, with what the task was when it was read: its status and the text
+ * after its checkbox. The index does not keep the line as written, so this is what an edit checks
+ * to be sure it is changing the task it meant to.
+ */
 export interface LineRef {
 	readonly line: number;
-	readonly raw: string;
+	readonly status: string;
+	readonly text: string;
+}
+
+/** Length of the front matter block in lines, or 0. */
+export function frontmatterLines(lines: readonly string[]): number {
+	if (lines[0]?.trim() !== "---") {
+		return 0;
+	}
+	const end = lines.findIndex(
+		(line, index) => index > 0 && (line.trim() === "---" || line.trim() === "..."),
+	);
+	return end === -1 ? 0 : end + 1;
+}
+
+function isTaskAt(line: string | undefined, ref: LineRef): boolean {
+	const item = line === undefined ? null : parseListLine(line);
+	return item !== null && item.status === ref.status && item.text.trim() === ref.text.trim();
 }
 
 export class StaleLineError extends Error {
@@ -20,15 +42,43 @@ function newline(content: string): string {
 }
 
 /**
- * Finds where a line is now: at its old index when unchanged, otherwise the only other line with
- * the same text. Fails when it is gone or ambiguous, so an edit never lands on the wrong line.
+ * Finds where a task is now: at its old index when it is still there, otherwise the only other
+ * line that is the same task. Fails when it is gone or ambiguous, so an edit never lands on the
+ * wrong line.
  */
 export function locate(lines: readonly string[], ref: LineRef): Result<number, StaleLineError> {
-	if (lines[ref.line] === ref.raw) {
+	if (isTaskAt(lines[ref.line], ref)) {
 		return ok(ref.line);
 	}
-	const matches = lines.flatMap((line, index) => (line === ref.raw ? [index] : []));
+	const matches = lines.flatMap((line, index) => (isTaskAt(line, ref) ? [index] : []));
 	return matches.length === 1 ? ok(matches[0] ?? 0) : err(new StaleLineError());
+}
+
+/**
+ * Rewrites a task line. `edit` gets the line as it is now and returns its replacement lines, or
+ * null when it cannot be edited.
+ */
+export function editLine(
+	content: string,
+	ref: LineRef,
+	edit: (line: string) => string | readonly string[] | null,
+): Result<string, Error> {
+	const eol = newline(content);
+	const lines = content.split(/\r?\n/);
+	const index = locate(lines, ref);
+	if (!index.ok) {
+		return index;
+	}
+	const replacement = edit(lines[index.value] ?? "");
+	if (replacement === null) {
+		return err(new Error("That line is not a task."));
+	}
+	lines.splice(
+		index.value,
+		1,
+		...(typeof replacement === "string" ? [replacement] : replacement),
+	);
+	return ok(lines.join(eol));
 }
 
 /** Replaces one line with zero or more lines. */

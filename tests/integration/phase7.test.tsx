@@ -151,26 +151,29 @@ describe("adapter details", () => {
 		});
 		await act(() => sleep(10));
 		const { clocks } = harness.container;
-		const plain = await clocks.start({ path: "a.md", line: 1, raw: "- plain" });
-		expect(!plain.ok && plain.error.message).toBe("That line is not a task.");
-		const gone = await clocks.start({ path: "a.md", line: 0, raw: "- [ ] Z" });
+		const plain = await clocks.start({ path: "a.md", line: 1, status: " ", text: "plain" });
+		expect(!plain.ok && plain.error.message).toBe(
+			"The note changed since it was read. Try again.",
+		);
+		const gone = await clocks.start({ path: "a.md", line: 0, status: " ", text: "Z" });
 		expect(!gone.ok && gone.error.message).toBe(
 			"The note changed since it was read. Try again.",
 		);
-		await clocks.start({ path: "a.md", line: 0, raw: "- [ ] A" });
+		await clocks.start({ path: "a.md", line: 0, status: " ", text: "A" });
 		await act(() => sleep(10));
 		const file = harness.app.vault.getFileByPath("a.md");
 		if (!file) {
 			throw new Error("missing");
 		}
 		const running = clocks.running.get()[0];
-		await harness.app.vault.process(file, (text) => text.replace("[clock::", "[clock:: "));
+		await harness.app.vault.process(file, (text) => text.replace("[clock::", "[other::"));
 		if (running) {
 			const stale = await harness.container.linter.closeClock({
 				kind: "close-clock",
 				path: "a.md",
-				line: running.clock.line,
-				raw: running.clock.raw,
+				line: running.task.line,
+				lastLine: running.task.lastLine,
+				value: running.clock.value,
 			});
 			expect(stale.ok).toBe(false);
 		}

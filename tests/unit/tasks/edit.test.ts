@@ -3,6 +3,7 @@ import fc from "fast-check";
 
 import {
 	appendToSection,
+	editLine,
 	insertAfter,
 	locate,
 	replaceLine,
@@ -10,37 +11,65 @@ import {
 	toggleDoneLine,
 } from "../../../src/features/tasks";
 
+/** A reference to the task `- [ ] <text>`. */
+const task = (line: number, text: string, status = " ") => ({ line, status, text });
+
 describe("locate", () => {
 	it("prefers the original index, then a unique match", () => {
-		expect(locate(["a", "b"], { line: 1, raw: "b" })).toEqual({ ok: true, value: 1 });
-		expect(locate(["x", "a", "b"], { line: 1, raw: "b" })).toEqual({ ok: true, value: 2 });
-		expect(locate(["b", "b"], { line: 5, raw: "b" }).ok).toBe(false);
-		expect(locate(["a"], { line: 0, raw: "z" }).ok).toBe(false);
+		expect(locate(["- [ ] a", "- [ ] b"], task(1, "b"))).toEqual({ ok: true, value: 1 });
+		expect(locate(["x", "- [ ] a", "- [ ] b"], task(1, "b"))).toEqual({ ok: true, value: 2 });
+		expect(locate(["- [ ] b", "- [ ] b"], task(5, "b")).ok).toBe(false);
+		expect(locate(["- [ ] a"], task(0, "z")).ok).toBe(false);
+	});
+
+	it("matches the checkbox and the text, not the spacing or the bullet", () => {
+		expect(locate(["\t* [ ]   spaced  "], task(0, "spaced"))).toEqual({ ok: true, value: 0 });
+		expect(locate(["> - [ ] quoted"], task(0, "quoted"))).toEqual({ ok: true, value: 0 });
+		expect(locate(["- [x] a"], task(0, "a", " ")).ok).toBe(false);
+		expect(locate(["- a"], task(0, "a")).ok).toBe(false);
+	});
+});
+
+describe("editLine", () => {
+	it("gives the edit the line as it is now", () => {
+		const seen: string[] = [];
+		const result = editLine("x\n\t- [ ] a", task(0, "a"), (line) => {
+			seen.push(line);
+			return line.replace("[ ]", "[x]");
+		});
+		expect(seen).toEqual(["\t- [ ] a"]);
+		expect(result.ok && result.value).toBe("x\n\t- [x] a");
+	});
+
+	it("fails when the edit refuses the line or the task moved", () => {
+		const refused = editLine("- [ ] a", task(0, "a"), () => null);
+		expect(!refused.ok && refused.error.message).toBe("That line is not a task.");
+		expect(editLine("- [ ] b", task(0, "a"), (line) => line).ok).toBe(false);
 	});
 });
 
 describe("replaceLine and insertAfter", () => {
 	it("replaces and inserts while keeping line endings", () => {
-		const content = "a\r\nb\r\nc";
-		const replaced = replaceLine(content, { line: 1, raw: "b" }, ["B1", "B2"]);
-		expect(replaced.ok && replaced.value).toBe("a\r\nB1\r\nB2\r\nc");
-		const inserted = insertAfter("a\nb", { line: 0, raw: "a" }, ["x"]);
-		expect(inserted.ok && inserted.value).toBe("a\nx\nb");
-		expect(insertAfter("a", { line: 0, raw: "q" }, ["x"]).ok).toBe(false);
+		const content = "- [ ] a\r\n- [ ] b\r\n- [ ] c";
+		const replaced = replaceLine(content, task(1, "b"), ["B1", "B2"]);
+		expect(replaced.ok && replaced.value).toBe("- [ ] a\r\nB1\r\nB2\r\n- [ ] c");
+		const inserted = insertAfter("- [ ] a\n- [ ] b", task(0, "a"), ["x"]);
+		expect(inserted.ok && inserted.value).toBe("- [ ] a\nx\n- [ ] b");
+		expect(insertAfter("- [ ] a", task(0, "q"), ["x"]).ok).toBe(false);
 	});
 
 	it("never touches other lines", () => {
 		fc.assert(
 			fc.property(
-				fc.array(fc.stringMatching(/^[a-z ]{0,8}$/), { minLength: 1, maxLength: 20 }),
+				fc.array(fc.stringMatching(/^[a-z]{1,8}$/), { minLength: 1, maxLength: 20 }),
 				fc.nat(),
 				fc.stringMatching(/^[A-Z]{1,5}$/),
-				(lines, pick, replacement) => {
+				(texts, pick, replacement) => {
+					const lines = texts.map((text, i) => `- [ ] ${text}${i}`);
 					const index = pick % lines.length;
-					const content = lines.join("\n");
 					const result = replaceLine(
-						content,
-						{ line: index, raw: lines[index] ?? "" },
+						lines.join("\n"),
+						task(index, `${texts[index]}${index}`),
 						replacement,
 					);
 					expect(result.ok).toBe(true);

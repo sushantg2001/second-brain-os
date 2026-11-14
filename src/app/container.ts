@@ -7,7 +7,8 @@ import { Planner } from "../features/planner";
 import { PpvIndex, PpvService } from "../features/ppv";
 import { Rollups } from "../features/rollups";
 import { DependencyGate } from "../features/setup";
-import { TaskActions, TaskIndex } from "../features/tasks";
+import { TaskActions, type TaskIndex } from "../features/tasks";
+import { DataviewTaskIndex } from "../infrastructure/dataview";
 import {
 	MomentDateFormatter,
 	NoticeNotifier,
@@ -53,6 +54,8 @@ export interface Container {
 
 export interface ContainerOverrides {
 	readonly clock?: Clock;
+	/** How long the task index waits before announcing a change. Tests set it to zero. */
+	readonly taskDebounceMs?: number;
 }
 
 export function createContainer(plugin: Plugin, overrides: ContainerOverrides = {}): Container {
@@ -74,7 +77,7 @@ export function createContainer(plugin: Plugin, overrides: ContainerOverrides = 
 		templates,
 		clock,
 	});
-	const tasks = new TaskIndex(notes);
+	const tasks = new DataviewTaskIndex(app, { debounceMs: overrides.taskDebounceMs });
 	const taskActions = new TaskActions(notes, clock, new TasksPluginToggler(app));
 	const now = new NowTicker(clock);
 	const ppvIndex = new PpvIndex(notes, settings.section("ppv").store);

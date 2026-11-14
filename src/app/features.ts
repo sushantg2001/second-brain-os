@@ -40,9 +40,8 @@ export const FEATURES: readonly FeatureModule[] = [
 	{
 		id: "tasks",
 		register: (plugin, container) => {
+			// Dataview indexes the vault once the layout is ready and tells the index when it is done.
 			plugin.register(container.tasks.attach());
-			// Reading every note can take a moment in large vaults, so it waits for the layout.
-			container.app.workspace.onLayoutReady(() => void container.tasks.rebuild());
 		},
 	},
 	{

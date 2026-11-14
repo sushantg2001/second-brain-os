@@ -13,8 +13,7 @@ import {
 import {
 	displayText,
 	locate,
-	parseTasks,
-	replaceLine,
+	parseListLine,
 	stripTimeBlock,
 	type Task,
 	type TaskIndex,
@@ -28,15 +27,7 @@ import {
 	momentNow,
 	rangeOnDate,
 } from "../domain/clock-entry";
-import {
-	clockIndent,
-	clockInsertLine,
-	closeClockLine,
-	clocksOf,
-	clocksWithin,
-	openClockLine,
-	type ClockLine,
-} from "../domain/task-clocks";
+import { clocksOf, closeClockIn, openClockLine, type ClockLine } from "../domain/task-clocks";
 
 export interface RunningClock {
 	readonly task: Task;
@@ -132,7 +123,7 @@ interface ClockIndex {
 	readonly clocked: readonly { readonly task: Task; readonly clocks: readonly ClockLine[] }[];
 }
 
-/** Time tracking: clock entries written on the lines under tasks. */
+/** Time tracking: `clock` fields written on the lines under tasks, found by Dataview. */
 export class Clocks {
 	readonly #running: ReadableStore<readonly RunningClock[]>;
 	#index: ClockIndex | null = null;
@@ -195,17 +186,22 @@ export class Clocks {
 		await this.deps.notes.process(ref.path, (content) => {
 			const lines = content.split(/\r?\n/);
 			const at = locate(lines, ref);
-			const task = at.ok
-				? parseTasks(ref.path, content).find((candidate) => candidate.line === at.value)
-				: undefined;
-			if (!task) {
-				failure = at.ok ? new Error("That line is not a task.") : at.error;
+			if (!at.ok) {
+				failure = at.error;
 				return content;
 			}
-			lines.splice(clockInsertLine(task), 0, openClockLine(clockIndent(task), now));
+			const task = this.deps.tasks.tasksIn(ref.path).find((found) => found.line === at.value);
+			if (!task) {
+				failure = new Error(
+					"Dataview has not indexed that task yet. Try again in a moment.",
+				);
+				return content;
+			}
+			// One tab deeper than the task, below the lines that already continue it.
+			const indent = `${parseListLine(lines[at.value] ?? "")?.indent ?? ""}\t`;
+			lines.splice(at.value + task.lineCount, 0, openClockLine(indent, now));
 			return lines.join(content.includes("\r\n") ? "\r\n" : "\n");
 		});
-		await this.deps.tasks.update(ref.path);
 		return failure ? err(failure) : ok(undefined);
 	}
 
@@ -215,15 +211,17 @@ export class Clocks {
 		for (const { task, clock } of this.#running.get()) {
 			let failure: Error | null = null;
 			await this.deps.notes.process(task.path, (content) => {
-				const closed = closeClockLine(clock.raw, now);
-				const next = closed === null ? null : replaceLine(content, clock, closed);
-				if (!next?.ok) {
-					failure = next?.error ?? new Error("That clock is not running.");
+				const next = closeClockIn(
+					content,
+					{ line: task.line, lastLine: task.lastLine, value: clock.value },
+					now,
+				);
+				if (!next.ok) {
+					failure = next.error;
 					return content;
 				}
 				return next.value;
 			});
-			await this.deps.tasks.update(task.path);
 			if (failure) {
 				return err(failure);
 			}
@@ -355,7 +353,11 @@ export class Clocks {
 	/** Total clocked minutes for one task, counting the tasks nested under it. */
 	minutesFor(task: Task): Minutes {
 		const now = this.deps.now.get();
-		return clocksWithin(task).reduce((sum, clock) => sum + entryMinutes(clock, now), 0);
+		return this.deps.tasks
+			.tasksIn(task.path)
+			.filter((nested) => nested.line >= task.line && nested.line <= task.lastLine)
+			.flatMap(clocksOf)
+			.reduce((sum, clock) => sum + entryMinutes(clock, now), 0);
 	}
 
 	/** Clocked minutes per day across the vault. */

@@ -24,7 +24,7 @@ export interface ClocksModuleDeps {
 export function taskAtLine(tasks: readonly Task[], line: number): Task | null {
 	let found: Task | null = null;
 	for (const task of tasks) {
-		if (task.line === line || task.children.some((child) => child.line === line)) {
+		if (task.line <= line && line <= task.lastLine) {
 			found = task;
 		}
 	}

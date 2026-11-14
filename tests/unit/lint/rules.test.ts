@@ -10,7 +10,7 @@ import {
 } from "../../../src/features/lint";
 import { buildDayPlan } from "../../../src/features/planner";
 import type { PpvNote } from "../../../src/features/ppv";
-import { parseTasks } from "../../../src/features/tasks";
+import { tasksIn } from "../../fakes/tasks";
 
 function note(partial: Partial<PpvNote> & Pick<PpvNote, "path" | "type">): PpvNote {
 	return {
@@ -94,12 +94,12 @@ describe("project rules", () => {
 		const idle = note({ path: "Idle.md", type: "project", parent: "x" });
 		const busy = note({ path: "Busy.md", type: "project", parent: "x", due: "2026-10-29" });
 		const pillar = note({ path: "x", type: "pillar" });
-		const tasks = parseTasks("Busy.md", "- [ ] Do it\n- [ ] ");
+		const tasks = tasksIn("Busy.md", "- [ ] Do it\n- [ ] ");
 		const findings = lint(
 			input({
 				notes: new Map([overdue, idle, busy, pillar].map((item) => [item.path, item])),
 				projectTasks: (path) =>
-					path === "Busy.md" ? tasks : parseTasks(path, "- [x] Done\n- [ ] "),
+					path === "Busy.md" ? tasks : tasksIn(path, "- [x] Done\n- [ ] "),
 			}),
 		);
 		expect(findings.map((item) => [item.rule, item.path])).toEqual([
@@ -111,7 +111,7 @@ describe("project rules", () => {
 
 describe("task rules", () => {
 	it("quotes a task without its inline fields, links as text", () => {
-		const tasks = parseTasks(
+		const tasks = tasksIn(
 			"a.md",
 			[
 				"- [x] 12:00 - 3:00 work [completion:: 2025-04-19]",
@@ -128,7 +128,7 @@ describe("task rules", () => {
 	});
 
 	it("reports malformed blocks and clocks running too long", () => {
-		const tasks = parseTasks(
+		const tasks = tasksIn(
 			"a.md",
 			[
 				"- [ ] 10:00 - 09:00 Backwards",
@@ -141,18 +141,19 @@ describe("task rules", () => {
 		const findings = lint(input({ tasks }));
 		expect(findings.map((item) => [item.rule, item.line, item.severity])).toEqual([
 			["malformed-time-block", 0, "error"],
-			["stale-clock", 2, "warning"],
+			["stale-clock", 1, "warning"],
 		]);
 		expect(findings[1]?.fix).toEqual({
 			kind: "close-clock",
 			path: "a.md",
-			line: 2,
-			raw: "\t- [clock::2026-10-28T09:00--]",
+			line: 1,
+			lastLine: 2,
+			value: "2026-10-28T09:00--",
 		});
 	});
 
 	it("reports overlapping open blocks per day", () => {
-		const tasks = parseTasks(
+		const tasks = tasksIn(
 			"2026-10-29.md",
 			"- [ ] 09:00 - 10:00 A\n- [ ] 09:30 - 10:30 B\n- [x] 11:00 - 12:00 C\n- [x] 11:30 - 12:30 D",
 		);
@@ -174,7 +175,7 @@ describe("task rules", () => {
 describe("task rules with nested tasks", () => {
 	const DAY = "2026-10-29.md";
 	const overlaps = (note: string) => {
-		const tasks = parseTasks(DAY, note);
+		const tasks = tasksIn(DAY, note);
 		const plan = buildDayPlan("2026-10-29", DAY, tasks, 30);
 		return lint(input({ plans: [{ path: DAY, plan }] })).map((item) => item.rule);
 	};
@@ -207,17 +208,18 @@ describe("task rules with nested tasks", () => {
 	});
 
 	it("reports a clock running too long once, on the task it is written under", () => {
-		const tasks = parseTasks(
+		const tasks = tasksIn(
 			"a.md",
 			["- [ ] Main", "\t- [ ] Sub", "\t\t[clock::2026-10-28T09:00:00--]"].join("\n"),
 		);
 		const findings = lint(input({ tasks }));
-		expect(findings.map((item) => [item.rule, item.line])).toEqual([["stale-clock", 2]]);
+		expect(findings.map((item) => [item.rule, item.line])).toEqual([["stale-clock", 1]]);
 		expect(findings[0]?.fix).toEqual({
 			kind: "close-clock",
 			path: "a.md",
-			line: 2,
-			raw: "\t\t[clock::2026-10-28T09:00:00--]",
+			line: 1,
+			lastLine: 2,
+			value: "2026-10-28T09:00:00--",
 		});
 	});
 });

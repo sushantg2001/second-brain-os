@@ -24,8 +24,10 @@ export type LintFix =
 	| {
 			readonly kind: "close-clock";
 			readonly path: string;
+			/** The task the clock is on, and the last line of it, to find the clock again. */
 			readonly line: number;
-			readonly raw: string;
+			readonly lastLine: number;
+			readonly value: string;
 	  }
 	| { readonly kind: "set-parent"; readonly path: string; readonly type: PpvType };
 
@@ -194,9 +196,15 @@ function taskFindings(input: LintInput): Finding[] {
 					finding(
 						"stale-clock",
 						task.path,
-						clock.line,
+						task.line,
 						`A clock on "${displayText(task.text)}" has run since ${clock.start.date}.`,
-						{ kind: "close-clock", path: task.path, line: clock.line, raw: clock.raw },
+						{
+							kind: "close-clock",
+							path: task.path,
+							line: task.line,
+							lastLine: task.lastLine,
+							value: clock.value,
+						},
 					),
 				);
 			}

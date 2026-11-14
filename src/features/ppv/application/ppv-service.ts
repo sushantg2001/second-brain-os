@@ -257,7 +257,6 @@ export class PpvService {
 		await this.deps.notes.process(path, (content) =>
 			appendToSection(content, settings.captureHeading, [line]),
 		);
-		await this.deps.tasks.update(path);
 		return ok(path);
 	}
 
